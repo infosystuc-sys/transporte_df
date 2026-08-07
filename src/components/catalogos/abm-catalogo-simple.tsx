@@ -12,7 +12,7 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -50,6 +50,8 @@ type Props<T extends FilaBase, TInput extends FieldValues> = {
   crear: (valores: TInput) => Promise<ResultadoAccion>;
   actualizar: (id: number, valores: TInput) => Promise<ResultadoAccion>;
   eliminar: (id: number) => Promise<ResultadoAccion>;
+  /** Si se pasa, agrega un botón "Duplicar" que abre el alta precargada. */
+  alDuplicar?: (fila: T) => TInput;
 };
 
 export function AbmCatalogoSimple<T extends FilaBase, TInput extends FieldValues>({
@@ -64,6 +66,7 @@ export function AbmCatalogoSimple<T extends FilaBase, TInput extends FieldValues
   crear,
   actualizar,
   eliminar,
+  alDuplicar,
 }: Props<T, TInput>) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
@@ -85,6 +88,13 @@ export function AbmCatalogoSimple<T extends FilaBase, TInput extends FieldValues
   function abrirEditar(fila: T) {
     setFilaEditando(fila);
     form.reset(aValoresFormulario(fila));
+    setAbierto(true);
+  }
+
+  function abrirDuplicar(fila: T) {
+    if (!alDuplicar) return;
+    setFilaEditando(null);
+    form.reset(alDuplicar(fila));
     setAbierto(true);
   }
 
@@ -124,6 +134,11 @@ export function AbmCatalogoSimple<T extends FilaBase, TInput extends FieldValues
       header: "",
       cell: ({ row }) => (
         <div className="flex justify-end gap-1">
+          {alDuplicar && (
+            <Button variant="ghost" size="icon" onClick={() => abrirDuplicar(row.original)}>
+              <Copy className="size-4" />
+            </Button>
+          )}
           <Button variant="ghost" size="icon" onClick={() => abrirEditar(row.original)}>
             <Pencil className="size-4" />
           </Button>

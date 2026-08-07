@@ -14,6 +14,15 @@ export const decimalOpcional = (max = "Valor inválido") =>
     .optional()
     .or(z.literal("").transform(() => undefined));
 
+/** Igual que decimalOpcional pero obligatorio (no vacío). */
+export const decimalRequerido = (mensaje = "Ingresá un valor.") =>
+  z
+    .string()
+    .trim()
+    .min(1, { error: mensaje })
+    .transform((v) => v.replace(",", "."))
+    .pipe(z.string().regex(/^-?\d+(\.\d+)?$/, { error: "Valor inválido" }));
+
 export const textoOpcional = z
   .string()
   .trim()
