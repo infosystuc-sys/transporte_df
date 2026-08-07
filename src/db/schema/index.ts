@@ -1,2 +1,12 @@
-// Las tablas se agregan en la Fase 2 (esquema completo de base de datos).
-export {};
+export * from "./enums";
+export * from "./usuarios";
+export * from "./catalogos";
+export * from "./clientes";
+export * from "./lugares";
+export * from "./flota";
+export * from "./tarifas";
+export * from "./viajes";
+export * from "./adjuntos";
+export * from "./gasoil";
+export * from "./cobros";
+export * from "./choferes-cuenta";
