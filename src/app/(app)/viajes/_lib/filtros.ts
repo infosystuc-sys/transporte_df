@@ -56,6 +56,7 @@ export function condicionesFiltroViajes(sp: BusquedaViajes): SQL | undefined {
 
   if (texto(sp, "merma") === "1") condiciones.push(eq(viajes.merma_excede_tolerancia, true));
   if (texto(sp, "pendiente_cobro") === "1") condiciones.push(gt(viajes.saldo_pendiente, "0"));
+  if (texto(sp, "importado_de_excel") === "1") condiciones.push(eq(viajes.importado_de_excel, true));
 
   return condiciones.length ? and(...condiciones) : undefined;
 }

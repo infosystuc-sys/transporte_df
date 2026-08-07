@@ -1,6 +1,7 @@
 import { eq, ilike } from "drizzle-orm";
 import { db } from "@/db";
-import { camiones, choferes, clientes, lugares, lugaresAlias, productos } from "@/db/schema";
+import { camiones, choferes, clientes, productos } from "@/db/schema";
+import { buscarLugarPorNombre } from "@/lib/lugares/buscar";
 import type { CpeExtraido } from "./parser";
 
 export type Coincidencias = {
@@ -27,24 +28,6 @@ async function buscarClientePorCuit(cuit: string | null) {
   return fila?.id ?? null;
 }
 
-/** Busca un lugar por nombre exacto o por alias, sin mayúsculas ni acentos. */
-async function buscarLugar(nombre: string | null) {
-  if (!nombre) return null;
-  const normalizado = nombre.trim();
-
-  const [porNombre] = await db
-    .select({ id: lugares.id })
-    .from(lugares)
-    .where(ilike(lugares.nombre, normalizado));
-  if (porNombre) return porNombre.id;
-
-  const [porAlias] = await db
-    .select({ id: lugaresAlias.lugar_id })
-    .from(lugaresAlias)
-    .where(ilike(lugaresAlias.alias, normalizado));
-  return porAlias?.id ?? null;
-}
-
 export async function buscarCoincidencias(cpe: CpeExtraido): Promise<Coincidencias> {
   const [titular_id, destinatario_id, pagador_id] = await Promise.all([
     buscarClientePorCuit(cpe.titular_cuit),
@@ -68,8 +51,8 @@ export async function buscarCoincidencias(cpe: CpeExtraido): Promise<Coincidenci
     : [];
 
   const [origen_id, destino_id] = await Promise.all([
-    buscarLugar(cpe.origen_localidad),
-    buscarLugar(cpe.destino_localidad),
+    buscarLugarPorNombre(cpe.origen_localidad),
+    buscarLugarPorNombre(cpe.destino_localidad),
   ]);
 
   return {
