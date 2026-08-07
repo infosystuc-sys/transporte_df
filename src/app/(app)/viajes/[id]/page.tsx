@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  adjuntos,
   camiones,
   cargasGasoil,
   choferes,
@@ -24,6 +25,7 @@ import {
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { formatoFechaInput } from "@/lib/schemas/campos-fecha";
+import { urlFirmadaAdjunto } from "@/lib/supabase/storage";
 import { StepperEstado } from "../_componentes/stepper-estado";
 import { TabsViaje } from "./_componentes/tabs-viaje";
 import { actualizarDatosGenerales } from "../actions";
@@ -69,6 +71,7 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
     filasMediosPago,
     filasCondicionesPago,
     filasImputaciones,
+    filasAdjuntos,
   ] = await Promise.all([
     db
       .select({ id: clientes.id, nombre: clientes.razon_social })
@@ -109,7 +112,18 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
       .innerJoin(cobros, eq(cobroImputaciones.cobro_id, cobros.id))
       .leftJoin(mediosPago, eq(cobros.medio_pago_id, mediosPago.id))
       .where(eq(cobroImputaciones.viaje_id, id)),
+    db
+      .select()
+      .from(adjuntos)
+      .where(and(eq(adjuntos.entidad, "viaje"), eq(adjuntos.entidad_id, id))),
   ]);
+
+  const filasAdjuntosConUrl = await Promise.all(
+    filasAdjuntos.map(async (a) => ({
+      ...a,
+      url: await urlFirmadaAdjunto(a.storage_path).catch(() => null),
+    }))
+  );
 
   const totalGastos = filasGastos.reduce((s, g) => s + Number(g.importe), 0);
   const totalGasoil = filasGasoil.reduce((s, g) => s + Number(g.importe), 0);
@@ -247,6 +261,10 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
             viajeId: id,
             filas: filasContingencias,
             tiposContingencia: filasTiposContingencia,
+          }}
+          adjuntos={{
+            viajeId: id,
+            filas: filasAdjuntosConUrl,
           }}
         />
 

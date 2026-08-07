@@ -1,17 +1,21 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import {
+  adjuntos,
   cobroImputaciones,
   tiposGasto,
+  tipoAdjuntoEnum,
   viajeAdicionales,
   viajeContingencias,
   viajeGastos,
   viajes,
 } from "@/db/schema";
+import { eliminarAdjunto, subirAdjunto } from "@/lib/supabase/storage";
 import {
   viajeAdicionalSchema,
   viajeCargaSchema,
@@ -241,5 +245,42 @@ export async function eliminarGasto(
   viajeId: number
 ): Promise<{ error?: string } | void> {
   await db.delete(viajeGastos).where(eq(viajeGastos.id, id));
+  revalidatePath(rutaViaje(viajeId));
+}
+
+// adjuntos
+export async function subirAdjuntoManual(
+  viajeId: number,
+  formData: FormData
+): Promise<{ error?: string } | void> {
+  const archivo = formData.get("archivo");
+  const tipo = formData.get("tipo");
+  if (!(archivo instanceof File) || archivo.size === 0) {
+    return { error: "Elegí un archivo." };
+  }
+  if (typeof tipo !== "string" || !tipoAdjuntoEnum.enumValues.includes(tipo as never)) {
+    return { error: "Elegí un tipo de adjunto." };
+  }
+
+  const buffer = Buffer.from(await archivo.arrayBuffer());
+  const rutaStorage = `viaje/${viajeId}/${randomUUID()}-${archivo.name}`;
+  await subirAdjunto(rutaStorage, buffer, archivo.type || "application/octet-stream");
+  await db.insert(adjuntos).values({
+    entidad: "viaje",
+    entidad_id: viajeId,
+    tipo: tipo as (typeof tipoAdjuntoEnum.enumValues)[number],
+    nombre_archivo: archivo.name,
+    storage_path: rutaStorage,
+  });
+  revalidatePath(rutaViaje(viajeId));
+}
+
+export async function eliminarAdjuntoViaje(
+  id: number,
+  viajeId: number,
+  storagePath: string
+): Promise<{ error?: string } | void> {
+  await eliminarAdjunto(storagePath);
+  await db.delete(adjuntos).where(eq(adjuntos.id, id));
   revalidatePath(rutaViaje(viajeId));
 }

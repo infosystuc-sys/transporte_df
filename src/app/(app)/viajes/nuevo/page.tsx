@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { camiones, choferes, clientes, lugares, productos } from "@/db/schema";
@@ -64,7 +65,12 @@ export default async function NuevoViajePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Nuevo viaje</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Nuevo viaje</h1>
+        <Link href="/viajes/importar-cpe" className="text-sm text-primary hover:underline">
+          ¿Tenés el PDF de la CPE? Importalo automáticamente
+        </Link>
+      </div>
       <FormularioDatosGenerales
         valoresIniciales={valoresPorDefecto}
         clientes={filasClientes}

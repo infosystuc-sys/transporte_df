@@ -79,6 +79,9 @@ export default async function ViajesPage({
               Exportar CSV
             </a>
           </Button>
+          <Button variant="outline" asChild>
+            <Link href="/viajes/importar-cpe">Importar CPE</Link>
+          </Button>
           <Button asChild>
             <Link href="/viajes/nuevo">Nuevo viaje</Link>
           </Button>

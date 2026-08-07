@@ -9,6 +9,7 @@ import { TabContingencias } from "../../_componentes/tab-contingencias";
 import { TabGastos } from "../../_componentes/tab-gastos";
 import { TabFacturacion } from "../../_componentes/tab-facturacion";
 import { TabPlaceholder } from "../../_componentes/tab-placeholder";
+import { TabAdjuntos } from "./tab-adjuntos";
 import type { ComponentProps } from "react";
 
 export function TabsViaje({
@@ -19,6 +20,7 @@ export function TabsViaje({
   gastos,
   facturacion,
   contingencias,
+  adjuntos,
 }: {
   datosGenerales: ComponentProps<typeof FormularioDatosGenerales>;
   carga: ComponentProps<typeof TabCarga>;
@@ -27,6 +29,7 @@ export function TabsViaje({
   gastos: ComponentProps<typeof TabGastos>;
   facturacion: ComponentProps<typeof TabFacturacion>;
   contingencias: ComponentProps<typeof TabContingencias>;
+  adjuntos: ComponentProps<typeof TabAdjuntos>;
 }) {
   return (
     <Tabs defaultValue="generales">
@@ -66,7 +69,7 @@ export function TabsViaje({
         <TabContingencias {...contingencias} />
       </TabsContent>
       <TabsContent value="adjuntos">
-        <TabPlaceholder fase="Fase 10 (Importación de CPE, que introduce Supabase Storage)" />
+        <TabAdjuntos {...adjuntos} />
       </TabsContent>
     </Tabs>
   );
