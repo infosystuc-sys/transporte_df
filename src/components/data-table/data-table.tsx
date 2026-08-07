@@ -15,6 +15,7 @@ type Props<TData extends Record<string, unknown>> = {
   columnas: ColumnDef<typeof tableFeaturesBase, TData>[];
   datos: TData[];
   sinFilas?: string;
+  onFilaClick?: (fila: TData) => void;
 };
 
 /**
@@ -27,6 +28,7 @@ export function DataTable<TData extends Record<string, unknown>>({
   columnas,
   datos,
   sinFilas = "Sin resultados.",
+  onFilaClick,
 }: Props<TData>) {
   const table = useTable({ features: tableFeaturesBase, columns: columnas, data: datos });
 
@@ -56,7 +58,11 @@ export function DataTable<TData extends Record<string, unknown>>({
             </TableRow>
           ) : (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow
+                key={row.id}
+                onClick={onFilaClick ? () => onFilaClick(row.original) : undefined}
+                className={onFilaClick ? "cursor-pointer" : undefined}
+              >
                 {row.getAllCells().map((cell) => (
                   <TableCell key={cell.id}>
                     <table.FlexRender cell={cell} />

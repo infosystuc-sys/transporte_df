@@ -8,7 +8,7 @@ export type NavItem = {
 // disponible: true y deja de mostrarse como "Próximamente".
 export const navItems: NavItem[] = [
   { href: "/", label: "Dashboard", disponible: true },
-  { href: "/viajes", label: "Viajes", disponible: false },
+  { href: "/viajes", label: "Viajes", disponible: true },
   { href: "/clientes", label: "Clientes", disponible: true },
   { href: "/camiones", label: "Camiones", disponible: true },
   { href: "/choferes", label: "Choferes", disponible: true },

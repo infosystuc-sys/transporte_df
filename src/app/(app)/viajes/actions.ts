@@ -1,0 +1,151 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
+import { db } from "@/db";
+import { cobroImputaciones, viajeContingencias, viajes } from "@/db/schema";
+import {
+  viajeCargaSchema,
+  viajeContingenciaSchema,
+  viajeDatosGeneralesSchema,
+  viajeDescargaSchema,
+  viajeTarifaSchema,
+  type ViajeCargaInput,
+  type ViajeContingenciaInput,
+  type ViajeDatosGeneralesInput,
+  type ViajeDescargaInput,
+  type ViajeTarifaInput,
+} from "@/lib/schemas/viajes";
+
+import type { EstadoViaje } from "./_lib/estados";
+
+function rutaViaje(id: number) {
+  return `/viajes/${id}`;
+}
+
+export async function crearViaje(valores: ViajeDatosGeneralesInput) {
+  const datos = viajeDatosGeneralesSchema.parse(valores);
+  const [viaje] = await db.insert(viajes).values(datos).returning({ id: viajes.id });
+  revalidatePath("/viajes");
+  redirect(`/viajes/${viaje.id}`);
+}
+
+export async function actualizarDatosGenerales(
+  id: number,
+  valores: ViajeDatosGeneralesInput
+): Promise<{ error?: string } | void> {
+  const datos = viajeDatosGeneralesSchema.parse(valores);
+  await db
+    .update(viajes)
+    .set({ ...datos, actualizado_en: new Date() })
+    .where(eq(viajes.id, id));
+  revalidatePath(rutaViaje(id));
+}
+
+export async function actualizarCarga(
+  id: number,
+  valores: ViajeCargaInput
+): Promise<{ error?: string } | void> {
+  const datos = viajeCargaSchema.parse(valores);
+  await db
+    .update(viajes)
+    .set({ ...datos, actualizado_en: new Date() })
+    .where(eq(viajes.id, id));
+  revalidatePath(rutaViaje(id));
+}
+
+export async function actualizarDescarga(
+  id: number,
+  valores: ViajeDescargaInput
+): Promise<{ error?: string } | void> {
+  const datos = viajeDescargaSchema.parse(valores);
+  await db
+    .update(viajes)
+    .set({ ...datos, actualizado_en: new Date() })
+    .where(eq(viajes.id, id));
+  revalidatePath(rutaViaje(id));
+}
+
+export async function actualizarTarifa(
+  id: number,
+  valores: ViajeTarifaInput
+): Promise<{ error?: string } | void> {
+  const datos = viajeTarifaSchema.parse(valores);
+  await db
+    .update(viajes)
+    .set({ ...datos, actualizado_en: new Date() })
+    .where(eq(viajes.id, id));
+  revalidatePath(rutaViaje(id));
+}
+
+export async function eliminarViaje(id: number) {
+  await db.delete(viajes).where(eq(viajes.id, id));
+  revalidatePath("/viajes");
+  redirect("/viajes");
+}
+
+/**
+ * Avanza o retrocede un paso en la máquina de estados, validando los
+ * mínimos que pide el spec: fecha de descarga para "descargado", N° de
+ * factura para "facturado", un cobro imputado para "cobrado".
+ */
+export async function cambiarEstadoViaje(
+  id: number,
+  nuevoEstado: EstadoViaje,
+  facturaNro?: string
+) {
+  const [viaje] = await db.select().from(viajes).where(eq(viajes.id, id));
+  if (!viaje) return { error: "Viaje no encontrado." };
+
+  if (nuevoEstado === "descargado" && !viaje.fecha_descarga) {
+    return { error: "No se puede pasar a Descargado sin fecha de descarga." };
+  }
+
+  if (nuevoEstado === "facturado") {
+    const nro = facturaNro?.trim() || viaje.factura_nro;
+    if (!nro) return { error: "No se puede pasar a Facturado sin N° de factura." };
+    await db
+      .update(viajes)
+      .set({ estado: nuevoEstado, factura_nro: nro, facturado: true, actualizado_en: new Date() })
+      .where(eq(viajes.id, id));
+    revalidatePath(rutaViaje(id));
+    revalidatePath("/viajes");
+    return;
+  }
+
+  if (nuevoEstado === "cobrado") {
+    const imputaciones = await db
+      .select()
+      .from(cobroImputaciones)
+      .where(eq(cobroImputaciones.viaje_id, id));
+    if (imputaciones.length === 0) {
+      return { error: "No se puede pasar a Cobrado sin un cobro imputado." };
+    }
+  }
+
+  await db
+    .update(viajes)
+    .set({ estado: nuevoEstado, actualizado_en: new Date() })
+    .where(eq(viajes.id, id));
+  revalidatePath(rutaViaje(id));
+  revalidatePath("/viajes");
+}
+
+// viaje_contingencias
+export async function crearContingencia(
+  viajeId: number,
+  valores: ViajeContingenciaInput
+): Promise<{ error?: string } | void> {
+  const datos = viajeContingenciaSchema.parse(valores);
+  await db.insert(viajeContingencias).values({ ...datos, viaje_id: viajeId });
+  revalidatePath(rutaViaje(viajeId));
+}
+
+export async function eliminarContingencia(
+  id: number,
+  viajeId: number
+): Promise<{ error?: string } | void> {
+  await db.delete(viajeContingencias).where(eq(viajeContingencias.id, id));
+  revalidatePath(rutaViaje(viajeId));
+}
