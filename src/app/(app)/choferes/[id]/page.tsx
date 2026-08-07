@@ -3,11 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { choferes, clientes, mediosPago, movimientosChofer, viajes } from "@/db/schema";
+import { choferes, clientes, liquidacionesChofer, mediosPago, movimientosChofer, viajes } from "@/db/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { calcularSaldo } from "@/lib/cuenta-corriente/signo";
 import { CuentaCorriente } from "./_componentes/cuenta-corriente";
 import { ViajesChofer } from "./_componentes/viajes-chofer";
+import { LiquidacionesChofer } from "./_componentes/liquidaciones-chofer";
 
 export async function generateMetadata({
   params,
@@ -26,7 +28,7 @@ export default async function ChoferDetallePage({ params }: { params: Promise<{ 
   const [chofer] = await db.select().from(choferes).where(eq(choferes.id, id));
   if (!chofer) notFound();
 
-  const [movimientos, filasMediosPago, viajesConCliente] = await Promise.all([
+  const [movimientos, filasMediosPago, viajesConCliente, filasLiquidaciones] = await Promise.all([
     db
       .select()
       .from(movimientosChofer)
@@ -47,7 +49,16 @@ export default async function ChoferDetallePage({ params }: { params: Promise<{ 
       .leftJoin(clientes, eq(viajes.cliente_id, clientes.id))
       .where(eq(viajes.chofer_id, id))
       .orderBy(desc(viajes.fecha_carga)),
+    db
+      .select()
+      .from(liquidacionesChofer)
+      .where(eq(liquidacionesChofer.chofer_id, id))
+      .orderBy(desc(liquidacionesChofer.fecha)),
   ]);
+
+  // El saldo mostrado es lo acumulado desde la última liquidación: lo ya
+  // barrido (liquidacion_id != null) no vuelve a sumar acá.
+  const saldoPendiente = calcularSaldo(movimientos.filter((m) => m.liquidacion_id == null));
 
   return (
     <div className="flex flex-col gap-6">
@@ -62,12 +73,21 @@ export default async function ChoferDetallePage({ params }: { params: Promise<{ 
         <TabsList>
           <TabsTrigger value="cuenta">Cuenta corriente</TabsTrigger>
           <TabsTrigger value="viajes">Viajes realizados</TabsTrigger>
+          <TabsTrigger value="liquidaciones">Liquidaciones</TabsTrigger>
         </TabsList>
         <TabsContent value="cuenta">
-          <CuentaCorriente choferId={id} movimientos={movimientos} medioPagos={filasMediosPago} />
+          <CuentaCorriente
+            choferId={id}
+            movimientos={movimientos}
+            medioPagos={filasMediosPago}
+            saldoPendiente={saldoPendiente}
+          />
         </TabsContent>
         <TabsContent value="viajes">
           <ViajesChofer viajes={viajesConCliente} />
+        </TabsContent>
+        <TabsContent value="liquidaciones">
+          <LiquidacionesChofer choferId={id} liquidaciones={filasLiquidaciones} />
         </TabsContent>
       </Tabs>
     </div>

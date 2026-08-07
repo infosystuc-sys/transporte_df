@@ -15,6 +15,13 @@
       "when": 1786069433734,
       "tag": "0001_woozy_ultimates",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786109264547,
+      "tag": "0002_legal_jamie_braddock",
+      "breakpoints": true
     }
   ]
 }

@@ -72,6 +72,7 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
     filasCondicionesPago,
     filasImputaciones,
     filasAdjuntos,
+    filaChoferAsignado,
   ] = await Promise.all([
     db
       .select({ id: clientes.id, nombre: clientes.razon_social })
@@ -116,7 +117,14 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
       .select()
       .from(adjuntos)
       .where(and(eq(adjuntos.entidad, "viaje"), eq(adjuntos.entidad_id, id))),
+    viaje.chofer_id
+      ? db
+          .select({ nombre: choferes.nombre_completo, modalidad_pago: choferes.modalidad_pago })
+          .from(choferes)
+          .where(eq(choferes.id, viaje.chofer_id))
+      : Promise.resolve([]),
   ]);
+  const choferAsignado = filaChoferAsignado[0] ?? null;
 
   const filasAdjuntosConUrl = await Promise.all(
     filasAdjuntos.map(async (a) => ({
@@ -127,7 +135,9 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
 
   const totalGastos = filasGastos.reduce((s, g) => s + Number(g.importe), 0);
   const totalGasoil = filasGasoil.reduce((s, g) => s + Number(g.importe), 0);
-  const costosConocidos = costosAdicionalesEmpresa + totalGastos + totalGasoil;
+  const importeLiquidacionChofer =
+    viaje.importe_liquidacion_chofer != null ? Number(viaje.importe_liquidacion_chofer) : 0;
+  const costosConocidos = costosAdicionalesEmpresa + totalGastos + totalGasoil + importeLiquidacionChofer;
   const rentabilidad =
     viaje.total_a_cobrar != null ? Number(viaje.total_a_cobrar) - costosConocidos : null;
 
@@ -266,6 +276,13 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
             viajeId: id,
             filas: filasAdjuntosConUrl,
           }}
+          liquidacion={{
+            choferNombre: choferAsignado?.nombre ?? null,
+            modalidadPago: choferAsignado?.modalidad_pago ?? null,
+            importeLiquidacionChofer: viaje.importe_liquidacion_chofer,
+            liquidado: viaje.liquidado,
+            liquidacionId: viaje.liquidacion_id,
+          }}
         />
 
         <aside className="flex h-fit flex-col gap-3 rounded-md border p-4">
@@ -288,13 +305,14 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
               <span>{formatoARS.format(totalGasoil)}</span>
             </div>
             <div className="flex justify-between">
+              <span className="text-muted-foreground">Liquidación al chofer</span>
+              <span>{formatoARS.format(importeLiquidacionChofer)}</span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-muted-foreground">Rentabilidad estimada</span>
               <span>{rentabilidad != null ? formatoARS.format(rentabilidad) : "—"}</span>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Todavía no descuenta la liquidación al chofer (Fase 11).
-          </p>
         </aside>
       </div>
     </div>

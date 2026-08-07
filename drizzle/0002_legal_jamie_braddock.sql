@@ -1,0 +1,3 @@
+ALTER TABLE "movimientos_chofer" ADD COLUMN "liquidacion_id" bigint;--> statement-breakpoint
+ALTER TABLE "movimientos_chofer" ADD CONSTRAINT "movimientos_chofer_liquidacion_id_liquidaciones_chofer_id_fk" FOREIGN KEY ("liquidacion_id") REFERENCES "public"."liquidaciones_chofer"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "movimientos_chofer_liquidacion_id_idx" ON "movimientos_chofer" USING btree ("liquidacion_id");

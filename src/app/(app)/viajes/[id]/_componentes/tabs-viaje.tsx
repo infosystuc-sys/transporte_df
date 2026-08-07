@@ -8,8 +8,8 @@ import { TabTarifa } from "../../_componentes/tab-tarifa";
 import { TabContingencias } from "../../_componentes/tab-contingencias";
 import { TabGastos } from "../../_componentes/tab-gastos";
 import { TabFacturacion } from "../../_componentes/tab-facturacion";
-import { TabPlaceholder } from "../../_componentes/tab-placeholder";
 import { TabAdjuntos } from "./tab-adjuntos";
+import { TabLiquidacion } from "./tab-liquidacion";
 import type { ComponentProps } from "react";
 
 export function TabsViaje({
@@ -21,6 +21,7 @@ export function TabsViaje({
   facturacion,
   contingencias,
   adjuntos,
+  liquidacion,
 }: {
   datosGenerales: ComponentProps<typeof FormularioDatosGenerales>;
   carga: ComponentProps<typeof TabCarga>;
@@ -30,6 +31,7 @@ export function TabsViaje({
   facturacion: ComponentProps<typeof TabFacturacion>;
   contingencias: ComponentProps<typeof TabContingencias>;
   adjuntos: ComponentProps<typeof TabAdjuntos>;
+  liquidacion: ComponentProps<typeof TabLiquidacion>;
 }) {
   return (
     <Tabs defaultValue="generales">
@@ -63,7 +65,7 @@ export function TabsViaje({
         <TabFacturacion {...facturacion} />
       </TabsContent>
       <TabsContent value="liquidacion">
-        <TabPlaceholder fase="Fase 11 (Liquidaciones a choferes)" />
+        <TabLiquidacion {...liquidacion} />
       </TabsContent>
       <TabsContent value="contingencias">
         <TabContingencias {...contingencias} />

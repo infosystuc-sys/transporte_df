@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -21,7 +22,7 @@ import {
 } from "@/lib/schemas/choferes-cuenta";
 import { formatoFechaInput } from "@/lib/schemas/campos-fecha";
 import { crearMovimientoManual } from "../../actions";
-import { calcularSaldo, signoTipoMovimiento } from "@/lib/cuenta-corriente/signo";
+import { signoTipoMovimiento } from "@/lib/cuenta-corriente/signo";
 
 const formatoARS = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 const formatoFecha = new Intl.DateTimeFormat("es-AR", { timeZone: "America/Argentina/Cordoba" });
@@ -42,6 +43,7 @@ type Movimiento = {
   importe: string;
   descripcion: string | null;
   origen_automatico: boolean;
+  liquidacion_id: number | null;
 };
 
 const opcionesTipo = [
@@ -62,10 +64,12 @@ export function CuentaCorriente({
   choferId,
   movimientos,
   medioPagos,
+  saldoPendiente,
 }: {
   choferId: number;
   movimientos: Movimiento[];
   medioPagos: { id: number; nombre: string }[];
+  saldoPendiente: number;
 }) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
@@ -75,7 +79,7 @@ export function CuentaCorriente({
     defaultValues: valoresPorDefecto,
   });
 
-  const saldo = calcularSaldo(movimientos);
+  const saldo = saldoPendiente;
 
   function onSubmit(valores: MovimientoManualInput) {
     startTransition(async () => {
@@ -117,6 +121,11 @@ export function CuentaCorriente({
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{ETIQUETAS_TIPO[m.tipo] ?? m.tipo}</span>
                     {m.origen_automatico && <Badge variant="outline">Automático</Badge>}
+                    {m.liquidacion_id != null && (
+                      <Link href={`/liquidaciones/${m.liquidacion_id}`}>
+                        <Badge variant="secondary">Liquidado</Badge>
+                      </Link>
+                    )}
                   </div>
                   {m.descripcion && <p className="text-sm text-muted-foreground">{m.descripcion}</p>}
                   <p className="text-xs text-muted-foreground">{formatoFecha.format(m.fecha)}</p>

@@ -12,6 +12,7 @@ import { procesarCpe, type ResultadoImportacionCpe } from "@/lib/cpe/importar";
 import { subirAdjunto } from "@/lib/supabase/storage";
 import { recalcularMerma } from "../_lib/merma";
 import { recalcularFlete } from "../_lib/flete";
+import { recalcularLiquidacionChofer } from "../_lib/liquidacion";
 
 function archivoDeFormData(formData: FormData): File {
   const archivo = formData.get("archivo");
@@ -46,6 +47,7 @@ export async function confirmarImportacionCpe(
   const [viaje] = await db.insert(viajes).values(datos).returning({ id: viajes.id });
   await recalcularMerma(viaje.id);
   await recalcularFlete(viaje.id);
+  await recalcularLiquidacionChofer(viaje.id);
 
   const buffer = Buffer.from(await archivo.arrayBuffer());
   const rutaStorage = `viaje/${viaje.id}/${randomUUID()}-${archivo.name}`;

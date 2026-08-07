@@ -27,12 +27,19 @@ export const movimientosChofer = pgTable(
     // true cuando lo generó el sistema (ej. desde un gasto o carga de gasoil).
     origen_automatico: boolean("origen_automatico").notNull().default(false),
     descripcion: text("descripcion"),
+    // Marca el movimiento como ya "barrido" por una liquidación (spec 11):
+    // el saldo pendiente de la cuenta corriente solo suma los que siguen
+    // en null. Se completa recién al crear la liquidación, nunca antes.
+    liquidacion_id: fkBigint("liquidacion_id").references(() => liquidacionesChofer.id, {
+      onDelete: "set null",
+    }),
   },
   (t) => [
     accesoTotalAutenticados("movimientos_chofer"),
     index("movimientos_chofer_chofer_id_idx").on(t.chofer_id),
     index("movimientos_chofer_medio_pago_id_idx").on(t.medio_pago_id),
     index("movimientos_chofer_viaje_id_idx").on(t.viaje_id),
+    index("movimientos_chofer_liquidacion_id_idx").on(t.liquidacion_id),
   ]
 ).enableRLS();
 

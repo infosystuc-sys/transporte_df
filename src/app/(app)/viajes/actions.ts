@@ -39,6 +39,7 @@ import type { EstadoViaje } from "./_lib/estados";
 import { recalcularMerma } from "./_lib/merma";
 import { recalcularFlete } from "./_lib/flete";
 import { recalcularCobro } from "./_lib/cobro";
+import { recalcularLiquidacionChofer } from "./_lib/liquidacion";
 import { registrarMovimientoAutomatico } from "@/lib/cuenta-corriente/movimientos";
 
 function rutaViaje(id: number) {
@@ -62,6 +63,7 @@ export async function actualizarDatosGenerales(
     .set({ ...datos, actualizado_en: new Date() })
     .where(eq(viajes.id, id));
   await recalcularFlete(id);
+  await recalcularLiquidacionChofer(id);
   revalidatePath(rutaViaje(id));
 }
 
@@ -76,6 +78,7 @@ export async function actualizarCarga(
     .where(eq(viajes.id, id));
   await recalcularMerma(id);
   await recalcularFlete(id);
+  await recalcularLiquidacionChofer(id);
   revalidatePath(rutaViaje(id));
 }
 
@@ -90,6 +93,7 @@ export async function actualizarDescarga(
     .where(eq(viajes.id, id));
   await recalcularMerma(id);
   await recalcularFlete(id);
+  await recalcularLiquidacionChofer(id);
   revalidatePath(rutaViaje(id));
 }
 
@@ -103,6 +107,7 @@ export async function actualizarTarifa(
     .set({ ...datos, actualizado_en: new Date() })
     .where(eq(viajes.id, id));
   await recalcularFlete(id);
+  await recalcularLiquidacionChofer(id);
   revalidatePath(rutaViaje(id));
 }
 
@@ -165,6 +170,10 @@ export async function cambiarEstadoViaje(
     }
   }
 
+  if (nuevoEstado === "liquidado" && !viaje.liquidado) {
+    return { error: "No se puede pasar a Liquidado sin incluir el viaje en una liquidación." };
+  }
+
   await db
     .update(viajes)
     .set({ estado: nuevoEstado, actualizado_en: new Date() })
@@ -198,6 +207,9 @@ export async function crearAdicional(
 ): Promise<{ error?: string } | void> {
   const datos = viajeAdicionalSchema.parse(valores);
   await db.insert(viajeAdicionales).values({ ...datos, viaje_id: viajeId });
+  // No recalcula la liquidación del chofer: los adicionales solo afectan
+  // importe_adicionales/total_a_cobrar (lo que se le cobra al cliente), no
+  // importe_flete (la base de la liquidación).
   await recalcularFlete(viajeId);
   revalidatePath(rutaViaje(viajeId));
 }
