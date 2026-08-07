@@ -7,6 +7,9 @@ import {
   cargasGasoil,
   choferes,
   clientes,
+  cobroImputaciones,
+  cobros,
+  condicionesPago,
   lugares,
   mediosPago,
   productos,
@@ -64,6 +67,8 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
     filasGasoil,
     filasTiposGasto,
     filasMediosPago,
+    filasCondicionesPago,
+    filasImputaciones,
   ] = await Promise.all([
     db
       .select({ id: clientes.id, nombre: clientes.razon_social })
@@ -92,6 +97,18 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
     db.select().from(cargasGasoil).where(eq(cargasGasoil.viaje_id, id)),
     db.select({ id: tiposGasto.id, nombre: tiposGasto.nombre }).from(tiposGasto),
     db.select({ id: mediosPago.id, nombre: mediosPago.nombre }).from(mediosPago),
+    db.select({ id: condicionesPago.id, nombre: condicionesPago.nombre }).from(condicionesPago),
+    db
+      .select({
+        id: cobroImputaciones.id,
+        importe_imputado: cobroImputaciones.importe_imputado,
+        cobro_fecha: cobros.fecha,
+        medio_pago_nombre: mediosPago.nombre,
+      })
+      .from(cobroImputaciones)
+      .innerJoin(cobros, eq(cobroImputaciones.cobro_id, cobros.id))
+      .leftJoin(mediosPago, eq(cobros.medio_pago_id, mediosPago.id))
+      .where(eq(cobroImputaciones.viaje_id, id)),
   ]);
 
   const totalGastos = filasGastos.reduce((s, g) => s + Number(g.importe), 0);
@@ -209,6 +226,22 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
             gasoil: filasGasoil,
             tiposGasto: filasTiposGasto,
             medioPagos: filasMediosPago,
+          }}
+          facturacion={{
+            viajeId: id,
+            valoresIniciales: {
+              factura_nro: viaje.factura_nro ?? "",
+              factura_fecha: formatoFechaInput(viaje.factura_fecha) as unknown as Date,
+              condicion_pago_id: viaje.condicion_pago_id ?? undefined,
+              factura_importe_neto: viaje.factura_importe_neto ?? undefined,
+              factura_iva: viaje.factura_iva ?? undefined,
+              factura_importe_total: viaje.factura_importe_total ?? undefined,
+            },
+            condicionesPago: filasCondicionesPago,
+            fechaVtoCobro: viaje.fecha_vto_cobro,
+            importeCobrado: viaje.importe_cobrado,
+            saldoPendiente: viaje.saldo_pendiente,
+            imputaciones: filasImputaciones,
           }}
           contingencias={{
             viajeId: id,

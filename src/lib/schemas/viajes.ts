@@ -86,6 +86,16 @@ export const viajeGastoSchema = z.object({
 });
 export type ViajeGastoInput = z.input<typeof viajeGastoSchema>;
 
+export const viajeFacturacionSchema = z.object({
+  factura_nro: textoOpcional,
+  factura_fecha: fechaOpcional,
+  condicion_pago_id: idOpcional,
+  factura_importe_neto: decimalOpcional(),
+  factura_iva: decimalOpcional(),
+  factura_importe_total: decimalOpcional(),
+});
+export type ViajeFacturacionInput = z.input<typeof viajeFacturacionSchema>;
+
 export const viajeContingenciaSchema = z.object({
   tipo_contingencia_id: idOpcional,
   descripcion: textoOpcional,

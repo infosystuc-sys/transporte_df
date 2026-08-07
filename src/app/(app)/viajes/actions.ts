@@ -18,6 +18,7 @@ import {
   viajeContingenciaSchema,
   viajeDatosGeneralesSchema,
   viajeDescargaSchema,
+  viajeFacturacionSchema,
   viajeGastoSchema,
   viajeTarifaSchema,
   type ViajeAdicionalInput,
@@ -25,6 +26,7 @@ import {
   type ViajeContingenciaInput,
   type ViajeDatosGeneralesInput,
   type ViajeDescargaInput,
+  type ViajeFacturacionInput,
   type ViajeGastoInput,
   type ViajeTarifaInput,
 } from "@/lib/schemas/viajes";
@@ -32,6 +34,7 @@ import {
 import type { EstadoViaje } from "./_lib/estados";
 import { recalcularMerma } from "./_lib/merma";
 import { recalcularFlete } from "./_lib/flete";
+import { recalcularCobro } from "./_lib/cobro";
 import { registrarMovimientoAutomatico } from "@/lib/cuenta-corriente/movimientos";
 
 function rutaViaje(id: number) {
@@ -99,6 +102,19 @@ export async function actualizarTarifa(
   revalidatePath(rutaViaje(id));
 }
 
+export async function actualizarFacturacion(
+  id: number,
+  valores: ViajeFacturacionInput
+): Promise<{ error?: string } | void> {
+  const datos = viajeFacturacionSchema.parse(valores);
+  await db
+    .update(viajes)
+    .set({ ...datos, actualizado_en: new Date() })
+    .where(eq(viajes.id, id));
+  await recalcularCobro(id);
+  revalidatePath(rutaViaje(id));
+}
+
 export async function eliminarViaje(id: number) {
   await db.delete(viajes).where(eq(viajes.id, id));
   revalidatePath("/viajes");
@@ -129,6 +145,7 @@ export async function cambiarEstadoViaje(
       .update(viajes)
       .set({ estado: nuevoEstado, factura_nro: nro, facturado: true, actualizado_en: new Date() })
       .where(eq(viajes.id, id));
+    await recalcularCobro(id);
     revalidatePath(rutaViaje(id));
     revalidatePath("/viajes");
     return;
