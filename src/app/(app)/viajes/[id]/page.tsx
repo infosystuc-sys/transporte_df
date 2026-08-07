@@ -8,7 +8,9 @@ import {
   clientes,
   lugares,
   productos,
+  tiposAdicional,
   tiposContingencia,
+  viajeAdicionales,
   viajeContingencias,
   viajes,
 } from "@/db/schema";
@@ -18,6 +20,7 @@ import { formatoFechaInput } from "@/lib/schemas/campos-fecha";
 import { StepperEstado } from "../_componentes/stepper-estado";
 import { TabsViaje } from "./_componentes/tabs-viaje";
 import { actualizarDatosGenerales } from "../actions";
+import { totalAdicionalesEmpresa } from "../_lib/flete";
 
 const formatoARS = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
@@ -50,6 +53,9 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
     filasLugares,
     filasContingencias,
     filasTiposContingencia,
+    filasAdicionales,
+    filasTiposAdicional,
+    costosAdicionalesEmpresa,
   ] = await Promise.all([
     db
       .select({ id: clientes.id, nombre: clientes.razon_social })
@@ -71,11 +77,13 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
     db.select({ id: lugares.id, nombre: lugares.nombre }).from(lugares).orderBy(asc(lugares.nombre)),
     db.select().from(viajeContingencias).where(eq(viajeContingencias.viaje_id, id)),
     db.select({ id: tiposContingencia.id, nombre: tiposContingencia.nombre }).from(tiposContingencia),
+    db.select().from(viajeAdicionales).where(eq(viajeAdicionales.viaje_id, id)),
+    db.select({ id: tiposAdicional.id, nombre: tiposAdicional.nombre }).from(tiposAdicional),
+    totalAdicionalesEmpresa(id),
   ]);
 
-  const costos = viaje.importe_adicionales ? Number(viaje.importe_adicionales) : 0;
   const rentabilidad =
-    viaje.total_a_cobrar != null ? Number(viaje.total_a_cobrar) - costos : null;
+    viaje.total_a_cobrar != null ? Number(viaje.total_a_cobrar) - costosAdicionalesEmpresa : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -169,6 +177,16 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
               valor_tarifa: viaje.valor_tarifa ?? undefined,
               base_calculo: viaje.base_calculo ?? undefined,
             },
+            netoOrigen: viaje.neto_origen,
+            netoDestino: viaje.neto_destino,
+            totales: {
+              importe_flete: viaje.importe_flete,
+              importe_adicionales: viaje.importe_adicionales,
+              importe_comision: viaje.importe_comision,
+              total_a_cobrar: viaje.total_a_cobrar,
+            },
+            adicionales: filasAdicionales,
+            tiposAdicional: filasTiposAdicional,
           }}
           contingencias={{
             viajeId: id,
@@ -185,8 +203,8 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
               <span>{money(viaje.total_a_cobrar)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Costos</span>
-              <span>{money(viaje.importe_adicionales)}</span>
+              <span className="text-muted-foreground">Adicionales a cargo de la empresa</span>
+              <span>{formatoARS.format(costosAdicionalesEmpresa)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Rentabilidad estimada</span>
@@ -194,7 +212,7 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            El cálculo completo de importes y rentabilidad se termina de armar en las Fases 7 y 8.
+            Todavía no descuenta gastos del viaje, gasoil ni liquidación al chofer (Fases 8 y 11).
           </p>
         </aside>
       </div>

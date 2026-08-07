@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { decimalOpcional, textoOpcional } from "./campos";
+import { decimalOpcional, decimalRequerido, textoOpcional } from "./campos";
 import { fechaOpcional } from "./campos-fecha";
 
 const idOpcional = z.coerce.number().optional().nullable();
@@ -65,6 +65,14 @@ export const viajeTarifaSchema = z.object({
   base_calculo: z.enum(["origen", "destino"]).optional().nullable(),
 });
 export type ViajeTarifaInput = z.input<typeof viajeTarifaSchema>;
+
+export const viajeAdicionalSchema = z.object({
+  tipo_adicional_id: z.coerce.number({ error: "Elegí un tipo." }),
+  descripcion: textoOpcional,
+  importe: decimalRequerido(),
+  a_cargo_de: z.enum(["cliente", "empresa"]).optional().nullable(),
+});
+export type ViajeAdicionalInput = z.input<typeof viajeAdicionalSchema>;
 
 export const viajeContingenciaSchema = z.object({
   tipo_contingencia_id: idOpcional,

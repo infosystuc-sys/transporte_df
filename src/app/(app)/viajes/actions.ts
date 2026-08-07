@@ -4,13 +4,15 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { cobroImputaciones, viajeContingencias, viajes } from "@/db/schema";
+import { cobroImputaciones, viajeAdicionales, viajeContingencias, viajes } from "@/db/schema";
 import {
+  viajeAdicionalSchema,
   viajeCargaSchema,
   viajeContingenciaSchema,
   viajeDatosGeneralesSchema,
   viajeDescargaSchema,
   viajeTarifaSchema,
+  type ViajeAdicionalInput,
   type ViajeCargaInput,
   type ViajeContingenciaInput,
   type ViajeDatosGeneralesInput,
@@ -20,6 +22,7 @@ import {
 
 import type { EstadoViaje } from "./_lib/estados";
 import { recalcularMerma } from "./_lib/merma";
+import { recalcularFlete } from "./_lib/flete";
 
 function rutaViaje(id: number) {
   return `/viajes/${id}`;
@@ -41,6 +44,7 @@ export async function actualizarDatosGenerales(
     .update(viajes)
     .set({ ...datos, actualizado_en: new Date() })
     .where(eq(viajes.id, id));
+  await recalcularFlete(id);
   revalidatePath(rutaViaje(id));
 }
 
@@ -54,6 +58,7 @@ export async function actualizarCarga(
     .set({ ...datos, actualizado_en: new Date() })
     .where(eq(viajes.id, id));
   await recalcularMerma(id);
+  await recalcularFlete(id);
   revalidatePath(rutaViaje(id));
 }
 
@@ -67,6 +72,7 @@ export async function actualizarDescarga(
     .set({ ...datos, actualizado_en: new Date() })
     .where(eq(viajes.id, id));
   await recalcularMerma(id);
+  await recalcularFlete(id);
   revalidatePath(rutaViaje(id));
 }
 
@@ -79,6 +85,7 @@ export async function actualizarTarifa(
     .update(viajes)
     .set({ ...datos, actualizado_en: new Date() })
     .where(eq(viajes.id, id));
+  await recalcularFlete(id);
   revalidatePath(rutaViaje(id));
 }
 
@@ -150,5 +157,25 @@ export async function eliminarContingencia(
   viajeId: number
 ): Promise<{ error?: string } | void> {
   await db.delete(viajeContingencias).where(eq(viajeContingencias.id, id));
+  revalidatePath(rutaViaje(viajeId));
+}
+
+// viaje_adicionales
+export async function crearAdicional(
+  viajeId: number,
+  valores: ViajeAdicionalInput
+): Promise<{ error?: string } | void> {
+  const datos = viajeAdicionalSchema.parse(valores);
+  await db.insert(viajeAdicionales).values({ ...datos, viaje_id: viajeId });
+  await recalcularFlete(viajeId);
+  revalidatePath(rutaViaje(viajeId));
+}
+
+export async function eliminarAdicional(
+  id: number,
+  viajeId: number
+): Promise<{ error?: string } | void> {
+  await db.delete(viajeAdicionales).where(eq(viajeAdicionales.id, id));
+  await recalcularFlete(viajeId);
   revalidatePath(rutaViaje(viajeId));
 }
