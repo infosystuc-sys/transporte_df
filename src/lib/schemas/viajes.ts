@@ -50,6 +50,9 @@ export const viajeDescargaSchema = z.object({
   bruto_destino: decimalOpcional(),
   tara_destino: decimalOpcional(),
   neto_destino: decimalOpcional(),
+  // Precio para valorizar la merma. Se precarga con el precio de referencia
+  // del producto si no se cargó nada, pero siempre es editable.
+  merma_precio_unitario: decimalOpcional(),
 });
 export type ViajeDescargaInput = z.input<typeof viajeDescargaSchema>;
 

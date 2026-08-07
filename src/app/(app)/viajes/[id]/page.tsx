@@ -12,6 +12,8 @@ import {
   viajeContingencias,
   viajes,
 } from "@/db/schema";
+import { AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { formatoFechaInput } from "@/lib/schemas/campos-fecha";
 import { StepperEstado } from "../_componentes/stepper-estado";
 import { TabsViaje } from "./_componentes/tabs-viaje";
@@ -83,6 +85,19 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
 
       <StepperEstado viajeId={viaje.id} estadoActual={viaje.estado} facturaNroActual={viaje.factura_nro} />
 
+      {viaje.merma_excede_tolerancia && (
+        <Alert variant="destructive">
+          <AlertTriangle className="size-4" />
+          <AlertTitle>Merma fuera de tolerancia</AlertTitle>
+          <AlertDescription>
+            Este viaje tiene una merma de {viaje.merma_pct ? Number(viaje.merma_pct).toFixed(2) : "—"}%,
+            por encima de la tolerancia aplicada (
+            {viaje.tolerancia_pct_aplicada ? Number(viaje.tolerancia_pct_aplicada).toFixed(2) : "—"}%).
+            No bloquea nada ni descuenta automáticamente.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
         <TabsViaje
           datosGenerales={{
@@ -137,6 +152,14 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
               bruto_destino: viaje.bruto_destino ?? undefined,
               tara_destino: viaje.tara_destino ?? undefined,
               neto_destino: viaje.neto_destino ?? undefined,
+              merma_precio_unitario: viaje.merma_precio_unitario ?? undefined,
+            },
+            merma: {
+              merma_kg: viaje.merma_kg,
+              merma_pct: viaje.merma_pct,
+              tolerancia_pct_aplicada: viaje.tolerancia_pct_aplicada,
+              merma_excede_tolerancia: viaje.merma_excede_tolerancia,
+              merma_importe: viaje.merma_importe,
             },
           }}
           tarifa={{

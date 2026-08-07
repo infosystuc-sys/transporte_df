@@ -19,6 +19,7 @@ import {
 } from "@/lib/schemas/viajes";
 
 import type { EstadoViaje } from "./_lib/estados";
+import { recalcularMerma } from "./_lib/merma";
 
 function rutaViaje(id: number) {
   return `/viajes/${id}`;
@@ -52,6 +53,7 @@ export async function actualizarCarga(
     .update(viajes)
     .set({ ...datos, actualizado_en: new Date() })
     .where(eq(viajes.id, id));
+  await recalcularMerma(id);
   revalidatePath(rutaViaje(id));
 }
 
@@ -64,6 +66,7 @@ export async function actualizarDescarga(
     .update(viajes)
     .set({ ...datos, actualizado_en: new Date() })
     .where(eq(viajes.id, id));
+  await recalcularMerma(id);
   revalidatePath(rutaViaje(id));
 }
 
