@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
   condicionesPago,
+  configuracion,
   estacionesServicio,
   lugares,
   lugaresAlias,
@@ -31,6 +32,7 @@ import {
   type TipoGastoInput,
 } from "@/lib/schemas/catalogos";
 import { lugarSchema, type LugarInput } from "@/lib/schemas/lugares";
+import { configuracionSchema, type ConfiguracionInput } from "@/lib/schemas/configuracion";
 import { esErrorDuplicado, esErrorReferenciado } from "@/lib/db/errores";
 
 const RUTA = "/configuracion";
@@ -295,6 +297,14 @@ export async function actualizarLugar(id: number, valores: LugarInput) {
     }
   });
   revalidatePath(RUTA);
+}
+
+// configuracion (fila única de la empresa; seed.ts garantiza que exista)
+export async function actualizarConfiguracion(id: number, valores: ConfiguracionInput) {
+  const datos = configuracionSchema.parse(valores);
+  await db.update(configuracion).set(datos).where(eq(configuracion.id, id));
+  revalidatePath(RUTA);
+  revalidatePath("/");
 }
 
 export async function eliminarLugar(id: number) {

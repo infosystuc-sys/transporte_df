@@ -16,6 +16,6 @@ export const navItems: NavItem[] = [
   { href: "/gasoil", label: "Gasoil", disponible: true },
   { href: "/cobros", label: "Cobros", disponible: true },
   { href: "/liquidaciones", label: "Liquidaciones", disponible: true },
-  { href: "/reportes", label: "Reportes", disponible: false },
+  { href: "/reportes", label: "Reportes", disponible: true },
   { href: "/configuracion", label: "Configuración", disponible: true },
 ];

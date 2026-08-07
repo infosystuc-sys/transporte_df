@@ -4,6 +4,7 @@ import { db } from "@/db";
 import {
   clientes,
   condicionesPago,
+  configuracion,
   estacionesServicio,
   lugares,
   lugaresAlias,
@@ -22,6 +23,7 @@ import { TabTiposContingencia } from "./_tabs/tipos-contingencia";
 import { TabEstacionesServicio } from "./_tabs/estaciones-servicio";
 import { TabProductos } from "./_tabs/productos";
 import { TabLugares } from "./_tabs/lugares";
+import { TabGeneral } from "./_tabs/general";
 
 export const metadata: Metadata = {
   title: "Configuración — Gestión de Fletes",
@@ -39,6 +41,7 @@ export default async function ConfiguracionPage() {
     filasLugares,
     filasAlias,
     filasClientes,
+    filaConfiguracion,
   ] = await Promise.all([
     db.select().from(condicionesPago).orderBy(asc(condicionesPago.nombre)),
     db.select().from(mediosPago).orderBy(asc(mediosPago.nombre)),
@@ -53,7 +56,9 @@ export default async function ConfiguracionPage() {
       .select({ id: clientes.id, razon_social: clientes.razon_social })
       .from(clientes)
       .orderBy(asc(clientes.razon_social)),
+    db.select().from(configuracion).limit(1),
   ]);
+  const config = filaConfiguracion[0];
 
   const aliasPorLugar = new Map<number, string[]>();
   for (const a of filasAlias) {
@@ -70,8 +75,9 @@ export default async function ConfiguracionPage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Configuración</h1>
 
-      <Tabs defaultValue="productos">
+      <Tabs defaultValue="general">
         <TabsList className="flex-wrap">
+          <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="productos">Productos</TabsTrigger>
           <TabsTrigger value="lugares">Lugares</TabsTrigger>
           <TabsTrigger value="estaciones">Estaciones de servicio</TabsTrigger>
@@ -82,6 +88,27 @@ export default async function ConfiguracionPage() {
           <TabsTrigger value="tipos-contingencia">Tipos de contingencia</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="general">
+          {config && (
+            <TabGeneral
+              id={config.id}
+              valoresIniciales={{
+                razon_social: config.razon_social ?? "",
+                cuit: config.cuit ?? "",
+                direccion: config.direccion ?? "",
+                telefono: config.telefono ?? "",
+                email: config.email ?? "",
+                tolerancia_merma_pct: config.tolerancia_merma_pct ?? undefined,
+                base_calculo_flete_default: config.base_calculo_flete_default ?? undefined,
+                modalidad_tarifa_default: config.modalidad_tarifa_default ?? undefined,
+                unidad_carga_default: config.unidad_carga_default ?? undefined,
+                porcentaje_chofer_default: config.porcentaje_chofer_default ?? undefined,
+                alerta_ctg_horas: config.alerta_ctg_horas ?? undefined,
+                alerta_vencimientos_dias: config.alerta_vencimientos_dias ?? undefined,
+              }}
+            />
+          )}
+        </TabsContent>
         <TabsContent value="productos">
           <TabProductos filas={filasProductos} />
         </TabsContent>
