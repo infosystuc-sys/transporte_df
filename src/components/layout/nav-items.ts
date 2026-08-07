@@ -9,13 +9,13 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   { href: "/", label: "Dashboard", disponible: true },
   { href: "/viajes", label: "Viajes", disponible: false },
-  { href: "/clientes", label: "Clientes", disponible: false },
-  { href: "/camiones", label: "Camiones", disponible: false },
-  { href: "/choferes", label: "Choferes", disponible: false },
+  { href: "/clientes", label: "Clientes", disponible: true },
+  { href: "/camiones", label: "Camiones", disponible: true },
+  { href: "/choferes", label: "Choferes", disponible: true },
   { href: "/tarifario", label: "Tarifario", disponible: false },
   { href: "/gasoil", label: "Gasoil", disponible: false },
   { href: "/cobros", label: "Cobros", disponible: false },
   { href: "/liquidaciones", label: "Liquidaciones", disponible: false },
   { href: "/reportes", label: "Reportes", disponible: false },
-  { href: "/configuracion", label: "Configuración", disponible: false },
+  { href: "/configuracion", label: "Configuración", disponible: true },
 ];
