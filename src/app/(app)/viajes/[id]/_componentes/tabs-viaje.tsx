@@ -6,6 +6,7 @@ import { TabCarga } from "../../_componentes/tab-carga";
 import { TabDescarga } from "../../_componentes/tab-descarga";
 import { TabTarifa } from "../../_componentes/tab-tarifa";
 import { TabContingencias } from "../../_componentes/tab-contingencias";
+import { TabGastos } from "../../_componentes/tab-gastos";
 import { TabPlaceholder } from "../../_componentes/tab-placeholder";
 import type { ComponentProps } from "react";
 
@@ -14,12 +15,14 @@ export function TabsViaje({
   carga,
   descarga,
   tarifa,
+  gastos,
   contingencias,
 }: {
   datosGenerales: ComponentProps<typeof FormularioDatosGenerales>;
   carga: ComponentProps<typeof TabCarga>;
   descarga: ComponentProps<typeof TabDescarga>;
   tarifa: ComponentProps<typeof TabTarifa>;
+  gastos: ComponentProps<typeof TabGastos>;
   contingencias: ComponentProps<typeof TabContingencias>;
 }) {
   return (
@@ -48,7 +51,7 @@ export function TabsViaje({
         <TabTarifa {...tarifa} />
       </TabsContent>
       <TabsContent value="gastos">
-        <TabPlaceholder fase="Fase 8 (Gastos del viaje, gasoil y cuenta corriente de choferes)" />
+        <TabGastos {...gastos} />
       </TabsContent>
       <TabsContent value="facturacion">
         <TabPlaceholder fase="Fase 9 (Facturación y cobros)" />

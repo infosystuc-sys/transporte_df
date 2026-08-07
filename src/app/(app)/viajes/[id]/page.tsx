@@ -4,14 +4,18 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
   camiones,
+  cargasGasoil,
   choferes,
   clientes,
   lugares,
+  mediosPago,
   productos,
   tiposAdicional,
   tiposContingencia,
+  tiposGasto,
   viajeAdicionales,
   viajeContingencias,
+  viajeGastos,
   viajes,
 } from "@/db/schema";
 import { AlertTriangle } from "lucide-react";
@@ -56,6 +60,10 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
     filasAdicionales,
     filasTiposAdicional,
     costosAdicionalesEmpresa,
+    filasGastos,
+    filasGasoil,
+    filasTiposGasto,
+    filasMediosPago,
   ] = await Promise.all([
     db
       .select({ id: clientes.id, nombre: clientes.razon_social })
@@ -80,10 +88,17 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
     db.select().from(viajeAdicionales).where(eq(viajeAdicionales.viaje_id, id)),
     db.select({ id: tiposAdicional.id, nombre: tiposAdicional.nombre }).from(tiposAdicional),
     totalAdicionalesEmpresa(id),
+    db.select().from(viajeGastos).where(eq(viajeGastos.viaje_id, id)),
+    db.select().from(cargasGasoil).where(eq(cargasGasoil.viaje_id, id)),
+    db.select({ id: tiposGasto.id, nombre: tiposGasto.nombre }).from(tiposGasto),
+    db.select({ id: mediosPago.id, nombre: mediosPago.nombre }).from(mediosPago),
   ]);
 
+  const totalGastos = filasGastos.reduce((s, g) => s + Number(g.importe), 0);
+  const totalGasoil = filasGasoil.reduce((s, g) => s + Number(g.importe), 0);
+  const costosConocidos = costosAdicionalesEmpresa + totalGastos + totalGasoil;
   const rentabilidad =
-    viaje.total_a_cobrar != null ? Number(viaje.total_a_cobrar) - costosAdicionalesEmpresa : null;
+    viaje.total_a_cobrar != null ? Number(viaje.total_a_cobrar) - costosConocidos : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -188,6 +203,13 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
             adicionales: filasAdicionales,
             tiposAdicional: filasTiposAdicional,
           }}
+          gastos={{
+            viajeId: id,
+            gastos: filasGastos,
+            gasoil: filasGasoil,
+            tiposGasto: filasTiposGasto,
+            medioPagos: filasMediosPago,
+          }}
           contingencias={{
             viajeId: id,
             filas: filasContingencias,
@@ -207,12 +229,20 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
               <span>{formatoARS.format(costosAdicionalesEmpresa)}</span>
             </div>
             <div className="flex justify-between">
+              <span className="text-muted-foreground">Gastos del viaje</span>
+              <span>{formatoARS.format(totalGastos)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Gasoil imputado</span>
+              <span>{formatoARS.format(totalGasoil)}</span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-muted-foreground">Rentabilidad estimada</span>
               <span>{rentabilidad != null ? formatoARS.format(rentabilidad) : "—"}</span>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Todavía no descuenta gastos del viaje, gasoil ni liquidación al chofer (Fases 8 y 11).
+            Todavía no descuenta la liquidación al chofer (Fase 11).
           </p>
         </aside>
       </div>

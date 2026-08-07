@@ -4,25 +4,35 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { cobroImputaciones, viajeAdicionales, viajeContingencias, viajes } from "@/db/schema";
+import {
+  cobroImputaciones,
+  tiposGasto,
+  viajeAdicionales,
+  viajeContingencias,
+  viajeGastos,
+  viajes,
+} from "@/db/schema";
 import {
   viajeAdicionalSchema,
   viajeCargaSchema,
   viajeContingenciaSchema,
   viajeDatosGeneralesSchema,
   viajeDescargaSchema,
+  viajeGastoSchema,
   viajeTarifaSchema,
   type ViajeAdicionalInput,
   type ViajeCargaInput,
   type ViajeContingenciaInput,
   type ViajeDatosGeneralesInput,
   type ViajeDescargaInput,
+  type ViajeGastoInput,
   type ViajeTarifaInput,
 } from "@/lib/schemas/viajes";
 
 import type { EstadoViaje } from "./_lib/estados";
 import { recalcularMerma } from "./_lib/merma";
 import { recalcularFlete } from "./_lib/flete";
+import { registrarMovimientoAutomatico } from "@/lib/cuenta-corriente/movimientos";
 
 function rutaViaje(id: number) {
   return `/viajes/${id}`;
@@ -177,5 +187,42 @@ export async function eliminarAdicional(
 ): Promise<{ error?: string } | void> {
   await db.delete(viajeAdicionales).where(eq(viajeAdicionales.id, id));
   await recalcularFlete(viajeId);
+  revalidatePath(rutaViaje(viajeId));
+}
+
+// viaje_gastos
+export async function crearGasto(
+  viajeId: number,
+  valores: ViajeGastoInput
+): Promise<{ error?: string } | void> {
+  const datos = viajeGastoSchema.parse(valores);
+  await db.insert(viajeGastos).values({ ...datos, viaje_id: viajeId });
+
+  // Si lo pagó el chofer y todavía no fue rendido, genera un movimiento a
+  // su favor en la cuenta corriente (spec 3.2).
+  if (datos.pagado_por === "chofer" && !datos.rendido) {
+    const [viaje] = await db.select().from(viajes).where(eq(viajes.id, viajeId));
+    if (viaje?.chofer_id) {
+      const [tipoGasto] = await db
+        .select()
+        .from(tiposGasto)
+        .where(eq(tiposGasto.id, datos.tipo_gasto_id));
+      await registrarMovimientoAutomatico({
+        chofer_id: viaje.chofer_id,
+        tipo: "gasto_rendido",
+        importe: datos.importe,
+        viaje_id: viajeId,
+        descripcion: `Gasto de viaje: ${tipoGasto?.nombre ?? "sin tipo"}`,
+      });
+    }
+  }
+  revalidatePath(rutaViaje(viajeId));
+}
+
+export async function eliminarGasto(
+  id: number,
+  viajeId: number
+): Promise<{ error?: string } | void> {
+  await db.delete(viajeGastos).where(eq(viajeGastos.id, id));
   revalidatePath(rutaViaje(viajeId));
 }

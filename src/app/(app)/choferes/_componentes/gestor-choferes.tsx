@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AbmCatalogoSimple } from "@/components/catalogos/abm-catalogo-simple";
 import { CampoBooleano, CampoSelect, CampoTexto } from "@/components/catalogos/campos-formulario";
@@ -94,7 +95,19 @@ export function GestorChoferes({
         activo: f.activo,
       })}
       columnas={[
-        { accessorKey: "nombre_completo", header: "Nombre completo" },
+        {
+          accessorKey: "nombre_completo",
+          header: "Nombre completo",
+          cell: ({ row }) => (
+            <Link
+              href={`/choferes/${row.original.id}`}
+              className="hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {row.original.nombre_completo}
+            </Link>
+          ),
+        },
         { accessorKey: "cuil", header: "CUIL" },
         { accessorKey: "telefono", header: "Teléfono" },
         {

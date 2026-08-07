@@ -74,6 +74,18 @@ export const viajeAdicionalSchema = z.object({
 });
 export type ViajeAdicionalInput = z.input<typeof viajeAdicionalSchema>;
 
+export const viajeGastoSchema = z.object({
+  tipo_gasto_id: z.coerce.number({ error: "Elegí un tipo de gasto." }),
+  fecha: fechaOpcional,
+  importe: decimalRequerido(),
+  pagado_por: z.enum(["empresa", "chofer"]).optional().nullable(),
+  medio_pago_id: idOpcional,
+  comprobante_nro: textoOpcional,
+  rendido: z.boolean().default(false),
+  observaciones: textoOpcional,
+});
+export type ViajeGastoInput = z.input<typeof viajeGastoSchema>;
+
 export const viajeContingenciaSchema = z.object({
   tipo_contingencia_id: idOpcional,
   descripcion: textoOpcional,

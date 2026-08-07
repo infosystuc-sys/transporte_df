@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { choferes } from "@/db/schema";
+import { choferes, movimientosChofer } from "@/db/schema";
 import { choferSchema, type ChoferInput } from "@/lib/schemas/flota";
+import { movimientoManualSchema, type MovimientoManualInput } from "@/lib/schemas/choferes-cuenta";
 import { esErrorReferenciado } from "@/lib/db/errores";
 
 const RUTA = "/choferes";
@@ -31,4 +32,13 @@ export async function eliminarChofer(id: number) {
     throw error;
   }
   revalidatePath(RUTA);
+}
+
+export async function crearMovimientoManual(
+  choferId: number,
+  valores: MovimientoManualInput
+): Promise<{ error?: string } | void> {
+  const datos = movimientoManualSchema.parse(valores);
+  await db.insert(movimientosChofer).values({ ...datos, chofer_id: choferId, origen_automatico: false });
+  revalidatePath(`${RUTA}/${choferId}`);
 }
