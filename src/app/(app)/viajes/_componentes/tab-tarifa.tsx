@@ -147,7 +147,7 @@ export function TabTarifa({
           <CampoSelect form={form} name="base_calculo" label="Base de cálculo" opciones={opcionesBase} />
         </div>
         {usaElOtroNeto && (
-          <p className="text-xs text-amber-600 dark:text-amber-500">
+          <p className="text-xs text-amber">
             Todavía no se cargó el neto de {baseCalculo}, así que el cálculo usa el otro neto
             disponible.
           </p>

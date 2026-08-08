@@ -46,7 +46,7 @@ export default async function NuevoCobroPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Nuevo cobro</h1>
+      <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Nuevo cobro</h1>
       <FormularioCobro
         clientes={filasClientes}
         medioPagos={filasMediosPago}

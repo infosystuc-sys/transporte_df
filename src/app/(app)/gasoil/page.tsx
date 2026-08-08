@@ -49,7 +49,7 @@ export default async function GasoilPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Gasoil</h1>
+      <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Gasoil</h1>
 
       <FiltrosGasoil camiones={filasCamiones} estaciones={filasEstaciones} />
 

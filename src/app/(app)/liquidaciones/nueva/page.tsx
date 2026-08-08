@@ -52,7 +52,7 @@ export default async function NuevaLiquidacionPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Nueva liquidación</h1>
+      <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Nueva liquidación</h1>
       <FormularioLiquidacion
         choferes={filasChoferes}
         medioPagos={filasMediosPago}

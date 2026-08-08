@@ -9,7 +9,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-56 shrink-0 border-r bg-muted/20 md:block">
+    <aside className="hidden w-56 shrink-0 bg-sidebar md:block">
       <nav className="flex flex-col gap-1 p-3">
         {navItems.map((item) => {
           const activo = pathname === item.href;
@@ -18,7 +18,7 @@ export function Sidebar() {
             return (
               <span
                 key={item.href}
-                className="flex items-center justify-between rounded-md px-3 py-2 text-sm text-muted-foreground/50"
+                className="flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/40"
               >
                 {item.label}
                 <span className="text-xs">Próximamente</span>
@@ -31,8 +31,8 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                activo && "bg-accent text-accent-foreground"
+                "rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-white/5 hover:text-white",
+                activo && "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
               {item.label}

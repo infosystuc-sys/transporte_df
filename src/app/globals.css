@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-geist-sans);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-manrope);
+  --font-heading: var(--font-manrope);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,82 +39,118 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Colores semánticos propios de la identidad Cashflow: positivo/negativo
+     de cuenta corriente y colores de apoyo para categorías/chips. */
+  --color-pos: var(--pos);
+  --color-neg: var(--neg);
+  --color-violet: var(--violet);
+  --color-teal: var(--teal);
+  --color-amber: var(--amber);
+
+  /* Escala de radios calibrada al uso real del proyecto en vez de un solo
+     multiplicador: "rounded-md" es el idioma dominante para tarjetas/
+     paneles/contenedores ad-hoc en toda la app (listas, asides, banners),
+     así que es el que tiene que dar exactamente los 12px de la identidad
+     Cashflow. Button/Input usan rounded-lg (9-11px); Card/Dialog usan
+     rounded-xl (16px, el radio de modal de Cashflow). */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 10px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-4xl: 9999px;
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #eef1f5;
+  --foreground: #1a2433;
+  --card: #ffffff;
+  --card-foreground: #1a2433;
+  --popover: #ffffff;
+  --popover-foreground: #1a2433;
+  --primary: #2f6df0;
+  --primary-foreground: #ffffff;
+  --secondary: #f8fafc;
+  --secondary-foreground: #3b4859;
+  --muted: #f8fafc;
+  --muted-foreground: #7c8aa0;
+  --accent: #f8fafc;
+  --accent-foreground: #1a2433;
+  --destructive: #dc2626;
+  --border: #e3e8ef;
+  --input: #cfd6e1;
+  --ring: #2f6df0;
+  --chart-1: #2f6df0;
+  --chart-2: #7a4ddb;
+  --chart-3: #0d9488;
+  --chart-4: #c2820a;
+  --chart-5: #7c8aa0;
+  --radius: 12px;
+
+  /* Menú lateral: siempre oscuro, incluso con el resto de la app en claro. */
+  --sidebar: #15202e;
+  --sidebar-foreground: #a9b4c5;
+  --sidebar-primary: #2f6df0;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2f6df0;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #22303f;
+  --sidebar-ring: #2f6df0;
+
+  --pos: #15803d;
+  --neg: #dc2626;
+  --violet: #7a4ddb;
+  --teal: #0d9488;
+  --amber: #c2820a;
+
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.07);
+  --shadow-lg: 0 12px 40px -8px rgba(16, 24, 40, 0.22);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0f1520;
+  --foreground: #e7ecf3;
+  --card: #17202c;
+  --card-foreground: #e7ecf3;
+  --popover: #17202c;
+  --popover-foreground: #e7ecf3;
+  --primary: #4f86ff;
+  --primary-foreground: #0f1520;
+  --secondary: #1c2632;
+  --secondary-foreground: #c7d0dd;
+  --muted: #1c2632;
+  --muted-foreground: #8b96a8;
+  --accent: #1c2632;
+  --accent-foreground: #e7ecf3;
+  --destructive: #f87171;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.16);
+  --ring: #4f86ff;
+  --chart-1: #4f86ff;
+  --chart-2: #9a7bea;
+  --chart-3: #2dd4bf;
+  --chart-4: #e0a83a;
+  --chart-5: #8b96a8;
+
+  --sidebar: #0c1119;
+  --sidebar-foreground: #a9b4c5;
+  --sidebar-primary: #4f86ff;
+  --sidebar-primary-foreground: #0f1520;
+  --sidebar-accent: #4f86ff;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1c2632;
+  --sidebar-ring: #4f86ff;
+
+  --pos: #22c55e;
+  --neg: #f87171;
+  --violet: #9a7bea;
+  --teal: #2dd4bf;
+  --amber: #e0a83a;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 40px -8px rgba(0, 0, 0, 0.6);
 }
 
 @layer base {
@@ -123,6 +159,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-variant-numeric: tabular-nums;
   }
   html {
     @apply font-sans;

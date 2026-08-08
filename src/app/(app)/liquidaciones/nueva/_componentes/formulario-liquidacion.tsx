@@ -119,7 +119,7 @@ export function FormularioLiquidacion({
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium">Chofer</label>
+        <label className="text-[11.5px] font-bold uppercase tracking-[0.03em] text-muted-foreground">Chofer</label>
         <Select value={choferId ? String(choferId) : undefined} onValueChange={cambiarChofer}>
           <SelectTrigger className="w-full sm:w-80">
             <SelectValue placeholder="Elegí un chofer" />
@@ -207,7 +207,7 @@ export function FormularioLiquidacion({
                           {m.descripcion && ` — ${m.descripcion}`}
                         </span>
                       </label>
-                      <span className={signo > 0 ? "text-emerald-600" : "text-destructive"}>
+                      <span className={signo > 0 ? "text-pos" : "text-destructive"}>
                         {signo > 0 ? "+" : "−"}
                         {formatoARS.format(Number(m.importe))}
                       </span>
@@ -220,7 +220,7 @@ export function FormularioLiquidacion({
 
           <div className="rounded-md border p-4">
             <p className="text-sm text-muted-foreground">Total neto a pagar</p>
-            <p className="text-lg font-semibold">{formatoARS.format(totalNeto)}</p>
+            <p className="text-[20px] font-extrabold">{formatoARS.format(totalNeto)}</p>
           </div>
         </>
       )}

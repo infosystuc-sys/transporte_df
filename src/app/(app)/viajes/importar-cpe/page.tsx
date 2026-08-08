@@ -34,7 +34,7 @@ export default async function ImportarCpePage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">Importar CPE</h1>
+        <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Importar CPE</h1>
         <p className="text-sm text-muted-foreground">
           Subí el PDF de la Carta de Porte Electrónica: el sistema intenta completar los datos del
           viaje automáticamente, pero siempre revisás y confirmás antes de guardar nada.

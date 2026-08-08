@@ -350,7 +350,7 @@ export function FormularioRevisionCpe({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <form onSubmit={form.handleSubmit(confirmar)} className="flex flex-col gap-6">
             {resultado.fuente === "claude" && (
-              <p className="rounded-md border border-amber-400 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300">
+              <p className="rounded-md border border-amber/40 bg-amber/10 p-3 text-sm text-amber">
                 Este PDF no tenía texto seleccionable: los datos se extrajeron con ayuda de IA a
                 partir de la imagen. Revisá todos los campos con cuidado antes de confirmar.
               </p>

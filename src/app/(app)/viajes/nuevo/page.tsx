@@ -66,7 +66,7 @@ export default async function NuevoViajePage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Nuevo viaje</h1>
+        <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Nuevo viaje</h1>
         <Link href="/viajes/importar-cpe" className="text-sm text-primary hover:underline">
           ¿Tenés el PDF de la CPE? Importalo automáticamente
         </Link>

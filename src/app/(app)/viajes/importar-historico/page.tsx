@@ -30,7 +30,7 @@ export default async function ImportarHistoricoPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">Importar histórico desde Excel</h1>
+        <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Importar histórico desde Excel</h1>
         <p className="text-sm text-muted-foreground">
           Subí la planilla anual (una hoja por tipo de carga). Revisá y confirmá antes de guardar —
           nada se importa automáticamente.

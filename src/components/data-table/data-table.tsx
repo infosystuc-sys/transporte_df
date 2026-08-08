@@ -33,7 +33,7 @@ export function DataTable<TData extends Record<string, unknown>>({
   const table = useTable({ features: tableFeaturesBase, columns: columnas, data: datos });
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border shadow-(--shadow)">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((grupo) => (

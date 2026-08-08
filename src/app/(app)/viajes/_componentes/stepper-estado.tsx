@@ -112,9 +112,10 @@ export function StepperEstado({
             <DialogTitle>N° de factura</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="factura_nro">
+            <p className="text-sm text-muted-foreground">
               Para pasar a Facturado hace falta un N° de factura.
-            </Label>
+            </p>
+            <Label htmlFor="factura_nro">N° de factura</Label>
             <Input
               id="factura_nro"
               value={facturaNro}

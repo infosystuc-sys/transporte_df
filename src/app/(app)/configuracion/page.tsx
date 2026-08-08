@@ -73,7 +73,7 @@ export default async function ConfiguracionPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Configuración</h1>
+      <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Configuración</h1>
 
       <Tabs defaultValue="general">
         <TabsList className="flex-wrap">

@@ -144,7 +144,7 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Viaje #{viaje.numero}</h1>
+        <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Viaje #{viaje.numero}</h1>
       </div>
 
       <StepperEstado viajeId={viaje.id} estadoActual={viaje.estado} facturaNroActual={viaje.factura_nro} />

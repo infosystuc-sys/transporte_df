@@ -134,7 +134,7 @@ export function FormularioCobro({
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium">Cliente (pagador)</label>
+        <label className="text-[11.5px] font-bold uppercase tracking-[0.03em] text-muted-foreground">Cliente (pagador)</label>
         <Select value={clienteId ? String(clienteId) : undefined} onValueChange={cambiarCliente}>
           <SelectTrigger className="w-full sm:w-80">
             <SelectValue placeholder="Elegí un cliente" />

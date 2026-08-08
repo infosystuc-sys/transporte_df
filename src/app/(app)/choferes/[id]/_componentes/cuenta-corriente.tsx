@@ -100,7 +100,7 @@ export function CuentaCorriente({
       <div className="flex items-center justify-between rounded-md border p-4">
         <div>
           <p className="text-sm text-muted-foreground">Saldo</p>
-          <p className="text-lg font-semibold">
+          <p className="text-[20px] font-extrabold">
             {saldo >= 0
               ? `La empresa le debe ${formatoARS.format(saldo)}`
               : `El chofer debe ${formatoARS.format(-saldo)}`}
@@ -130,7 +130,7 @@ export function CuentaCorriente({
                   {m.descripcion && <p className="text-sm text-muted-foreground">{m.descripcion}</p>}
                   <p className="text-xs text-muted-foreground">{formatoFecha.format(m.fecha)}</p>
                 </div>
-                <span className={signo > 0 ? "text-emerald-600" : "text-destructive"}>
+                <span className={signo > 0 ? "text-pos" : "text-destructive"}>
                   {signo > 0 ? "+" : "−"}
                   {formatoARS.format(Number(m.importe))}
                 </span>

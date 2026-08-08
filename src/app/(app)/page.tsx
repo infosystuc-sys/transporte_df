@@ -74,20 +74,20 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
+      <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Dashboard</h1>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">Viajes totales</CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold">{totalViajes}</CardContent>
+          <CardContent className="text-[20px] font-extrabold">{totalViajes}</CardContent>
         </Card>
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">Pendiente de cobro</CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold">{formatoARS.format(totalPendienteCobro)}</CardContent>
+          <CardContent className="text-[20px] font-extrabold">{formatoARS.format(totalPendienteCobro)}</CardContent>
         </Card>
         <Card>
           <CardHeader>
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
               Saldo pendiente a choferes
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold">
+          <CardContent className="text-[20px] font-extrabold">
             {formatoARS.format(saldoPendienteChoferes)}
           </CardContent>
         </Card>
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">Alertas activas</CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold">
+          <CardContent className="text-[20px] font-extrabold">
             {ctg.length + vencFlota.length + vencChoferes.length + merma.length + cobrosVencidos.length}
           </CardContent>
         </Card>
