@@ -64,13 +64,22 @@ Ver el spec de diseño completo en
    pnpm seed
    ```
 
-6. Levantar el servidor de desarrollo:
+6. Crear el bucket privado de Storage para los adjuntos (CPE en PDF,
+   tickets de balanza, facturas). Es idempotente: se puede volver a
+   correr sin romper nada.
+
+   ```bash
+   pnpm storage:setup
+   ```
+
+7. Levantar el servidor de desarrollo:
 
    ```bash
    pnpm dev
    ```
 
-   Abrir [http://localhost:3000](http://localhost:3000).
+   Abrir [http://localhost:3000](http://localhost:3000). Si el puerto está
+   ocupado, Next.js elige el siguiente libre y lo informa en la consola.
 
 ## Scripts
 
@@ -83,6 +92,7 @@ Ver el spec de diseño completo en
 | `pnpm db:migrate`   | Aplica las migraciones pendientes contra `DATABASE_URL`  |
 | `pnpm db:studio`    | Abre Drizzle Studio para inspeccionar la base            |
 | `pnpm seed`         | Carga catálogos y datos de prueba                        |
+| `pnpm storage:setup`| Crea el bucket privado de Storage para adjuntos          |
 
 ## Estructura
 
@@ -90,19 +100,19 @@ Ver el spec de diseño completo en
 src/
   app/
     login/          # Ruta pública de login
-    (app)/           # Rutas protegidas por el proxy (dashboard, viajes, etc.)
+    (app)/           # Rutas protegidas por el middleware (dashboard, viajes, etc.)
   components/
     ui/              # Componentes shadcn/ui
     layout/          # Sidebar, topbar, navegación
     auth/            # Formulario de login
   lib/
-    supabase/        # Clientes de Supabase (browser, server, proxy)
+    supabase/        # Clientes de Supabase (browser, server, middleware, storage)
     schemas/          # Schemas de Zod compartidos entre cliente y servidor
     auth/             # Server actions de autenticación
   db/
     schema/           # Esquema de Drizzle (tablas)
     index.ts          # Instancia de conexión a la base
-  proxy.ts             # Protección de rutas y refresco de sesión (Next.js 16)
+  middleware.ts        # Protección de rutas y refresco de sesión
 drizzle/                # Migraciones generadas (versionadas en git)
 fixtures/               # Documentos reales de referencia (CPE, remitos, Excel histórico)
 docs/superpowers/specs/  # Spec de diseño del proyecto
