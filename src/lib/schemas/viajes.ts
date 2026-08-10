@@ -15,9 +15,8 @@ export const viajeDatosGeneralesSchema = z.object({
   declaracion_calidad: z.enum(["conforme", "condicional"]).optional().nullable(),
   remito_nro: textoOpcional,
 
-  // El cliente es el flete pagador: a quien se le factura.
+  // El cliente es siempre el flete pagador: a quien se le factura.
   cliente_id: z.coerce.number({ error: "Elegí un cliente." }),
-  pagador_id: idOpcional,
   // Titular de la carta de porte y destinatario: solo estadísticos, no
   // son clientes ni se dan de alta en el catálogo.
   titular_nombre: textoOpcional,

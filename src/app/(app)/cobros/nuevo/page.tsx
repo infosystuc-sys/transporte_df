@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { and, asc, eq, gt, isNull, or, sql } from "drizzle-orm";
+import { and, asc, eq, gt, isNull, or } from "drizzle-orm";
 import { db } from "@/db";
 import { clientes, mediosPago, viajes } from "@/db/schema";
 import { FormularioCobro } from "./_componentes/formulario-cobro";
@@ -35,8 +35,8 @@ export default async function NuevoCobroPage({
           .where(
             and(
               eq(viajes.facturado, true),
-              // El pagador es viajes.pagador_id si está, si no viajes.cliente_id.
-              sql`coalesce(${viajes.pagador_id}, ${viajes.cliente_id}) = ${clienteId}`,
+              // El cliente del viaje es siempre el que paga el flete.
+              eq(viajes.cliente_id, clienteId),
               or(isNull(viajes.saldo_pendiente), gt(viajes.saldo_pendiente, "0"))
             )
           )

@@ -113,7 +113,6 @@ function construirValoresIniciales(resultado: ResultadoImportacionCpe): ViajeDes
 
     // El cliente es el flete pagador: es a quien se le factura.
     cliente_id: (c.cliente_id ?? undefined) as unknown as number,
-    pagador_id: undefined,
     // Solo estadísticos: no generan ficha de cliente.
     titular_nombre: e.titular_nombre ?? "",
     titular_cuit: e.titular_cuit ?? "",

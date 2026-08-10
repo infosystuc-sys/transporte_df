@@ -112,12 +112,6 @@ export function FormularioDatosGenerales({
           label="Cliente (flete pagador)"
           opciones={opciones(clientes)}
         />
-        <CampoSelect
-          form={form}
-          name="pagador_id"
-          label="Paga un tercero (vacío = el cliente)"
-          opciones={opciones(clientes)}
-        />
         <CampoSelect form={form} name="intermediario_id" label="Intermediario de flete" opciones={opciones(clientes)} />
         <CampoTexto
           form={form}

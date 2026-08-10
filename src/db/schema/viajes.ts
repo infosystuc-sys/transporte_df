@@ -48,17 +48,14 @@ export const viajes = pgTable(
     remito_nro: text("remito_nro"),
     declaracion_calidad: declaracionCalidadEnum("declaracion_calidad"),
 
-    // Partes intervinientes. El cliente es el flete pagador: es a quien se
-    // le factura, y es el único de la CPE que se da de alta en el catálogo
-    // de clientes.
+    // Partes intervinientes. El cliente es siempre el flete pagador: es a
+    // quien se le factura, y es el único de la CPE que se da de alta en el
+    // catálogo de clientes. No hay un campo de pagador aparte a propósito:
+    // por definición del negocio nunca difiere del cliente, y tenerlo
+    // suelto solo habilitaba que los dos quedaran en desacuerdo.
     cliente_id: fkBigint("cliente_id")
       .notNull()
       .references(() => clientes.id, { onDelete: "restrict" }),
-    // Override para el caso puntual en que el flete lo paga un tercero
-    // distinto del cliente; los cobros usan coalesce(pagador_id, cliente_id).
-    pagador_id: fkBigint("pagador_id").references(() => clientes.id, {
-      onDelete: "set null",
-    }),
     // Titular de la carta de porte y destinatario de la mercadería: se
     // guardan como texto, solo con fines estadísticos. No son clientes
     // (no se les factura), así que no se les crea ficha en el catálogo.
@@ -152,7 +149,6 @@ export const viajes = pgTable(
   (t) => [
     accesoTotalAutenticados("viajes"),
     index("viajes_cliente_id_idx").on(t.cliente_id),
-    index("viajes_pagador_id_idx").on(t.pagador_id),
     index("viajes_intermediario_id_idx").on(t.intermediario_id),
     index("viajes_camion_id_idx").on(t.camion_id),
     index("viajes_chofer_id_idx").on(t.chofer_id),

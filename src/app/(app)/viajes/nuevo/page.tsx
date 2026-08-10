@@ -22,7 +22,6 @@ const valoresPorDefecto: ViajeDatosGeneralesInput = {
   declaracion_calidad: undefined,
   remito_nro: "",
   cliente_id: undefined as unknown as number,
-  pagador_id: undefined,
   titular_nombre: "",
   titular_cuit: "",
   destinatario_nombre: "",

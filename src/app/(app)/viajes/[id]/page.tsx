@@ -176,7 +176,6 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
               declaracion_calidad: viaje.declaracion_calidad ?? undefined,
               remito_nro: viaje.remito_nro ?? "",
               cliente_id: viaje.cliente_id,
-              pagador_id: viaje.pagador_id ?? undefined,
               titular_nombre: viaje.titular_nombre ?? "",
               titular_cuit: viaje.titular_cuit ?? "",
               destinatario_nombre: viaje.destinatario_nombre ?? "",
