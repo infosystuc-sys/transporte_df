@@ -111,9 +111,14 @@ function construirValoresIniciales(resultado: ResultadoImportacionCpe): ViajeDes
     declaracion_calidad: e.declaracion_calidad,
     remito_nro: "",
 
-    cliente_id: (c.titular_id ?? undefined) as unknown as number,
-    pagador_id: c.pagador_id ?? undefined,
-    destinatario_id: c.destinatario_id ?? undefined,
+    // El cliente es el flete pagador: es a quien se le factura.
+    cliente_id: (c.cliente_id ?? undefined) as unknown as number,
+    pagador_id: undefined,
+    // Solo estadísticos: no generan ficha de cliente.
+    titular_nombre: e.titular_nombre ?? "",
+    titular_cuit: e.titular_cuit ?? "",
+    destinatario_nombre: e.destinatario_nombre ?? "",
+    destinatario_cuit: e.destinatario_cuit ?? "",
     intermediario_id: undefined,
     comision_intermediario_pct: undefined,
 
@@ -564,36 +569,28 @@ export function FormularioRevisionCpe({
               <CampoEntidadConCrear
                 form={form}
                 name="cliente_id"
-                label="Cliente (titular)"
+                label="Cliente (flete pagador)"
                 opciones={opcionesClientes}
                 onAbrirCrear={() =>
-                  abrirCrear("cliente", "Nuevo cliente", e.titular_nombre ?? "", e.titular_cuit ?? "", "cliente_id")
+                  abrirCrear("cliente", "Nuevo cliente", e.pagador_nombre ?? "", e.pagador_cuit ?? "", "cliente_id")
                 }
               />
-              <CampoEntidadConCrear
-                form={form}
-                name="pagador_id"
-                label="Flete pagador"
-                opciones={opcionesClientes}
-                onAbrirCrear={() =>
-                  abrirCrear("cliente", "Nuevo cliente", e.pagador_nombre ?? "", e.pagador_cuit ?? "", "pagador_id")
-                }
-              />
-              <CampoEntidadConCrear
-                form={form}
-                name="destinatario_id"
-                label="Destinatario"
-                opciones={opcionesClientes}
-                onAbrirCrear={() =>
-                  abrirCrear(
-                    "cliente",
-                    "Nuevo cliente",
-                    e.destinatario_nombre ?? "",
-                    e.destinatario_cuit ?? "",
-                    "destinatario_id"
-                  )
-                }
-              />
+            </div>
+
+            <div className="flex flex-col gap-3 rounded-md border p-4">
+              <div>
+                <h3 className="text-sm font-bold">Datos estadísticos</h3>
+                <p className="text-sm text-muted-foreground">
+                  Se guardan con el viaje solo para reportes. No se les factura, así que no se dan
+                  de alta como clientes.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <CampoTexto form={form} name="titular_nombre" label="Titular de la carta de porte" />
+                <CampoTexto form={form} name="titular_cuit" label="CUIT del titular" />
+                <CampoTexto form={form} name="destinatario_nombre" label="Destinatario" />
+                <CampoTexto form={form} name="destinatario_cuit" label="CUIT del destinatario" />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

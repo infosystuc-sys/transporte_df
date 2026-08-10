@@ -29,8 +29,6 @@ export const entidadFaltanteSchema = z.object({
   tipo: z.enum(["cliente", "chofer", "camion", "producto", "lugar"]),
   campo: z.enum([
     "cliente_id",
-    "pagador_id",
-    "destinatario_id",
     "chofer_id",
     "camion_id",
     "producto_id",

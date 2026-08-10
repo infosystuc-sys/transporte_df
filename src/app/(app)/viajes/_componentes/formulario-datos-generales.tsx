@@ -106,20 +106,40 @@ export function FormularioDatosGenerales({
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <CampoSelect form={form} name="cliente_id" label="Cliente" opciones={opciones(clientes)} />
+        <CampoSelect
+          form={form}
+          name="cliente_id"
+          label="Cliente (flete pagador)"
+          opciones={opciones(clientes)}
+        />
         <CampoSelect
           form={form}
           name="pagador_id"
-          label="Flete pagador (vacío = el cliente)"
+          label="Paga un tercero (vacío = el cliente)"
           opciones={opciones(clientes)}
         />
-        <CampoSelect form={form} name="destinatario_id" label="Destinatario" opciones={opciones(clientes)} />
         <CampoSelect form={form} name="intermediario_id" label="Intermediario de flete" opciones={opciones(clientes)} />
         <CampoTexto
           form={form}
           name="comision_intermediario_pct"
           label="Comisión del intermediario (%)"
         />
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-md border p-4">
+        <div>
+          <h3 className="text-sm font-bold">Datos estadísticos</h3>
+          <p className="text-sm text-muted-foreground">
+            Titular de la carta de porte y destinatario de la mercadería. Se guardan solo para
+            reportes: no se les factura ni se dan de alta como clientes.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <CampoTexto form={form} name="titular_nombre" label="Titular de la carta de porte" />
+          <CampoTexto form={form} name="titular_cuit" label="CUIT del titular" />
+          <CampoTexto form={form} name="destinatario_nombre" label="Destinatario" />
+          <CampoTexto form={form} name="destinatario_cuit" label="CUIT del destinatario" />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

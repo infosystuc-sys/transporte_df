@@ -5,9 +5,8 @@ import { buscarLugarPorNombre } from "@/lib/lugares/buscar";
 import type { CpeExtraido } from "./parser";
 
 export type Coincidencias = {
-  titular_id: number | null;
-  destinatario_id: number | null;
-  pagador_id: number | null;
+  /** Se busca por el CUIT del flete pagador: es el único que es cliente. */
+  cliente_id: number | null;
   chofer_id: number | null;
   camion_id: number | null;
   producto_id: number | null;
@@ -20,8 +19,6 @@ export type TipoEntidadFaltante = "cliente" | "chofer" | "camion" | "producto" |
 /** Campo del formulario de revisión que completa cada entidad al crearse. */
 export type CampoViajeFaltante =
   | "cliente_id"
-  | "pagador_id"
-  | "destinatario_id"
   | "chofer_id"
   | "camion_id"
   | "producto_id"
@@ -75,9 +72,10 @@ export function detectarFaltantes(cpe: CpeExtraido, c: Coincidencias): EntidadFa
     });
   };
 
-  agregar(c.titular_id, "cliente_titular", "cliente", "cliente_id", "Cliente (titular)", cpe.titular_nombre, cpe.titular_cuit);
-  agregar(c.destinatario_id, "cliente_destinatario", "cliente", "destinatario_id", "Destinatario", cpe.destinatario_nombre, cpe.destinatario_cuit);
-  agregar(c.pagador_id, "cliente_pagador", "cliente", "pagador_id", "Flete pagador", cpe.pagador_nombre, cpe.pagador_cuit);
+  // Solo el flete pagador se da de alta como cliente: es a quien se le
+  // factura. El titular de la carta de porte y el destinatario quedan
+  // como texto estadístico en el viaje, sin ficha en el catálogo.
+  agregar(c.cliente_id, "cliente", "cliente", "cliente_id", "Cliente (flete pagador)", cpe.pagador_nombre, cpe.pagador_cuit);
   agregar(c.chofer_id, "chofer", "chofer", "chofer_id", "Chofer", cpe.chofer_nombre, cpe.chofer_cuil);
   agregar(c.producto_id, "producto", "producto", "producto_id", "Producto (especie)", cpe.producto_nombre);
   agregar(c.camion_id, "camion", "camion", "camion_id", "Camión", cpe.dominio_tractor);
@@ -101,11 +99,7 @@ async function buscarClientePorCuit(cuit: string | null) {
 }
 
 export async function buscarCoincidencias(cpe: CpeExtraido): Promise<Coincidencias> {
-  const [titular_id, destinatario_id, pagador_id] = await Promise.all([
-    buscarClientePorCuit(cpe.titular_cuit),
-    buscarClientePorCuit(cpe.destinatario_cuit),
-    buscarClientePorCuit(cpe.pagador_cuit),
-  ]);
+  const cliente_id = await buscarClientePorCuit(cpe.pagador_cuit);
 
   const [chofer] = cpe.chofer_cuil
     ? await db.select({ id: choferes.id }).from(choferes).where(eq(choferes.cuil, limpiarCuit(cpe.chofer_cuil)))
@@ -128,9 +122,7 @@ export async function buscarCoincidencias(cpe: CpeExtraido): Promise<Coincidenci
   ]);
 
   return {
-    titular_id,
-    destinatario_id,
-    pagador_id,
+    cliente_id,
     chofer_id: chofer?.id ?? null,
     camion_id: camion?.id ?? null,
     producto_id: producto?.id ?? null,

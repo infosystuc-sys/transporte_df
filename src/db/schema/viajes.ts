@@ -48,16 +48,24 @@ export const viajes = pgTable(
     remito_nro: text("remito_nro"),
     declaracion_calidad: declaracionCalidadEnum("declaracion_calidad"),
 
-    // Partes intervinientes
+    // Partes intervinientes. El cliente es el flete pagador: es a quien se
+    // le factura, y es el único de la CPE que se da de alta en el catálogo
+    // de clientes.
     cliente_id: fkBigint("cliente_id")
       .notNull()
       .references(() => clientes.id, { onDelete: "restrict" }),
+    // Override para el caso puntual en que el flete lo paga un tercero
+    // distinto del cliente; los cobros usan coalesce(pagador_id, cliente_id).
     pagador_id: fkBigint("pagador_id").references(() => clientes.id, {
       onDelete: "set null",
     }),
-    destinatario_id: fkBigint("destinatario_id").references(() => clientes.id, {
-      onDelete: "set null",
-    }),
+    // Titular de la carta de porte y destinatario de la mercadería: se
+    // guardan como texto, solo con fines estadísticos. No son clientes
+    // (no se les factura), así que no se les crea ficha en el catálogo.
+    titular_nombre: text("titular_nombre"),
+    titular_cuit: text("titular_cuit"),
+    destinatario_nombre: text("destinatario_nombre"),
+    destinatario_cuit: text("destinatario_cuit"),
     intermediario_id: fkBigint("intermediario_id").references(() => clientes.id, {
       onDelete: "set null",
     }),
@@ -145,7 +153,6 @@ export const viajes = pgTable(
     accesoTotalAutenticados("viajes"),
     index("viajes_cliente_id_idx").on(t.cliente_id),
     index("viajes_pagador_id_idx").on(t.pagador_id),
-    index("viajes_destinatario_id_idx").on(t.destinatario_id),
     index("viajes_intermediario_id_idx").on(t.intermediario_id),
     index("viajes_camion_id_idx").on(t.camion_id),
     index("viajes_chofer_id_idx").on(t.chofer_id),
