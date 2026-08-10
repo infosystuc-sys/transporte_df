@@ -3,6 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/layout/sidebar";
 import { UserMenu } from "@/components/layout/user-menu";
 
+// Todo lo que cuelga de este layout depende de la sesión y hace consultas
+// reales a Supabase por request: nunca debe intentar generarse como
+// estático. Sin esto, next build igual prueba renderizarlas una vez para
+// decidir si son estáticas, y esas consultas reales durante el build
+// (a veces varias en paralelo, como en el dashboard) pueden tardar más
+// de 60s y tirar abajo el build entero.
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({
   children,
 }: {
@@ -13,8 +21,8 @@ export default async function AppLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // El proxy ya protege esta ruta; este chequeo es la defensa "cerca de
-  // los datos" que recomienda Next.js, no la única.
+  // El middleware ya protege esta ruta; este chequeo es la defensa "cerca
+  // de los datos" que recomienda Next.js, no la única.
   if (!user) {
     redirect("/login");
   }
