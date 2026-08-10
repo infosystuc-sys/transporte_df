@@ -19,17 +19,66 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CampoBooleano, CampoTexto } from "@/components/catalogos/campos-formulario";
 import { viajeDesdeCpeSchema, type ViajeDesdeCpeInput } from "@/lib/schemas/cpe-importacion";
 import type { ResultadoImportacionCpe } from "@/lib/cpe/importar";
+import type { EntidadFaltante, TipoEntidadFaltante } from "@/lib/cpe/matching";
 import {
   confirmarImportacionCpe,
   crearCamionRapido,
   crearChoferRapido,
   crearClienteRapido,
+  crearEntidadesFaltantes,
   crearLugarRapido,
+  crearProductoRapido,
   importarCpe,
 } from "../actions";
 
 type Opcion = { value: string; label: string };
-type TipoEntidad = "cliente" | "camion" | "chofer" | "lugar";
+type TipoEntidad = TipoEntidadFaltante;
+
+/** Documento sin puntos ni guiones, para comparar CUIT/CUIL entre roles. */
+const soloDigitos = (v: string) => v.replace(/[^0-9]/g, "");
+
+type GrupoFaltante = {
+  huella: string;
+  tipo: TipoEntidadFaltante;
+  nombre: string;
+  documento: string | null;
+  /** Roles de la CPE que resuelve este mismo registro. */
+  roles: string[];
+};
+
+/**
+ * Agrupa los faltantes que son el mismo registro con distinto rol: en una
+ * CPE es muy común que titular, destinatario y flete pagador sean la misma
+ * empresa. Sin agrupar, el panel mostraría tres filas idénticas y diría
+ * "dar de alta 3" cuando en realidad se crea un solo cliente.
+ */
+function agruparFaltantes(faltantes: EntidadFaltante[]): GrupoFaltante[] {
+  const grupos = new Map<string, GrupoFaltante>();
+  for (const f of faltantes) {
+    const huella = `${f.tipo}:${(f.documento ? soloDigitos(f.documento) : f.nombre).toLowerCase()}`;
+    const existente = grupos.get(huella);
+    if (existente) {
+      existente.roles.push(f.etiqueta);
+      continue;
+    }
+    grupos.set(huella, {
+      huella,
+      tipo: f.tipo,
+      nombre: f.nombre,
+      documento: f.documento,
+      roles: [f.etiqueta],
+    });
+  }
+  return [...grupos.values()];
+}
+
+const ETIQUETAS_TIPO_FALTANTE: Record<TipoEntidadFaltante, string> = {
+  cliente: "Cliente",
+  chofer: "Chofer",
+  camion: "Camión",
+  producto: "Producto",
+  lugar: "Lugar",
+};
 
 const opcionesDeclaracion = [
   { value: "conforme", label: "Conforme" },
@@ -188,6 +237,9 @@ function DialogCrearRapido({
         case "lugar":
           resultado = await crearLugarRapido({ nombre });
           break;
+        case "producto":
+          resultado = await crearProductoRapido({ nombre, tipo: "grano" });
+          break;
       }
       toast.success("Creado.");
       onCreado(resultado.id, nombre);
@@ -256,7 +308,14 @@ export function FormularioRevisionCpe({
   const [opcionesLugares, setOpcionesLugares] = useState<Opcion[]>(() =>
     lugares.map((l) => ({ value: String(l.id), label: l.nombre }))
   );
-  const opcionesProductos = productos.map((p) => ({ value: String(p.id), label: p.nombre }));
+  const [opcionesProductos, setOpcionesProductos] = useState<Opcion[]>(() =>
+    productos.map((p) => ({ value: String(p.id), label: p.nombre }))
+  );
+
+  // Se guardan aparte de `resultado` porque se vacían al darlos de alta.
+  const [faltantes, setFaltantes] = useState<EntidadFaltante[]>([]);
+  const [isPendingFaltantes, startTransitionFaltantes] = useTransition();
+  const grupos = useMemo(() => agruparFaltantes(faltantes), [faltantes]);
 
   const [dialog, setDialog] = useState<{
     tipo: TipoEntidad;
@@ -282,6 +341,7 @@ export function FormularioRevisionCpe({
     const f = e.target.files?.[0] ?? null;
     setArchivo(f);
     setResultado(null);
+    setFaltantes([]);
   }
 
   function procesar() {
@@ -292,10 +352,55 @@ export function FormularioRevisionCpe({
       try {
         const r = await importarCpe(formData);
         setResultado(r);
+        setFaltantes(r.faltantes);
         form.reset(construirValoresIniciales(r));
       } catch {
         toast.error("No se pudo procesar el PDF. Verificá que sea un archivo válido.");
       }
+    });
+  }
+
+  function agregarOpcion(tipo: TipoEntidadFaltante, id: number, nombre: string) {
+    const opcion = { value: String(id), label: nombre };
+    const sumar = (prev: Opcion[]) =>
+      prev.some((o) => o.value === opcion.value) ? prev : [...prev, opcion];
+    if (tipo === "cliente") setOpcionesClientes(sumar);
+    if (tipo === "camion") setOpcionesCamiones(sumar);
+    if (tipo === "chofer") setOpcionesChoferes(sumar);
+    if (tipo === "lugar") setOpcionesLugares(sumar);
+    if (tipo === "producto") setOpcionesProductos(sumar);
+  }
+
+  /** Da de alta todo lo faltante y deja los campos del viaje ya apuntando a lo nuevo. */
+  function darDeAltaFaltantes() {
+    startTransitionFaltantes(async () => {
+      const r = await crearEntidadesFaltantes({ faltantes });
+      if (r.error || !r.creadas) {
+        toast.error(r.error ?? "No se pudieron dar de alta los registros.");
+        return;
+      }
+      const creadas = r.creadas;
+
+      for (const f of faltantes) {
+        const id = creadas[f.clave];
+        if (id == null) continue;
+        form.setValue(f.campo as Path<ViajeDesdeCpeInput>, id as never);
+      }
+      // Una opción por registro real creado, no por rol: si el mismo
+      // cliente cubre tres roles, se agrega una sola vez al desplegable.
+      for (const g of grupos) {
+        const clave = faltantes.find(
+          (f) =>
+            `${f.tipo}:${(f.documento ? soloDigitos(f.documento) : f.nombre).toLowerCase()}` === g.huella
+        )?.clave;
+        const id = clave ? creadas[clave] : undefined;
+        if (id != null) agregarOpcion(g.tipo, id, g.nombre);
+      }
+
+      toast.success(
+        grupos.length === 1 ? "Se dio de alta 1 registro." : `Se dieron de alta ${grupos.length} registros.`
+      );
+      setFaltantes([]);
     });
   }
 
@@ -321,11 +426,10 @@ export function FormularioRevisionCpe({
   function onCreado(id: number, nombre: string) {
     if (!dialog) return;
     form.setValue(dialog.campo, id as never);
-    const opcion = { value: String(id), label: nombre };
-    if (dialog.tipo === "cliente") setOpcionesClientes((prev) => [...prev, opcion]);
-    if (dialog.tipo === "camion") setOpcionesCamiones((prev) => [...prev, opcion]);
-    if (dialog.tipo === "chofer") setOpcionesChoferes((prev) => [...prev, opcion]);
-    if (dialog.tipo === "lugar") setOpcionesLugares((prev) => [...prev, opcion]);
+    agregarOpcion(dialog.tipo, id, nombre);
+    // Si se creó a mano algo que estaba en la lista de faltantes, ya no
+    // hace falta seguir ofreciéndolo en el panel.
+    setFaltantes((prev) => prev.filter((f) => f.campo !== dialog.campo));
   }
 
   const e = resultado?.extraido;
@@ -365,6 +469,58 @@ export function FormularioRevisionCpe({
               <p className="text-xs text-muted-foreground">
                 Referencia leída del QR: {resultado.referenciaQr}
               </p>
+            )}
+
+            {grupos.length > 0 && (
+              <div className="flex flex-col gap-3 rounded-md border border-amber/40 bg-amber/10 p-4">
+                <div>
+                  <h3 className="text-sm font-bold">
+                    {grupos.length === 1
+                      ? "Falta dar de alta 1 registro"
+                      : `Faltan dar de alta ${grupos.length} registros`}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    La CPE menciona estos datos y todavía no existen en el sistema. Revisá que estén
+                    bien leídos y confirmá para crearlos y dejarlos asignados al viaje.
+                  </p>
+                </div>
+
+                <ul className="flex flex-col gap-2">
+                  {grupos.map((g) => (
+                    <li
+                      key={g.huella}
+                      className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-md bg-card p-3"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-medium">{g.nombre}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {ETIQUETAS_TIPO_FALTANTE[g.tipo]}
+                          {g.documento && ` · ${g.documento}`}
+                          {" · usar como "}
+                          {g.roles.join(", ")}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button type="button" onClick={darDeAltaFaltantes} disabled={isPendingFaltantes}>
+                    {isPendingFaltantes
+                      ? "Dando de alta..."
+                      : grupos.length === 1
+                        ? "Dar de alta 1 registro"
+                        : `Dar de alta los ${grupos.length}`}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setFaltantes([])}
+                    className="text-xs text-muted-foreground hover:underline"
+                  >
+                    Los cargo a mano
+                  </button>
+                </div>
+              </div>
             )}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -461,30 +617,15 @@ export function FormularioRevisionCpe({
               />
               <CampoTexto form={form} name="dominio_tractor" label="Dominio tractor" />
               <CampoTexto form={form} name="dominio_acoplado" label="Dominio acoplado" />
-              <div className="flex flex-col gap-2">
-                <Label>Producto</Label>
-                <Controller
-                  control={form.control}
-                  name="producto_id"
-                  render={({ field }) => (
-                    <Select
-                      value={field.value != null ? String(field.value) : undefined}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Seleccionar..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {opcionesProductos.map((o) => (
-                          <SelectItem key={o.value} value={o.value}>
-                            {o.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
+              <CampoEntidadConCrear
+                form={form}
+                name="producto_id"
+                label="Producto (especie)"
+                opciones={opcionesProductos}
+                onAbrirCrear={() =>
+                  abrirCrear("producto", "Nuevo producto", e.producto_nombre ?? "", "", "producto_id")
+                }
+              />
               <CampoTexto form={form} name="km" label="Km a recorrer" tipo="number" />
               <CampoEntidadConCrear
                 form={form}

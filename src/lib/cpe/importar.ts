@@ -2,7 +2,12 @@ import { parseTextoCpe, type CpeExtraido } from "./parser";
 import { extraerTextoCpe } from "./extraer";
 import { decodificarQrCpe } from "./qr";
 import { extraerConClaude } from "./claude";
-import { buscarCoincidencias, type Coincidencias } from "./matching";
+import {
+  buscarCoincidencias,
+  detectarFaltantes,
+  type Coincidencias,
+  type EntidadFaltante,
+} from "./matching";
 
 export type FuenteExtraccionCpe = "texto" | "claude" | "manual";
 
@@ -11,6 +16,8 @@ export type ResultadoImportacionCpe = {
   fuente: FuenteExtraccionCpe;
   referenciaQr: string | null;
   coincidencias: Coincidencias;
+  /** Datos de la CPE que no existen todavía en los catálogos. */
+  faltantes: EntidadFaltante[];
 };
 
 /**
@@ -48,6 +55,7 @@ export async function procesarCpe(buffer: Buffer): Promise<ResultadoImportacionC
   }
 
   const coincidencias = await buscarCoincidencias(extraido);
+  const faltantes = detectarFaltantes(extraido, coincidencias);
 
-  return { extraido, fuente, referenciaQr, coincidencias };
+  return { extraido, fuente, referenciaQr, coincidencias, faltantes };
 }
