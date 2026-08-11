@@ -3,10 +3,25 @@ import path from "node:path";
 import { createCanvas } from "@napi-rs/canvas";
 
 const require = createRequire(import.meta.url);
-const carpetaPdfjs = path.dirname(require.resolve("pdfjs-dist/package.json"));
 
-// pdfjs exige barra normal y slash final, no separador de Windows.
-const rutaFactory = (sub: string) => path.join(carpetaPdfjs, sub).replace(/\\/g, "/") + "/";
+/**
+ * Ubica la carpeta de pdfjs-dist para poder pasarle standard_fonts/cmaps.
+ * No puede vivir en el top level del módulo: bajo Turbopack (build de
+ * producción), con pdfjs-dist como serverExternalPackages, require.resolve
+ * sobre un paquete externalizado devuelve el id numérico interno del chunk
+ * en vez de un path real, y path.dirname(numero) tira TypeError. Si eso
+ * pasara en el top level, se lleva puesta toda la Server Action al cargar
+ * el módulo, sin que ningún try/catch de más abajo llegue a atajarlo. Acá
+ * adentro, si falla, se sigue sin fuentes/cmaps en vez de romper todo.
+ */
+function rutaFactory(sub: string): string | undefined {
+  try {
+    const carpetaPdfjs = path.dirname(require.resolve("pdfjs-dist/package.json"));
+    return path.join(carpetaPdfjs, sub).replace(/\\/g, "/") + "/";
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * Renderiza la primera página del PDF a canvas (usado para leer el QR y
