@@ -358,8 +358,10 @@ export function FormularioRevisionCpe({
         setResultado(r);
         setFaltantes(r.faltantes);
         form.reset(construirValoresIniciales(r));
-      } catch {
-        toast.error("No se pudo procesar el PDF. Verificá que sea un archivo válido.");
+      } catch (err) {
+        console.error("importarCpe falló:", err);
+        const mensaje = err instanceof Error ? err.message : String(err);
+        toast.error(`No se pudo procesar el PDF: ${mensaje}`);
       }
     });
   }

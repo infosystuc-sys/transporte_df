@@ -6,6 +6,13 @@ const nextConfig: NextConfig = {
   // importación de CPE). Sin esto, el bundler de Server Components intenta
   // empaquetarlo como si fuera JS puro y falla.
   serverExternalPackages: ["@napi-rs/canvas", "pdfjs-dist"],
+  experimental: {
+    // Server Actions limitan el body a 1MB por defecto. Un PDF de CPE
+    // escaneado (en vez de generado digitalmente) puede superar eso.
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
 };
 
 export default nextConfig;
