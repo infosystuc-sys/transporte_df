@@ -2,7 +2,13 @@ import { z } from "zod";
 import { decimalOpcional, decimalRequerido, textoOpcional } from "./campos";
 import { fechaOpcional } from "./campos-fecha";
 
-const idOpcional = z.coerce.number().optional().nullable();
+// "" (select sin elegir nada) no puede llegar a z.coerce.number(): Number("")
+// es 0, así que sin este preprocesamiento un campo vacío se guardaría como
+// FK 0 en vez de quedar sin asignar.
+const vacioAIndefinido = (v: unknown) => (v === "" || v == null ? undefined : v);
+const idOpcional = z.preprocess(vacioAIndefinido, z.coerce.number().optional().nullable());
+const idRequerido = (mensaje: string) =>
+  z.preprocess(vacioAIndefinido, z.coerce.number({ error: mensaje }));
 
 export const viajeDatosGeneralesSchema = z.object({
   tiene_cpe: z.boolean().default(true),
@@ -16,7 +22,7 @@ export const viajeDatosGeneralesSchema = z.object({
   remito_nro: textoOpcional,
 
   // El cliente es siempre el flete pagador: a quien se le factura.
-  cliente_id: z.coerce.number({ error: "Elegí un cliente." }),
+  cliente_id: idRequerido("Elegí un cliente."),
   // Titular de la carta de porte y destinatario: solo estadísticos, no
   // son clientes ni se dan de alta en el catálogo.
   titular_nombre: textoOpcional,

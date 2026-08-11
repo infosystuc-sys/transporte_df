@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { unstable_rethrow, useRouter } from "next/navigation";
 import { Controller, useForm, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -165,6 +165,7 @@ function CampoEntidadConCrear({
   opciones: Opcion[];
   onAbrirCrear: () => void;
 }) {
+  const error = form.formState.errors[name]?.message as string | undefined;
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -198,6 +199,7 @@ function CampoEntidadConCrear({
           </Select>
         )}
       />
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
 }
@@ -416,12 +418,21 @@ export function FormularioRevisionCpe({
       const formData = new FormData();
       formData.set("archivo", archivo);
       formData.set("datos", JSON.stringify(valores));
-      const r = await confirmarImportacionCpe(formData);
-      if (r?.error) {
-        toast.error(r.error);
-        return;
+      try {
+        const r = await confirmarImportacionCpe(formData);
+        if (r?.error) {
+          toast.error(r.error);
+          return;
+        }
+        router.refresh();
+      } catch (err) {
+        // Deja pasar el redirect() de éxito de confirmarImportacionCpe: es
+        // una excepción de control de flujo interna de Next, no un error.
+        unstable_rethrow(err);
+        console.error("confirmarImportacionCpe falló:", err);
+        const mensaje = err instanceof Error ? err.message : String(err);
+        toast.error(`No se pudo crear el viaje: ${mensaje}`);
       }
-      router.refresh();
     });
   }
 
