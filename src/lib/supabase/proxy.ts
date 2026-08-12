@@ -32,9 +32,17 @@ export async function actualizarSesion(request: NextRequest) {
   );
 
   // getClaims valida la firma del JWT contra las claves públicas del
-  // proyecto sin ida y vuelta a la red: es el chequeo "optimista"
-  // recomendado por Supabase para usar en el proxy.
-  const { data } = await supabase.auth.getClaims();
+  // proyecto. Solo evita la ida y vuelta a la red cuando el JWKS ya está
+  // en cache (memoria del proceso) y no venció: si no, el propio SDK de
+  // Supabase hace fetch a /.well-known/jwks.json sin timeout — en una
+  // instancia serverless fría (cache vacío) eso puede colgar el proxy
+  // hasta el límite de la función (300s) y tumbar TODAS las rutas, login
+  // incluido. Con el timeout acá, ante un problema de red se cae a "no
+  // autenticado" (redirige a /login) en vez de colgar la respuesta.
+  const data = await Promise.race([
+    supabase.auth.getClaims().then((r) => r.data),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+  ]);
   const estaAutenticado = data?.claims != null;
 
   const { pathname } = request.nextUrl;
