@@ -197,7 +197,7 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
             choferes: filasChoferes,
             productos: filasProductos,
             lugares: filasLugares,
-            alGuardar: async (valores) => actualizarDatosGenerales(id, valores),
+            alGuardar: actualizarDatosGenerales.bind(null, id),
           }}
           carga={{
             viajeId: id,
