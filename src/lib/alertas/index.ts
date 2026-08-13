@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { and, eq, gt, inArray, isNotNull, isNull, lte, or } from "drizzle-orm";
 import { db } from "@/db";
 import { camiones, choferes, clientes, configuracion, viajes } from "@/db/schema";
@@ -5,13 +6,16 @@ import { camiones, choferes, clientes, configuracion, viajes } from "@/db/schema
 const HORAS_CTG_POR_DEFECTO = 24;
 const DIAS_VENCIMIENTOS_POR_DEFECTO = 30;
 
-async function obtenerUmbrales() {
+// cache() de React deduplica por render: las tres alertas que la llaman
+// (CTG, flota, choferes) se disparan juntas vía Promise.all en el
+// dashboard, y sin esto cada una repetía la misma consulta a configuracion.
+const obtenerUmbrales = cache(async () => {
   const [config] = await db.select().from(configuracion).limit(1);
   return {
     horasCtg: config?.alerta_ctg_horas ?? HORAS_CTG_POR_DEFECTO,
     diasVencimientos: config?.alerta_vencimientos_dias ?? DIAS_VENCIMIENTOS_POR_DEFECTO,
   };
-}
+});
 
 // Estados en los que la CPE/CTG todavía tiene que estar vigente para
 // circular: una vez descargado, su vencimiento deja de ser un riesgo.
