@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/layout/sidebar";
 import { UserMenu } from "@/components/layout/user-menu";
+import { MenuMobile } from "@/components/layout/menu-mobile";
 
 // Todo lo que cuelga de este layout depende de la sesión y hace consultas
 // reales a Supabase por request: nunca debe intentar generarse como
@@ -30,11 +31,16 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-screen flex-1 flex-col">
       <header className="flex h-14 shrink-0 items-center justify-between border-b bg-card px-4">
-        <span className="text-[16.5px] font-extrabold tracking-[-0.01em]">Gestión de Fletes</span>
+        <div className="flex items-center gap-2">
+          <MenuMobile />
+          <span className="text-[16.5px] font-extrabold tracking-[-0.01em]">Gestión de Fletes</span>
+        </div>
         <UserMenu email={user.email ?? ""} />
       </header>
       <div className="flex flex-1">
-        <Sidebar />
+        <div className="hidden md:block">
+          <Sidebar />
+        </div>
         <main className="flex-1 p-6">{children}</main>
       </div>
     </div>

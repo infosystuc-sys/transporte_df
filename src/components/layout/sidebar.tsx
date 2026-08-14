@@ -9,7 +9,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-56 shrink-0 bg-sidebar md:block">
+    <aside className="h-full w-full bg-sidebar md:w-56 md:shrink-0">
       <nav className="flex flex-col gap-1 p-3">
         {navItems.map((item) => {
           const activo = pathname === item.href;
