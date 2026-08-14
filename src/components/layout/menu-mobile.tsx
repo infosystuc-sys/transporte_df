@@ -16,9 +16,9 @@ export function MenuMobile() {
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-64 p-0">
+      <SheetContent side="left" className="data-[side=left]:w-64 p-0">
         <SheetTitle className="sr-only">Navegación</SheetTitle>
-        <div onClick={() => setAbierto(false)}>
+        <div onClick={() => setAbierto(false)} className="flex-1">
           <Sidebar />
         </div>
       </SheetContent>
