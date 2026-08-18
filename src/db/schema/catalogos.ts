@@ -35,6 +35,9 @@ export const configuracion = pgTable(
     porcentaje_chofer_default: porcentaje("porcentaje_chofer_default").default("15"),
     alerta_ctg_horas: integer("alerta_ctg_horas").default(24),
     alerta_vencimientos_dias: integer("alerta_vencimientos_dias").default(30),
+    // Umbral de diferencia % entre valor_tarifa (real) y
+    // valor_tarifa_declarada (documento) que dispara la alerta.
+    alerta_diferencia_tarifa_pct: porcentaje("alerta_diferencia_tarifa_pct").default("5"),
   },
   () => [accesoTotalAutenticados("configuracion")]
 ).enableRLS();

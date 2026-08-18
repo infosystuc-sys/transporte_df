@@ -17,5 +17,6 @@ export const configuracionSchema = z.object({
   porcentaje_chofer_default: decimalOpcional(),
   alerta_ctg_horas: z.coerce.number().int().optional().nullable(),
   alerta_vencimientos_dias: z.coerce.number().int().optional().nullable(),
+  alerta_diferencia_tarifa_pct: decimalOpcional(),
 });
 export type ConfiguracionInput = z.input<typeof configuracionSchema>;

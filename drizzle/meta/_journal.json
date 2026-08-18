@@ -57,6 +57,13 @@
       "when": 1787065981104,
       "tag": "0007_valor_tarifa_declarada",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787066273684,
+      "tag": "0008_alerta_diferencia_tarifa",
+      "breakpoints": true
     }
   ]
 }

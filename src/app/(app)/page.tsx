@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   alertasCobrosVencidos,
   alertasCtgPorVencer,
+  alertasDiferenciaTarifa,
   alertasMerma,
   alertasVencimientosChoferes,
   alertasVencimientosFlota,
@@ -31,6 +32,7 @@ export default async function DashboardPage() {
     vencChoferes,
     merma,
     cobrosVencidos,
+    diferenciaTarifa,
   ] = await Promise.all([
     db
       .select({ estado: viajes.estado, cantidad: sql<number>`count(*)::int` })
@@ -66,6 +68,7 @@ export default async function DashboardPage() {
     alertasVencimientosChoferes(),
     alertasMerma(),
     alertasCobrosVencidos(),
+    alertasDiferenciaTarifa(),
   ]);
 
   const totalPendienteCobro = Number(filaPendienteCobro[0]?.total ?? 0);
@@ -104,7 +107,12 @@ export default async function DashboardPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Alertas activas</CardTitle>
           </CardHeader>
           <CardContent className="text-[20px] font-extrabold">
-            {ctg.length + vencFlota.length + vencChoferes.length + merma.length + cobrosVencidos.length}
+            {ctg.length +
+              vencFlota.length +
+              vencChoferes.length +
+              merma.length +
+              cobrosVencidos.length +
+              diferenciaTarifa.length}
           </CardContent>
         </Card>
       </div>
@@ -158,6 +166,15 @@ export default async function DashboardPage() {
             href: `/viajes/${a.viaje_id}`,
             texto: `#${a.numero} — ${a.cliente_nombre ?? "—"}`,
             detalle: a.merma_pct ? `${Number(a.merma_pct).toFixed(2)}%` : "—",
+          }))}
+        />
+        <TarjetaAlertas
+          titulo="Tarifa real vs. declarada"
+          vacio="Sin diferencias entre tarifa real y declarada."
+          items={diferenciaTarifa.map((a) => ({
+            href: `/viajes/${a.viaje_id}`,
+            texto: `#${a.numero} — ${a.cliente_nombre ?? "—"}`,
+            detalle: `${Number(a.diferencia_pct).toFixed(2)}%`,
           }))}
         />
       </div>

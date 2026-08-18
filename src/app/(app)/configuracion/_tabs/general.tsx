@@ -95,6 +95,11 @@ export function TabGeneral({ id, valoresIniciales }: { id: number; valoresInicia
             label="Avisar vencimientos de flota/choferes con (días de anticipación)"
             tipo="number"
           />
+          <CampoTexto
+            form={form}
+            name="alerta_diferencia_tarifa_pct"
+            label="Avisar diferencia entre tarifa real y declarada desde (%)"
+          />
         </div>
       </div>
 

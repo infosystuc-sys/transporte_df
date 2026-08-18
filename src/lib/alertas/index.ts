@@ -1,19 +1,23 @@
 import { cache } from "react";
-import { and, eq, gt, inArray, isNotNull, isNull, lte, or } from "drizzle-orm";
+import { and, eq, gt, inArray, isNotNull, isNull, lte, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { camiones, choferes, clientes, configuracion, viajes } from "@/db/schema";
 
 const HORAS_CTG_POR_DEFECTO = 24;
 const DIAS_VENCIMIENTOS_POR_DEFECTO = 30;
+const DIFERENCIA_TARIFA_PCT_POR_DEFECTO = 5;
 
-// cache() de React deduplica por render: las tres alertas que la llaman
-// (CTG, flota, choferes) se disparan juntas vía Promise.all en el
-// dashboard, y sin esto cada una repetía la misma consulta a configuracion.
+// cache() de React deduplica por render: las alertas que la llaman (CTG,
+// flota, choferes, diferencia de tarifa) se disparan juntas vía Promise.all
+// en el dashboard, y sin esto cada una repetía la misma consulta a
+// configuracion.
 const obtenerUmbrales = cache(async () => {
   const [config] = await db.select().from(configuracion).limit(1);
   return {
     horasCtg: config?.alerta_ctg_horas ?? HORAS_CTG_POR_DEFECTO,
     diasVencimientos: config?.alerta_vencimientos_dias ?? DIAS_VENCIMIENTOS_POR_DEFECTO,
+    diferenciaTarifaPct:
+      config?.alerta_diferencia_tarifa_pct ?? String(DIFERENCIA_TARIFA_PCT_POR_DEFECTO),
   };
 });
 
@@ -157,4 +161,42 @@ export async function alertasCobrosVencidos(): Promise<AlertaCobroVencido[]> {
         or(isNull(viajes.saldo_pendiente), gt(viajes.saldo_pendiente, "0"))
       )
     ) as Promise<AlertaCobroVencido[]>;
+}
+
+export type AlertaDiferenciaTarifa = {
+  viaje_id: number;
+  numero: number;
+  valor_tarifa: string | null;
+  valor_tarifa_declarada: string | null;
+  diferencia_pct: string;
+  cliente_nombre: string | null;
+};
+
+/**
+ * Diferencia % entre lo que se cobra de verdad (valor_tarifa) y lo que
+ * dice la documentación (valor_tarifa_declarada), relativa al valor
+ * declarado. nullif evita dividir por cero si se cargó "0" como declarado.
+ */
+export async function alertasDiferenciaTarifa(): Promise<AlertaDiferenciaTarifa[]> {
+  const { diferenciaTarifaPct } = await obtenerUmbrales();
+  const diferenciaPct = sql<string>`abs(${viajes.valor_tarifa} - ${viajes.valor_tarifa_declarada}) / nullif(${viajes.valor_tarifa_declarada}, 0) * 100`;
+
+  return db
+    .select({
+      viaje_id: viajes.id,
+      numero: viajes.numero,
+      valor_tarifa: viajes.valor_tarifa,
+      valor_tarifa_declarada: viajes.valor_tarifa_declarada,
+      diferencia_pct: diferenciaPct.as("diferencia_pct"),
+      cliente_nombre: clientes.razon_social,
+    })
+    .from(viajes)
+    .leftJoin(clientes, eq(viajes.cliente_id, clientes.id))
+    .where(
+      and(
+        isNotNull(viajes.valor_tarifa),
+        isNotNull(viajes.valor_tarifa_declarada),
+        sql`${diferenciaPct} > ${diferenciaTarifaPct}`
+      )
+    ) as Promise<AlertaDiferenciaTarifa[]>;
 }

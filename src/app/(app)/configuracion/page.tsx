@@ -105,6 +105,7 @@ export default async function ConfiguracionPage() {
                 porcentaje_chofer_default: config.porcentaje_chofer_default ?? undefined,
                 alerta_ctg_horas: config.alerta_ctg_horas ?? undefined,
                 alerta_vencimientos_dias: config.alerta_vencimientos_dias ?? undefined,
+                alerta_diferencia_tarifa_pct: config.alerta_diferencia_tarifa_pct ?? undefined,
               }}
             />
           )}

@@ -1,0 +1,1 @@
+ALTER TABLE "configuracion" ADD COLUMN "alerta_diferencia_tarifa_pct" numeric(6, 3) DEFAULT '5';
