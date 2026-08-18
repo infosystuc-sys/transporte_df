@@ -38,7 +38,7 @@ type FilaGasoil = {
   fecha: Date;
   litros: string;
   importe: string;
-  modalidad: "cuenta_corriente" | "pagado_por_chofer";
+  modalidad: "cuenta_corriente" | "pagado_por_chofer" | "surtidor_propio";
 };
 
 const opcionesPagadoPor = [

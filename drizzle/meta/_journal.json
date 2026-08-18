@@ -43,6 +43,13 @@
       "when": 1786402591972,
       "tag": "0005_curved_frightful_four",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787065556528,
+      "tag": "0006_modalidad_gasoil_surtidor_propio",
+      "breakpoints": true
     }
   ]
 }

@@ -21,7 +21,7 @@ type Fila = {
   precio_litro: string | null;
   importe: string;
   odometro: number;
-  modalidad: "cuenta_corriente" | "pagado_por_chofer";
+  modalidad: "cuenta_corriente" | "pagado_por_chofer" | "surtidor_propio";
   rendido: boolean | null;
   comprobante_nro: string | null;
   observaciones: string | null;
@@ -33,6 +33,7 @@ const formatoFecha = new Intl.DateTimeFormat("es-AR", { timeZone: "America/Argen
 const opcionesModalidad = [
   { value: "cuenta_corriente", label: "Cuenta corriente (empresa)" },
   { value: "pagado_por_chofer", label: "Pagado por el chofer" },
+  { value: "surtidor_propio", label: "Surtidor propio" },
 ];
 
 const valoresPorDefecto: CargaGasoilInput = {

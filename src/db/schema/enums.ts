@@ -79,6 +79,7 @@ export const tipoAdjuntoEnum = pgEnum("tipo_adjunto", [
 export const modalidadGasoilEnum = pgEnum("modalidad_gasoil", [
   "cuenta_corriente",
   "pagado_por_chofer",
+  "surtidor_propio",
 ]);
 
 export const tipoMovimientoChoferEnum = pgEnum("tipo_movimiento_chofer", [

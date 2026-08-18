@@ -14,7 +14,7 @@ export const cargaGasoilSchema = z.object({
   precio_litro: decimalOpcional(),
   importe: decimalRequerido(),
   odometro: z.coerce.number({ error: "Ingresá el odómetro." }).int(),
-  modalidad: z.enum(["cuenta_corriente", "pagado_por_chofer"], {
+  modalidad: z.enum(["cuenta_corriente", "pagado_por_chofer", "surtidor_propio"], {
     error: "Elegí la modalidad de pago.",
   }),
   rendido: z.boolean().default(false),

@@ -1,0 +1,1 @@
+ALTER TYPE "public"."modalidad_gasoil" ADD VALUE 'surtidor_propio';
