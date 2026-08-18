@@ -73,6 +73,9 @@ export const viajeTarifaSchema = z.object({
     .optional()
     .nullable(),
   valor_tarifa: decimalOpcional(),
+  // Lo que dice la documentación (ej. la CPE), distinto de valor_tarifa
+  // (lo que se cobra de verdad) — siempre se carga a mano.
+  valor_tarifa_declarada: decimalOpcional(),
   base_calculo: z.enum(["origen", "destino"]).optional().nullable(),
 });
 export type ViajeTarifaInput = z.input<typeof viajeTarifaSchema>;

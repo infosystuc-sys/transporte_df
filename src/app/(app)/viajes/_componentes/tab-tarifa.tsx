@@ -144,6 +144,11 @@ export function TabTarifa({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <CampoSelect form={form} name="modalidad_tarifa" label="Modalidad" opciones={opcionesModalidad} />
           <CampoTexto form={form} name="valor_tarifa" label="Valor de la tarifa ($)" />
+          <CampoTexto
+            form={form}
+            name="valor_tarifa_declarada"
+            label="Tarifa declarada (según documentación)"
+          />
           <CampoSelect form={form} name="base_calculo" label="Base de cálculo" opciones={opcionesBase} />
         </div>
         {usaElOtroNeto && (

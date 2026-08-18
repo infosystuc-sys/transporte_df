@@ -107,6 +107,9 @@ export const viajes = pgTable(
     // Tarifa e importes
     modalidad_tarifa: modalidadTarifaEnum("modalidad_tarifa"),
     valor_tarifa: dinero("valor_tarifa"),
+    // Lo que dice la documentación (ej. lo extraído de la CPE), separado
+    // de valor_tarifa (lo que efectivamente se cobra, siempre carga manual).
+    valor_tarifa_declarada: dinero("valor_tarifa_declarada"),
     tarifa_id: fkBigint("tarifa_id").references(() => tarifas.id, { onDelete: "set null" }),
     base_calculo: baseCalculoEnum("base_calculo"),
     importe_flete: dinero("importe_flete"),

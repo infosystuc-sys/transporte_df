@@ -1,0 +1,1 @@
+ALTER TABLE "viajes" ADD COLUMN "valor_tarifa_declarada" numeric(14, 2);

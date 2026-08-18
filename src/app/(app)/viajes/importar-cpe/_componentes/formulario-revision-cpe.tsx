@@ -147,7 +147,11 @@ function construirValoresIniciales(resultado: ResultadoImportacionCpe): ViajeDes
     merma_precio_unitario: undefined,
 
     modalidad_tarifa: undefined,
-    valor_tarifa: numStr(e.valor_tarifa),
+    // Lo que trae la CPE es lo declarado en el documento, no necesariamente
+    // lo que se termina cobrando — valor_tarifa (el real) queda vacío para
+    // cargarlo a mano.
+    valor_tarifa: numStr(null),
+    valor_tarifa_declarada: numStr(e.valor_tarifa),
     base_calculo: undefined,
   };
 }
@@ -686,6 +690,11 @@ export function FormularioRevisionCpe({
                 />
               </div>
               <CampoTexto form={form} name="valor_tarifa" label="Valor de la tarifa ($)" />
+              <CampoTexto
+                form={form}
+                name="valor_tarifa_declarada"
+                label="Tarifa declarada (según documentación)"
+              />
               <div className="flex flex-col gap-2">
                 <Label>Base de cálculo</Label>
                 <Controller

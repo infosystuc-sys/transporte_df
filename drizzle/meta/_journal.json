@@ -50,6 +50,13 @@
       "when": 1787065556528,
       "tag": "0006_modalidad_gasoil_surtidor_propio",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787065981104,
+      "tag": "0007_valor_tarifa_declarada",
+      "breakpoints": true
     }
   ]
 }

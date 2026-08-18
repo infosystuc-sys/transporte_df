@@ -233,6 +233,7 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
             valoresIniciales: {
               modalidad_tarifa: viaje.modalidad_tarifa ?? undefined,
               valor_tarifa: viaje.valor_tarifa ?? undefined,
+              valor_tarifa_declarada: viaje.valor_tarifa_declarada ?? undefined,
               base_calculo: viaje.base_calculo ?? undefined,
             },
             netoOrigen: viaje.neto_origen,
