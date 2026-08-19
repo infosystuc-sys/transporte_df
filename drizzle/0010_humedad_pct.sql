@@ -1,0 +1,1 @@
+ALTER TABLE "viajes" ADD COLUMN "humedad_pct" numeric(6, 3);

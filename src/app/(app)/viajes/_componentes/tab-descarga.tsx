@@ -73,6 +73,7 @@ export function TabDescarga({
         <CampoPeso form={form} name="bruto_destino" label="Peso bruto (destino)" />
         <CampoPeso form={form} name="tara_destino" label="Tara (destino)" />
         <CampoPeso form={form} name="neto_destino" label="Peso neto (destino)" />
+        <CampoTexto form={form} name="humedad_pct" label="Humedad (%)" />
       </div>
 
       {merma.merma_kg != null && merma.merma_pct != null ? (

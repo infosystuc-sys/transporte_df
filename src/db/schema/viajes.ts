@@ -98,6 +98,7 @@ export const viajes = pgTable(
     neto_destino: pesoKg("neto_destino"),
     merma_kg: pesoKg("merma_kg"),
     merma_pct: porcentaje("merma_pct"),
+    humedad_pct: porcentaje("humedad_pct"),
     // Snapshot de la tolerancia vigente al momento del cálculo.
     tolerancia_pct_aplicada: porcentaje("tolerancia_pct_aplicada"),
     merma_excede_tolerancia: boolean("merma_excede_tolerancia").notNull().default(false),

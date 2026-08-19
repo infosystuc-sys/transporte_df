@@ -254,6 +254,7 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
               bruto_destino: viaje.bruto_destino ?? undefined,
               tara_destino: viaje.tara_destino ?? undefined,
               neto_destino: viaje.neto_destino ?? undefined,
+              humedad_pct: viaje.humedad_pct ?? undefined,
               merma_precio_unitario: viaje.merma_precio_unitario ?? undefined,
             },
             merma: {
