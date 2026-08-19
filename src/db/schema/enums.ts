@@ -8,6 +8,11 @@ export const estadoViajeEnum = pgEnum("estado_viaje", [
   "facturado",
   "cobrado",
   "liquidado",
+  // Estado terminal alternativo (destino rechazó la carga) — no forma
+  // parte de la secuencia lineal planificado→...→liquidado, así que no
+  // está en ESTADOS_ORDEN ni en el stepper. Ver rechazarViaje() en
+  // src/app/(app)/viajes/actions.ts.
+  "rechazado",
 ]);
 
 export const tipoCargaEnum = pgEnum("tipo_carga", ["grano", "otro"]);

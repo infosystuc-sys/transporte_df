@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
@@ -27,6 +28,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { formatoFechaInput } from "@/lib/schemas/campos-fecha";
 import { urlFirmadaAdjunto } from "@/lib/supabase/storage";
 import { StepperEstado } from "../_componentes/stepper-estado";
+import { BotonRechazar } from "../_componentes/boton-rechazar";
 import { TabsViaje } from "./_componentes/tabs-viaje";
 import { actualizarDatosGenerales } from "../actions";
 import { totalAdicionalesEmpresa } from "../_lib/flete";
@@ -73,6 +75,8 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
     filasImputaciones,
     filasAdjuntos,
     filaChoferAsignado,
+    filaViajeOriginal,
+    filaViajeReemplazante,
   ] = await Promise.all([
     db
       .select({ id: clientes.id, nombre: clientes.razon_social })
@@ -123,8 +127,22 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
           .from(choferes)
           .where(eq(choferes.id, viaje.chofer_id))
       : Promise.resolve([]),
+    // Viaje original que este reemplaza (si este viaje nació de un rechazo).
+    viaje.viaje_reemplaza_a_id
+      ? db
+          .select({ id: viajes.id, numero: viajes.numero })
+          .from(viajes)
+          .where(eq(viajes.id, viaje.viaje_reemplaza_a_id))
+      : Promise.resolve([]),
+    // Link inverso: el viaje que reemplazó a este (si este fue rechazado).
+    db
+      .select({ id: viajes.id, numero: viajes.numero })
+      .from(viajes)
+      .where(eq(viajes.viaje_reemplaza_a_id, id)),
   ]);
   const choferAsignado = filaChoferAsignado[0] ?? null;
+  const viajeOriginal = filaViajeOriginal[0] ?? null;
+  const viajeReemplazante = filaViajeReemplazante[0] ?? null;
 
   const filasAdjuntosConUrl = await Promise.all(
     filasAdjuntos.map(async (a) => ({
@@ -143,11 +161,29 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Viaje #{viaje.numero}</h1>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Viaje #{viaje.numero}</h1>
+        </div>
+        {viajeOriginal && (
+          <Link href={`/viajes/${viajeOriginal.id}`} className="text-sm text-primary hover:underline">
+            Reemplaza al viaje #{viajeOriginal.numero}
+          </Link>
+        )}
+        {viajeReemplazante && (
+          <Link
+            href={`/viajes/${viajeReemplazante.id}`}
+            className="text-sm text-primary hover:underline"
+          >
+            Reemplazado por el viaje #{viajeReemplazante.numero}
+          </Link>
+        )}
       </div>
 
-      <StepperEstado viajeId={viaje.id} estadoActual={viaje.estado} facturaNroActual={viaje.factura_nro} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <StepperEstado viajeId={viaje.id} estadoActual={viaje.estado} facturaNroActual={viaje.factura_nro} />
+        <BotonRechazar viajeId={viaje.id} estadoActual={viaje.estado} />
+      </div>
 
       {viaje.merma_excede_tolerancia && (
         <Alert variant="destructive">

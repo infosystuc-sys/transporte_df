@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,7 @@ const ETIQUETAS: Record<EstadoViaje, string> = {
   facturado: "Facturado",
   cobrado: "Cobrado",
   liquidado: "Liquidado",
+  rechazado: "Rechazado",
 };
 
 export function StepperEstado({
@@ -42,6 +44,15 @@ export function StepperEstado({
   const [isPending, startTransition] = useTransition();
   const [pidiendoFactura, setPidiendoFactura] = useState(false);
   const [facturaNro, setFacturaNro] = useState(facturaNroActual ?? "");
+
+  // Estado terminal alternativo: no es un paso de ESTADOS_ORDEN, así que no
+  // tiene sentido ofrecer Retroceder/Avanzar ni resaltar ningún paso de la
+  // secuencia lineal como "actual". Sale antes de indexOf: "rechazado"
+  // nunca está en ESTADOS_ORDEN, así que ni vale la pena buscarlo ahí.
+  if (estadoActual === "rechazado") {
+    return <Badge variant="destructive">{ETIQUETAS.rechazado}</Badge>;
+  }
+
   const indiceActual = ESTADOS.indexOf(estadoActual);
 
   function ejecutar(estado: EstadoViaje, nro?: string) {

@@ -64,6 +64,13 @@
       "when": 1787066273684,
       "tag": "0008_alerta_diferencia_tarifa",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787148546399,
+      "tag": "0009_viaje_rechazado",
+      "breakpoints": true
     }
   ]
 }

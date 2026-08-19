@@ -1,4 +1,4 @@
-import { boolean, index, integer, pgTable, text } from "drizzle-orm/pg-core";
+import { boolean, index, integer, pgTable, text, type AnyPgColumn } from "drizzle-orm/pg-core";
 import {
   accesoTotalAutenticados,
   dinero,
@@ -140,6 +140,14 @@ export const viajes = pgTable(
 
     // Preparado para contrafletes/retorno — sin funcionalidad todavía.
     viaje_relacionado_id: fkBigint("viaje_relacionado_id"),
+    // Cuando el destino rechaza la carga, el viaje original queda cerrado
+    // en estado "rechazado" (terminal, no se reabre) y este campo, en el
+    // viaje NUEVO que se crea para continuar la operación (ej. llevar la
+    // carga a reacondicionar), apunta al viaje rechazado que reemplaza.
+    viaje_reemplaza_a_id: fkBigint("viaje_reemplaza_a_id").references(
+      (): AnyPgColumn => viajes.id,
+      { onDelete: "set null" }
+    ),
 
     observaciones: text("observaciones"),
     // Marca los viajes cargados por el importador de Excel (Fase 13) para
@@ -162,6 +170,7 @@ export const viajes = pgTable(
     index("viajes_condicion_pago_id_idx").on(t.condicion_pago_id),
     index("viajes_liquidacion_id_idx").on(t.liquidacion_id),
     index("viajes_estado_idx").on(t.estado),
+    index("viajes_reemplaza_a_id_idx").on(t.viaje_reemplaza_a_id),
   ]
 ).enableRLS();
 

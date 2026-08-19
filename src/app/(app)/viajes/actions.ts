@@ -53,6 +53,25 @@ export async function crearViaje(valores: ViajeDatosGeneralesInput) {
   redirect(`/viajes/${viaje.id}`);
 }
 
+/**
+ * Igual que crearViaje, pero deja el viaje nuevo marcado como reemplazo del
+ * que se rechazó (ver rechazarViaje). viaje_reemplaza_a_id no es un campo
+ * del formulario de datos generales, así que se recibe aparte y no pasa
+ * por viajeDatosGeneralesSchema.
+ */
+export async function crearViajeReemplazo(
+  reemplazaAId: number,
+  valores: ViajeDatosGeneralesInput
+) {
+  const datos = viajeDatosGeneralesSchema.parse(valores);
+  const [viaje] = await db
+    .insert(viajes)
+    .values({ ...datos, viaje_reemplaza_a_id: reemplazaAId })
+    .returning({ id: viajes.id });
+  revalidatePath("/viajes");
+  redirect(`/viajes/${viaje.id}`);
+}
+
 export async function actualizarDatosGenerales(
   id: number,
   valores: ViajeDatosGeneralesInput
@@ -178,6 +197,33 @@ export async function cambiarEstadoViaje(
     .update(viajes)
     .set({ estado: nuevoEstado, actualizado_en: new Date() })
     .where(eq(viajes.id, id));
+  revalidatePath(rutaViaje(id));
+  revalidatePath("/viajes");
+}
+
+/**
+ * El destino rechazó la carga: el viaje queda cerrado en un estado
+ * terminal alternativo (no forma parte de la secuencia lineal de
+ * cambiarEstadoViaje, y no se reabre ni se reintenta — la operación sigue
+ * en un viaje nuevo, ver crearViajeReemplazo). Deja registrado el motivo
+ * como una contingencia más, reusando el campo descripcion existente.
+ */
+export async function rechazarViaje(
+  id: number,
+  motivo: string
+): Promise<{ error?: string } | void> {
+  const descripcion = motivo.trim();
+  if (!descripcion) return { error: "Ingresá el motivo del rechazo." };
+
+  await db
+    .update(viajes)
+    .set({ estado: "rechazado", actualizado_en: new Date() })
+    .where(eq(viajes.id, id));
+  await db.insert(viajeContingencias).values({
+    viaje_id: id,
+    descripcion,
+    fecha: new Date(),
+  });
   revalidatePath(rutaViaje(id));
   revalidatePath("/viajes");
 }

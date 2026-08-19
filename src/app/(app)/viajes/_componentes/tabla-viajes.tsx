@@ -36,6 +36,7 @@ const ETIQUETAS_ESTADO: Record<EstadoViaje, string> = {
   facturado: "Facturado",
   cobrado: "Cobrado",
   liquidado: "Liquidado",
+  rechazado: "Rechazado",
 };
 
 function formatoFechaCorta(f: Date | null) {
@@ -150,7 +151,9 @@ export function TablaViajes({
       ),
       cell: ({ row }) => (
         <div className="flex items-center gap-1.5">
-          <Badge variant="outline">{ETIQUETAS_ESTADO[row.original.estado]}</Badge>
+          <Badge variant={row.original.estado === "rechazado" ? "destructive" : "outline"}>
+            {ETIQUETAS_ESTADO[row.original.estado]}
+          </Badge>
           {row.original.merma_excede_tolerancia && <Badge variant="destructive">Merma</Badge>}
         </div>
       ),

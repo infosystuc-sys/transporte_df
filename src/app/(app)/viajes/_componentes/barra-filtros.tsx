@@ -24,6 +24,7 @@ const ESTADOS: { value: string; label: string }[] = [
   { value: "facturado", label: "Facturado" },
   { value: "cobrado", label: "Cobrado" },
   { value: "liquidado", label: "Liquidado" },
+  { value: "rechazado", label: "Rechazado" },
 ];
 
 const CAMPOS_TEXTO = ["q", "fecha_desde", "fecha_hasta"] as const;

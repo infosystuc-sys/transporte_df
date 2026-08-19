@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { and, eq, gt, inArray, isNotNull, isNull, lte, or, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, isNotNull, isNull, lte, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { camiones, choferes, clientes, configuracion, viajes } from "@/db/schema";
 
@@ -130,7 +130,15 @@ export async function alertasMerma(): Promise<AlertaMerma[]> {
     })
     .from(viajes)
     .leftJoin(clientes, eq(viajes.cliente_id, clientes.id))
-    .where(and(eq(viajes.merma_excede_tolerancia, true), eq(viajes.liquidado, false)));
+    .where(
+      and(
+        eq(viajes.merma_excede_tolerancia, true),
+        eq(viajes.liquidado, false),
+        // Un viaje rechazado queda cerrado — su merma (si llegó a
+        // calcularse antes del rechazo) ya no es algo para hacer seguimiento.
+        ne(viajes.estado, "rechazado")
+      )
+    );
 }
 
 export type AlertaCobroVencido = {
