@@ -1,12 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AbmCatalogoSimple } from "@/components/catalogos/abm-catalogo-simple";
 import { CampoBooleano, CampoSelect, CampoTexto } from "@/components/catalogos/campos-formulario";
 import { Badge } from "@/components/ui/badge";
+import { BotonCargarIA } from "@/lib/comprobantes/boton-cargar-ia";
 import { cargaGasoilSchema, type CargaGasoilInput } from "@/lib/schemas/gasoil";
 import { formatoFechaInput } from "@/lib/schemas/campos-fecha";
-import { actualizarCargaGasoil, crearCargaGasoil, eliminarCargaGasoil } from "../actions";
+import {
+  actualizarCargaGasoil,
+  crearCargaGasoil,
+  crearCargaGasoilConAdjunto,
+  eliminarCargaGasoil,
+} from "../actions";
 
 type Opcion = { id: number; nombre: string };
 
@@ -66,6 +73,22 @@ export function GestorGasoil({
   const opciones = (lista: Opcion[]) => lista.map((o) => ({ value: String(o.id), label: o.nombre }));
   const nombreCamion = (id: number) => camiones.find((c) => c.id === id)?.nombre ?? "—";
 
+  // El archivo de "Cargar por IA" se guarda acá (no en el form) hasta el
+  // submit final: camion_id y odómetro siempre se completan a mano, así
+  // que el alta real recién pasa cuando el usuario confirma el formulario
+  // ya precargado, no en el momento en que sube el comprobante.
+  const [archivoIA, setArchivoIA] = useState<File | null>(null);
+
+  async function crearConPosibleAdjunto(valores: CargaGasoilInput) {
+    if (!archivoIA) return crearCargaGasoil(valores);
+    const formData = new FormData();
+    formData.set("archivo", archivoIA);
+    formData.set("datos", JSON.stringify(valores));
+    const resultado = await crearCargaGasoilConAdjunto(formData);
+    setArchivoIA(null);
+    return resultado;
+  }
+
   return (
     <AbmCatalogoSimple<Fila, CargaGasoilInput>
       titulo="carga de gasoil"
@@ -114,6 +137,29 @@ export function GestorGasoil({
       ]}
       campos={(form) => (
         <>
+          <div className="flex flex-col gap-1 sm:col-span-2">
+            <BotonCargarIA
+              onExtraido={(archivo, datos) => {
+                setArchivoIA(archivo);
+                form.reset({
+                  ...form.getValues(),
+                  fecha: (datos.fecha
+                    ? formatoFechaInput(datos.fecha)
+                    : form.getValues("fecha")) as unknown as Date,
+                  litros: datos.litros != null ? String(datos.litros) : form.getValues("litros"),
+                  importe:
+                    datos.importe_total != null
+                      ? String(datos.importe_total)
+                      : form.getValues("importe"),
+                  comprobante_nro: datos.comprobante_nro ?? form.getValues("comprobante_nro"),
+                });
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              Precarga litros, importe, fecha y N° de comprobante. Camión y odómetro siempre se
+              completan a mano.
+            </p>
+          </div>
           <CampoTexto form={form} name="fecha" label="Fecha" tipo="date" />
           <CampoSelect form={form} name="camion_id" label="Camión" opciones={opciones(camiones)} />
           <CampoSelect form={form} name="chofer_id" label="Chofer" opciones={opciones(choferes)} />
@@ -133,9 +179,10 @@ export function GestorGasoil({
           <CampoTexto form={form} name="observaciones" label="Observaciones" textarea />
         </>
       )}
-      crear={crearCargaGasoil}
+      crear={crearConPosibleAdjunto}
       actualizar={actualizarCargaGasoil}
       eliminar={eliminarCargaGasoil}
+      onAbrir={() => setArchivoIA(null)}
     />
   );
 }

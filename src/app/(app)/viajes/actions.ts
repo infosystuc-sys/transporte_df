@@ -246,17 +246,66 @@ export async function eliminarContingencia(
   revalidatePath(rutaViaje(viajeId));
 }
 
+/**
+ * Sube el comprobante de un gasto/adicional/carga de gasoil como adjunto
+ * del viaje. Se usa desde las variantes "con adjunto" de crearAdicional y
+ * crearGasto — a diferencia de gasoil (que sí tiene su propia entidad
+ * "carga_gasoil" en entidad_adjunto), acá no hay una entidad específica
+ * para "viaje_gasto"/"viaje_adicional", así que el adjunto queda a nivel
+ * del viaje completo, igual que el resto de sus adjuntos.
+ */
+async function adjuntarComprobante(viajeId: number, archivo: File) {
+  const buffer = Buffer.from(await archivo.arrayBuffer());
+  const rutaStorage = `viaje/${viajeId}/${randomUUID()}-${archivo.name}`;
+  await subirAdjunto(rutaStorage, buffer, archivo.type || "application/octet-stream");
+  await db.insert(adjuntos).values({
+    entidad: "viaje",
+    entidad_id: viajeId,
+    tipo: "comprobante",
+    nombre_archivo: archivo.name,
+    storage_path: rutaStorage,
+  });
+}
+
+function archivoYDatosDeFormData<T>(formData: FormData): { archivo: File; datos: T } | { error: string } {
+  const archivo = formData.get("archivo");
+  const datosJson = formData.get("datos");
+  if (!(archivo instanceof File) || typeof datosJson !== "string") {
+    return { error: "Faltan datos." };
+  }
+  return { archivo, datos: JSON.parse(datosJson) as T };
+}
+
 // viaje_adicionales
-export async function crearAdicional(
-  viajeId: number,
-  valores: ViajeAdicionalInput
-): Promise<{ error?: string } | void> {
-  const datos = viajeAdicionalSchema.parse(valores);
+async function insertarAdicional(viajeId: number, datos: ReturnType<typeof viajeAdicionalSchema.parse>) {
   await db.insert(viajeAdicionales).values({ ...datos, viaje_id: viajeId });
   // No recalcula la liquidación del chofer: los adicionales solo afectan
   // importe_adicionales/total_a_cobrar (lo que se le cobra al cliente), no
   // importe_flete (la base de la liquidación).
   await recalcularFlete(viajeId);
+}
+
+export async function crearAdicional(
+  viajeId: number,
+  valores: ViajeAdicionalInput
+): Promise<{ error?: string } | void> {
+  const datos = viajeAdicionalSchema.parse(valores);
+  await insertarAdicional(viajeId, datos);
+  revalidatePath(rutaViaje(viajeId));
+}
+
+/** Igual que crearAdicional, pero además guarda el comprobante (subido
+ * para la carga por IA, ej. de estadía) como adjunto del viaje. */
+export async function crearAdicionalConAdjunto(
+  viajeId: number,
+  formData: FormData
+): Promise<{ error?: string } | void> {
+  const entrada = archivoYDatosDeFormData<ViajeAdicionalInput>(formData);
+  if ("error" in entrada) return entrada;
+
+  const datos = viajeAdicionalSchema.parse(entrada.datos);
+  await insertarAdicional(viajeId, datos);
+  await adjuntarComprobante(viajeId, entrada.archivo);
   revalidatePath(rutaViaje(viajeId));
 }
 
@@ -270,11 +319,7 @@ export async function eliminarAdicional(
 }
 
 // viaje_gastos
-export async function crearGasto(
-  viajeId: number,
-  valores: ViajeGastoInput
-): Promise<{ error?: string } | void> {
-  const datos = viajeGastoSchema.parse(valores);
+async function insertarGasto(viajeId: number, datos: ReturnType<typeof viajeGastoSchema.parse>) {
   await db.insert(viajeGastos).values({ ...datos, viaje_id: viajeId });
 
   // Si lo pagó el chofer y todavía no fue rendido, genera un movimiento a
@@ -295,6 +340,29 @@ export async function crearGasto(
       });
     }
   }
+}
+
+export async function crearGasto(
+  viajeId: number,
+  valores: ViajeGastoInput
+): Promise<{ error?: string } | void> {
+  const datos = viajeGastoSchema.parse(valores);
+  await insertarGasto(viajeId, datos);
+  revalidatePath(rutaViaje(viajeId));
+}
+
+/** Igual que crearGasto, pero además guarda el comprobante (subido para
+ * la carga por IA) como adjunto del viaje. */
+export async function crearGastoConAdjunto(
+  viajeId: number,
+  formData: FormData
+): Promise<{ error?: string } | void> {
+  const entrada = archivoYDatosDeFormData<ViajeGastoInput>(formData);
+  if ("error" in entrada) return entrada;
+
+  const datos = viajeGastoSchema.parse(entrada.datos);
+  await insertarGasto(viajeId, datos);
+  await adjuntarComprobante(viajeId, entrada.archivo);
   revalidatePath(rutaViaje(viajeId));
 }
 

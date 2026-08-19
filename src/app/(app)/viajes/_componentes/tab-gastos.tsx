@@ -16,8 +16,10 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { CampoBooleano, CampoSelect, CampoTexto } from "@/components/catalogos/campos-formulario";
+import { BotonCargarIA } from "@/lib/comprobantes/boton-cargar-ia";
+import { formatoFechaInput } from "@/lib/schemas/campos-fecha";
 import { viajeGastoSchema, type ViajeGastoInput } from "@/lib/schemas/viajes";
-import { crearGasto, eliminarGasto } from "../actions";
+import { crearGasto, crearGastoConAdjunto, eliminarGasto } from "../actions";
 
 const formatoARS = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 const formatoFecha = new Intl.DateTimeFormat("es-AR", { timeZone: "America/Argentina/Cordoba" });
@@ -73,6 +75,7 @@ export function TabGastos({
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [archivoIA, setArchivoIA] = useState<File | null>(null);
   const form = useForm<ViajeGastoInput>({
     resolver: zodResolver(viajeGastoSchema),
     defaultValues: valoresPorDefecto,
@@ -84,13 +87,22 @@ export function TabGastos({
 
   function onSubmit(valores: ViajeGastoInput) {
     startTransition(async () => {
-      const resultado = await crearGasto(viajeId, valores);
+      let resultado;
+      if (archivoIA) {
+        const formData = new FormData();
+        formData.set("archivo", archivoIA);
+        formData.set("datos", JSON.stringify(valores));
+        resultado = await crearGastoConAdjunto(viajeId, formData);
+      } else {
+        resultado = await crearGasto(viajeId, valores);
+      }
       if (resultado?.error) {
         toast.error(resultado.error);
         return;
       }
       toast.success("Agregado.");
       form.reset(valoresPorDefecto);
+      setArchivoIA(null);
       setAbierto(false);
       router.refresh();
     });
@@ -114,7 +126,13 @@ export function TabGastos({
           <h3 className="text-sm font-semibold text-muted-foreground">
             Gastos del viaje {gastos.length > 0 && `— ${formatoARS.format(totalGastos)}`}
           </h3>
-          <Button size="sm" onClick={() => setAbierto(true)}>
+          <Button
+            size="sm"
+            onClick={() => {
+              setArchivoIA(null);
+              setAbierto(true);
+            }}
+          >
             Agregar gasto
           </Button>
         </div>
@@ -178,6 +196,28 @@ export function TabGastos({
             <DialogTitle>Nuevo gasto</DialogTitle>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <BotonCargarIA
+                onExtraido={(archivo, datos) => {
+                  setArchivoIA(archivo);
+                  form.reset({
+                    ...form.getValues(),
+                    fecha: (datos.fecha
+                      ? (formatoFechaInput(datos.fecha) as unknown as Date)
+                      : form.getValues("fecha")) as Date | undefined,
+                    importe:
+                      datos.importe_total != null
+                        ? String(datos.importe_total)
+                        : form.getValues("importe"),
+                    comprobante_nro: datos.comprobante_nro ?? form.getValues("comprobante_nro"),
+                  });
+                }}
+              />
+              <p className="text-xs text-muted-foreground">
+                Precarga importe, fecha y N° de comprobante. Tipo y medio de pago siempre se
+                completan a mano.
+              </p>
+            </div>
             <CampoSelect
               form={form}
               name="tipo_gasto_id"

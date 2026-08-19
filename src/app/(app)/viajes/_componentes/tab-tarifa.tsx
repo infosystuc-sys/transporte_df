@@ -16,13 +16,14 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { CampoSelect, CampoTexto } from "@/components/catalogos/campos-formulario";
+import { BotonCargarIA } from "@/lib/comprobantes/boton-cargar-ia";
 import {
   viajeAdicionalSchema,
   viajeTarifaSchema,
   type ViajeAdicionalInput,
   type ViajeTarifaInput,
 } from "@/lib/schemas/viajes";
-import { actualizarTarifa, crearAdicional, eliminarAdicional } from "../actions";
+import { actualizarTarifa, crearAdicional, crearAdicionalConAdjunto, eliminarAdicional } from "../actions";
 
 const formatoARS = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
@@ -89,6 +90,7 @@ export function TabTarifa({
 
   const [abiertoAdicional, setAbiertoAdicional] = useState(false);
   const [isPendingAdicional, startTransitionAdicional] = useTransition();
+  const [archivoIAAdicional, setArchivoIAAdicional] = useState<File | null>(null);
   const formAdicional = useForm<ViajeAdicionalInput>({
     resolver: zodResolver(viajeAdicionalSchema),
     defaultValues: valoresPorDefectoAdicional,
@@ -113,13 +115,22 @@ export function TabTarifa({
 
   function onSubmitAdicional(valores: ViajeAdicionalInput) {
     startTransitionAdicional(async () => {
-      const resultado = await crearAdicional(viajeId, valores);
+      let resultado;
+      if (archivoIAAdicional) {
+        const formData = new FormData();
+        formData.set("archivo", archivoIAAdicional);
+        formData.set("datos", JSON.stringify(valores));
+        resultado = await crearAdicionalConAdjunto(viajeId, formData);
+      } else {
+        resultado = await crearAdicional(viajeId, valores);
+      }
       if (resultado?.error) {
         toast.error(resultado.error);
         return;
       }
       toast.success("Agregado.");
       formAdicional.reset(valoresPorDefectoAdicional);
+      setArchivoIAAdicional(null);
       setAbiertoAdicional(false);
       router.refresh();
     });
@@ -188,7 +199,13 @@ export function TabTarifa({
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-muted-foreground">Adicionales</h3>
-          <Button size="sm" onClick={() => setAbiertoAdicional(true)}>
+          <Button
+            size="sm"
+            onClick={() => {
+              setArchivoIAAdicional(null);
+              setAbiertoAdicional(true);
+            }}
+          >
             Agregar adicional
           </Button>
         </div>
@@ -231,6 +248,29 @@ export function TabTarifa({
             <DialogTitle>Nuevo adicional</DialogTitle>
           </DialogHeader>
           <form onSubmit={formAdicional.handleSubmit(onSubmitAdicional)} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <BotonCargarIA
+                onExtraido={(archivo, datos) => {
+                  setArchivoIAAdicional(archivo);
+                  const tipoEstadia =
+                    datos.tipo_sugerido === "estadia"
+                      ? tiposAdicional.find((t) => /estad[ií]a/i.test(t.nombre))
+                      : undefined;
+                  formAdicional.reset({
+                    ...formAdicional.getValues(),
+                    tipo_adicional_id: tipoEstadia?.id ?? formAdicional.getValues("tipo_adicional_id"),
+                    importe:
+                      datos.importe_total != null
+                        ? String(datos.importe_total)
+                        : formAdicional.getValues("importe"),
+                  });
+                }}
+              />
+              <p className="text-xs text-muted-foreground">
+                Pensado sobre todo para estadía — precarga el importe (y el tipo, si dice
+                "estadía"). El resto siempre se completa a mano.
+              </p>
+            </div>
             <CampoSelect
               form={formAdicional}
               name="tipo_adicional_id"

@@ -52,6 +52,10 @@ type Props<T extends FilaBase, TInput extends FieldValues> = {
   eliminar: (id: number) => Promise<ResultadoAccion>;
   /** Si se pasa, agrega un botón "Duplicar" que abre el alta precargada. */
   alDuplicar?: (fila: T) => TInput;
+  /** Se llama cada vez que se abre el diálogo (alta, edición o duplicado).
+   * Pensado para que un consumidor con estado extra fuera del form (ej. un
+   * archivo adjunto pendiente de subir) lo limpie al abrir de nuevo. */
+  onAbrir?: () => void;
 };
 
 export function AbmCatalogoSimple<T extends FilaBase, TInput extends FieldValues>({
@@ -67,6 +71,7 @@ export function AbmCatalogoSimple<T extends FilaBase, TInput extends FieldValues
   actualizar,
   eliminar,
   alDuplicar,
+  onAbrir,
 }: Props<T, TInput>) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
@@ -82,12 +87,14 @@ export function AbmCatalogoSimple<T extends FilaBase, TInput extends FieldValues
   function abrirNuevo() {
     setFilaEditando(null);
     form.reset(valoresPorDefecto);
+    onAbrir?.();
     setAbierto(true);
   }
 
   function abrirEditar(fila: T) {
     setFilaEditando(fila);
     form.reset(aValoresFormulario(fila));
+    onAbrir?.();
     setAbierto(true);
   }
 
@@ -95,6 +102,7 @@ export function AbmCatalogoSimple<T extends FilaBase, TInput extends FieldValues
     if (!alDuplicar) return;
     setFilaEditando(null);
     form.reset(alDuplicar(fila));
+    onAbrir?.();
     setAbierto(true);
   }
 
