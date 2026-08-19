@@ -5,6 +5,7 @@ import {
   mediosPago,
   productos,
   tiposAdicional,
+  tiposContingencia,
   tiposGasto,
 } from "./schema";
 
@@ -44,6 +45,15 @@ async function seedCatalogos() {
       { nombre: "Retorno vacío", a_cargo_default: "cliente" },
       { nombre: "Contraflete", a_cargo_default: "cliente" },
       { nombre: "Otro", a_cargo_default: "empresa" },
+    ])
+    .onConflictDoNothing();
+
+  await db
+    .insert(tiposContingencia)
+    .values([
+      { nombre: "Rechazo en destino / Reacondicionamiento" },
+      { nombre: "Rotura/Avería" },
+      { nombre: "Demora" },
     ])
     .onConflictDoNothing();
 
