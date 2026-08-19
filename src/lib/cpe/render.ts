@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import path from "node:path";
-import { createCanvas } from "@napi-rs/canvas";
+import { createCanvas, loadImage } from "@napi-rs/canvas";
 
 const require = createRequire(import.meta.url);
 
@@ -23,12 +23,14 @@ function rutaFactory(sub: string): string | undefined {
   }
 }
 
-/**
- * Renderiza la primera página del PDF a canvas (usado para leer el QR y
- * para el fallback de Claude). Devuelve el canvas directamente para poder
- * leer tanto ImageData (jsQR) como PNG (Claude) sin re-decodificar.
- */
-export async function renderizarPrimeraPagina(buffer: Buffer, escala = 2) {
+// Todo PDF arranca con estos 4 bytes ("%PDF"), sea cual sea la versión.
+const MAGIC_PDF = Buffer.from("%PDF");
+
+function esPdf(buffer: Buffer): boolean {
+  return buffer.subarray(0, MAGIC_PDF.length).equals(MAGIC_PDF);
+}
+
+async function renderizarPaginaPdf(buffer: Buffer, escala: number) {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const doc = await pdfjs.getDocument({
     data: new Uint8Array(buffer),
@@ -55,4 +57,25 @@ export async function renderizarPrimeraPagina(buffer: Buffer, escala = 2) {
   }).promise;
 
   return canvas;
+}
+
+async function renderizarImagen(buffer: Buffer) {
+  const imagen = await loadImage(buffer);
+  const canvas = createCanvas(imagen.width, imagen.height);
+  const contexto = canvas.getContext("2d");
+  contexto.drawImage(imagen, 0, 0);
+  return canvas;
+}
+
+/**
+ * Renderiza la primera página del documento a canvas (usado para leer el
+ * QR y para el fallback de Claude). Acepta tanto PDF como una foto
+ * (JPG/PNG) de la Carta de Porte — se detecta por los magic bytes, no por
+ * el nombre de archivo ni el content-type declarado, que no son
+ * confiables. Devuelve el canvas directamente para poder leer tanto
+ * ImageData (jsQR) como PNG (Claude) sin re-decodificar.
+ */
+export async function renderizarPrimeraPagina(buffer: Buffer, escala = 2) {
+  if (!esPdf(buffer)) return renderizarImagen(buffer);
+  return renderizarPaginaPdf(buffer, escala);
 }

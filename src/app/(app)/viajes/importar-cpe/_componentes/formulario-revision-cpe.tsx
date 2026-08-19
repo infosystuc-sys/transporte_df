@@ -460,8 +460,13 @@ export function FormularioRevisionCpe({
       {!resultado && (
         <div className="flex flex-col gap-4 rounded-md border p-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="archivo-cpe">Archivo PDF de la CPE</Label>
-            <Input id="archivo-cpe" type="file" accept="application/pdf" onChange={onSeleccionarArchivo} />
+            <Label htmlFor="archivo-cpe">Archivo o foto de la CPE</Label>
+            <Input
+              id="archivo-cpe"
+              type="file"
+              accept="application/pdf,image/jpeg,image/png"
+              onChange={onSeleccionarArchivo}
+            />
           </div>
           <div>
             <Button onClick={procesar} disabled={!archivo || isPendingProcesar}>
