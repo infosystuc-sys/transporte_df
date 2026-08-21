@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { and, asc, desc, eq, gte, lte, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { camiones, cargasGasoil, choferes, estacionesServicio } from "@/db/schema";
+import { camiones, cargasGasoil, choferes, estacionesServicio, viajes } from "@/db/schema";
 import { GestorGasoil } from "./_componentes/gestor-gasoil";
 import { FiltrosGasoil } from "./_componentes/filtros-gasoil";
 import { PanelRendimiento } from "./_componentes/panel-rendimiento";
@@ -28,7 +28,7 @@ export default async function GasoilPage({
   if (fechaHasta) condiciones.push(lte(cargasGasoil.fecha, new Date(fechaHasta)));
   const where = condiciones.length ? and(...condiciones) : undefined;
 
-  const [filasCargas, filasCamiones, filasChoferes, filasEstaciones] = await Promise.all([
+  const [filasCargas, filasCamiones, filasChoferes, filasEstaciones, filasViajes] = await Promise.all([
     (where
       ? db.select().from(cargasGasoil).where(where)
       : db.select().from(cargasGasoil)
@@ -45,6 +45,11 @@ export default async function GasoilPage({
       .select({ id: estacionesServicio.id, nombre: estacionesServicio.nombre })
       .from(estacionesServicio)
       .orderBy(asc(estacionesServicio.nombre)),
+    db
+      .select({ id: viajes.id, numero: viajes.numero })
+      .from(viajes)
+      .where(eq(viajes.liquidado, false))
+      .orderBy(desc(viajes.numero)),
   ]);
 
   return (
@@ -65,6 +70,7 @@ export default async function GasoilPage({
         camiones={filasCamiones}
         choferes={filasChoferes}
         estaciones={filasEstaciones}
+        viajes={filasViajes.map((v) => ({ id: v.id, nombre: `#${v.numero}` }))}
       />
     </div>
   );

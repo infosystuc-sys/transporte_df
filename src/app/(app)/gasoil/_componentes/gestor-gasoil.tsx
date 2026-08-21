@@ -64,11 +64,13 @@ export function GestorGasoil({
   camiones,
   choferes,
   estaciones,
+  viajes,
 }: {
   filas: Fila[];
   camiones: Opcion[];
   choferes: Opcion[];
   estaciones: Opcion[];
+  viajes: Opcion[];
 }) {
   const opciones = (lista: Opcion[]) => lista.map((o) => ({ value: String(o.id), label: o.nombre }));
   const nombreCamion = (id: number) => camiones.find((c) => c.id === id)?.nombre ?? "—";
@@ -164,6 +166,7 @@ export function GestorGasoil({
           <CampoSelect form={form} name="camion_id" label="Camión" opciones={opciones(camiones)} />
           <CampoSelect form={form} name="chofer_id" label="Chofer" opciones={opciones(choferes)} />
           <CampoSelect form={form} name="estacion_id" label="Estación" opciones={opciones(estaciones)} />
+          <CampoSelect form={form} name="viaje_id" label="Viaje (opcional)" opciones={opciones(viajes)} />
           <CampoTexto form={form} name="litros" label="Litros" />
           <CampoTexto form={form} name="precio_litro" label="Precio por litro ($)" />
           <CampoTexto form={form} name="importe" label="Importe total ($)" />
