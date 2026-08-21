@@ -45,7 +45,9 @@ async function insertarCargaGasoil(datos: ReturnType<typeof cargaGasoilSchema.pa
 }
 
 export async function crearCargaGasoil(valores: CargaGasoilInput): Promise<{ error?: string } | void> {
+  console.error("DEBUG valores recibidos:", JSON.stringify(valores));
   const datos = cargaGasoilSchema.parse(valores);
+  console.error("DEBUG datos parseados:", JSON.stringify(datos));
   await insertarCargaGasoil(datos);
   revalidatePath(RUTA);
 }
