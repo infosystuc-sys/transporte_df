@@ -18,11 +18,17 @@ async function insertarCargaGasoil(datos: ReturnType<typeof cargaGasoilSchema.pa
   const [carga] = await db.insert(cargasGasoil).values(datos).returning({ id: cargasGasoil.id });
 
   const [camion] = await db.select().from(camiones).where(eq(camiones.id, datos.camion_id));
-  if (camion && (camion.odometro_actual == null || datos.odometro > camion.odometro_actual)) {
+  if (
+    camion &&
+    datos.odometro != null &&
+    (camion.odometro_actual == null || datos.odometro > camion.odometro_actual)
+  ) {
     await db.update(camiones).set({ odometro_actual: datos.odometro }).where(eq(camiones.id, datos.camion_id));
   }
 
-  if (datos.modalidad === "pagado_por_chofer" && datos.chofer_id) {
+  // El schema exige importe cuando modalidad = pagado_por_chofer, así que
+  // acá siempre está presente — el chequeo es solo para conformar a TS.
+  if (datos.modalidad === "pagado_por_chofer" && datos.chofer_id && datos.importe) {
     const [estacion] = datos.estacion_id
       ? await db.select().from(estacionesServicio).where(eq(estacionesServicio.id, datos.estacion_id))
       : [];
@@ -84,7 +90,11 @@ export async function actualizarCargaGasoil(
   await db.update(cargasGasoil).set(datos).where(eq(cargasGasoil.id, id));
 
   const [camion] = await db.select().from(camiones).where(eq(camiones.id, datos.camion_id));
-  if (camion && (camion.odometro_actual == null || datos.odometro > camion.odometro_actual)) {
+  if (
+    camion &&
+    datos.odometro != null &&
+    (camion.odometro_actual == null || datos.odometro > camion.odometro_actual)
+  ) {
     await db.update(camiones).set({ odometro_actual: datos.odometro }).where(eq(camiones.id, datos.camion_id));
   }
 

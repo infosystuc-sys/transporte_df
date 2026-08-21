@@ -20,9 +20,12 @@ export const cargasGasoil = pgTable(
     }),
     litros: cantidad("litros").notNull(),
     precio_litro: dinero("precio_litro"),
-    importe: dinero("importe").notNull(),
-    // Se usa para actualizar camiones.odometro_actual si es mayor al vigente.
-    odometro: integer("odometro").notNull(),
+    // A veces el proveedor factura recién en la liquidación: puede quedar
+    // sin cargar hasta ese momento.
+    importe: dinero("importe"),
+    // Se usa para actualizar camiones.odometro_actual si es mayor al
+    // vigente. No siempre se tiene a mano al cargar el combustible.
+    odometro: integer("odometro"),
     modalidad: modalidadGasoilEnum("modalidad").notNull(),
     // Solo aplica si modalidad = pagado_por_chofer.
     rendido: boolean("rendido"),

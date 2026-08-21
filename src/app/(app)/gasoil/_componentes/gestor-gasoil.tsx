@@ -26,8 +26,8 @@ type Fila = {
   estacion_id: number | null;
   litros: string;
   precio_litro: string | null;
-  importe: string;
-  odometro: number;
+  importe: string | null;
+  odometro: number | null;
   modalidad: "cuenta_corriente" | "pagado_por_chofer" | "surtidor_propio";
   rendido: boolean | null;
   comprobante_nro: string | null;
@@ -52,7 +52,7 @@ const valoresPorDefecto: CargaGasoilInput = {
   litros: "",
   precio_litro: "",
   importe: "",
-  odometro: undefined as unknown as number,
+  odometro: undefined,
   modalidad: "cuenta_corriente",
   rendido: false,
   comprobante_nro: "",
@@ -106,8 +106,8 @@ export function GestorGasoil({
         estacion_id: f.estacion_id ?? undefined,
         litros: f.litros,
         precio_litro: f.precio_litro ?? "",
-        importe: f.importe,
-        odometro: f.odometro,
+        importe: f.importe ?? "",
+        odometro: f.odometro ?? undefined,
         modalidad: f.modalidad,
         rendido: f.rendido ?? false,
         comprobante_nro: f.comprobante_nro ?? "",
@@ -124,7 +124,10 @@ export function GestorGasoil({
         {
           accessorKey: "importe",
           header: "Importe",
-          cell: ({ getValue }) => formatoARS.format(Number(getValue())),
+          cell: ({ getValue }) => {
+            const v = getValue() as string | null;
+            return v != null ? formatoARS.format(Number(v)) : "—";
+          },
         },
         {
           accessorKey: "modalidad",
@@ -135,7 +138,11 @@ export function GestorGasoil({
             </Badge>
           ),
         },
-        { accessorKey: "odometro", header: "Odómetro" },
+        {
+          accessorKey: "odometro",
+          header: "Odómetro",
+          cell: ({ getValue }) => (getValue() as number | null) ?? "—",
+        },
       ]}
       campos={(form) => (
         <>

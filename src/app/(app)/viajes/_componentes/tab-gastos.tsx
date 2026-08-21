@@ -39,7 +39,7 @@ type FilaGasoil = {
   id: number;
   fecha: Date;
   litros: string;
-  importe: string;
+  importe: string | null;
   modalidad: "cuenta_corriente" | "pagado_por_chofer" | "surtidor_propio";
 };
 
@@ -183,7 +183,7 @@ export function TabGastos({
                 <span>
                   {formatoFecha.format(g.fecha)} — {g.litros} L
                 </span>
-                <span>{formatoARS.format(Number(g.importe))}</span>
+                <span>{g.importe != null ? formatoARS.format(Number(g.importe)) : "Precio pendiente"}</span>
               </li>
             ))}
           </ul>

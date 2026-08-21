@@ -1,4 +1,4 @@
-type Carga = { camion_id: number; litros: string; odometro: number };
+type Carga = { camion_id: number; litros: string; odometro: number | null };
 
 export function PanelRendimiento({
   cargas,
@@ -17,8 +17,12 @@ export function PanelRendimiento({
   const filas = Array.from(porCamion.entries())
     .map(([camionId, lista]) => {
       const litros = lista.reduce((s, c) => s + Number(c.litros), 0);
-      const odometros = lista.map((c) => c.odometro);
-      const km = Math.max(...odometros) - Math.min(...odometros);
+      // El odómetro puede quedar sin cargar (llega recién en la
+      // liquidación) — esas cargas no aportan al cálculo de km recorridos.
+      const odometros = lista
+        .map((c) => c.odometro)
+        .filter((o): o is number => o != null);
+      const km = odometros.length > 0 ? Math.max(...odometros) - Math.min(...odometros) : 0;
       const rendimiento = km > 0 && litros > 0 ? km / litros : null;
       const litrosCada100km = km > 0 && litros > 0 ? (litros / km) * 100 : null;
       return {
