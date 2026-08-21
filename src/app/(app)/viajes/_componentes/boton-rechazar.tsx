@@ -31,7 +31,12 @@ export function BotonRechazar({
   const [motivo, setMotivo] = useState("");
   const [rechazado, setRechazado] = useState(false);
 
-  if (!ESTADOS_CON_RECHAZO_HABILITADO.includes(estadoActual)) return null;
+  // No se puede cortar acá con un early return si ya se confirmó el rechazo:
+  // router.refresh() actualiza estadoActual a "rechazado" apenas se guarda,
+  // y eso haría que este componente (con el diálogo de éxito adentro)
+  // desaparezca al toque, antes de que se llegue a ver la opción de crear
+  // el viaje de reemplazo.
+  if (!rechazado && !ESTADOS_CON_RECHAZO_HABILITADO.includes(estadoActual)) return null;
 
   function confirmar() {
     startTransition(async () => {
@@ -57,9 +62,11 @@ export function BotonRechazar({
 
   return (
     <Dialog open={abierto} onOpenChange={cerrar}>
-      <Button type="button" variant="destructive" size="sm" onClick={() => setAbierto(true)}>
-        Marcar como rechazado
-      </Button>
+      {!rechazado && (
+        <Button type="button" variant="destructive" size="sm" onClick={() => setAbierto(true)}>
+          Marcar como rechazado
+        </Button>
+      )}
       <DialogContent>
         {!rechazado ? (
           <>
