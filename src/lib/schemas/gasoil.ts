@@ -17,7 +17,13 @@ export const cargaGasoilSchema = z
     // de cargar combustible — importe y odómetro pueden completarse
     // después (salvo que el chofer ya lo haya pagado él mismo, ver abajo).
     importe: decimalOpcional(),
-    odometro: z.coerce.number().int().optional().nullable(),
+    // preprocess: el input de texto manda "" cuando se deja vacío, y
+    // z.coerce.number() lo convertiría en 0 en vez de tratarlo como
+    // ausente.
+    odometro: z.preprocess(
+      (v) => (v === "" ? undefined : v),
+      z.coerce.number().int().optional().nullable()
+    ),
     modalidad: z.enum(["cuenta_corriente", "pagado_por_chofer", "surtidor_propio"], {
       error: "Elegí la modalidad de pago.",
     }),
