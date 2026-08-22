@@ -70,7 +70,9 @@
   --card-foreground: #1a2433;
   --popover: #ffffff;
   --popover-foreground: #1a2433;
-  --primary: #2f6df0;
+  /* Identidad Grupo Don Félix: verde bosque (contorno/camión del logo) y
+     dorado (sol/trigo) en vez del azul "Cashflow" original. */
+  --primary: #1e5b34;
   --primary-foreground: #ffffff;
   --secondary: #f8fafc;
   --secondary-foreground: #3b4859;
@@ -81,29 +83,29 @@
   --destructive: #dc2626;
   --border: #e3e8ef;
   --input: #cfd6e1;
-  --ring: #2f6df0;
-  --chart-1: #2f6df0;
-  --chart-2: #7a4ddb;
+  --ring: #1e5b34;
+  --chart-1: #1e5b34;
+  --chart-2: #e8a916;
   --chart-3: #0d9488;
-  --chart-4: #c2820a;
+  --chart-4: #7a4ddb;
   --chart-5: #7c8aa0;
   --radius: 12px;
 
   /* Menú lateral: siempre oscuro, incluso con el resto de la app en claro. */
-  --sidebar: #15202e;
+  --sidebar: #0f1a13;
   --sidebar-foreground: #a9b4c5;
-  --sidebar-primary: #2f6df0;
+  --sidebar-primary: #1e5b34;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #2f6df0;
+  --sidebar-accent: #1e5b34;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #22303f;
-  --sidebar-ring: #2f6df0;
+  --sidebar-border: #1c2f22;
+  --sidebar-ring: #1e5b34;
 
   --pos: #15803d;
   --neg: #dc2626;
   --violet: #7a4ddb;
   --teal: #0d9488;
-  --amber: #c2820a;
+  --amber: #e8a916;
 
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.07);
   --shadow-lg: 0 12px 40px -8px rgba(16, 24, 40, 0.22);
@@ -116,7 +118,7 @@
   --card-foreground: #e7ecf3;
   --popover: #17202c;
   --popover-foreground: #e7ecf3;
-  --primary: #4f86ff;
+  --primary: #3fa65e;
   --primary-foreground: #0f1520;
   --secondary: #1c2632;
   --secondary-foreground: #c7d0dd;
@@ -127,27 +129,27 @@
   --destructive: #f87171;
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.16);
-  --ring: #4f86ff;
-  --chart-1: #4f86ff;
-  --chart-2: #9a7bea;
+  --ring: #3fa65e;
+  --chart-1: #3fa65e;
+  --chart-2: #f2c230;
   --chart-3: #2dd4bf;
-  --chart-4: #e0a83a;
+  --chart-4: #9a7bea;
   --chart-5: #8b96a8;
 
-  --sidebar: #0c1119;
+  --sidebar: #0a120d;
   --sidebar-foreground: #a9b4c5;
-  --sidebar-primary: #4f86ff;
+  --sidebar-primary: #3fa65e;
   --sidebar-primary-foreground: #0f1520;
-  --sidebar-accent: #4f86ff;
+  --sidebar-accent: #3fa65e;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #1c2632;
-  --sidebar-ring: #4f86ff;
+  --sidebar-border: #16241b;
+  --sidebar-ring: #3fa65e;
 
   --pos: #22c55e;
   --neg: #f87171;
   --violet: #9a7bea;
   --teal: #2dd4bf;
-  --amber: #e0a83a;
+  --amber: #f2c230;
 
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 12px 40px -8px rgba(0, 0, 0, 0.6);
