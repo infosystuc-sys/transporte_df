@@ -70,13 +70,12 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
             <Button
-              variant="ghost"
-              className="absolute top-2 right-2"
+              variant="outline"
+              className="absolute top-3 right-3 rounded-full bg-background"
               size="icon-sm"
             >
-              <XIcon
-              />
-              <span className="sr-only">Close</span>
+              <XIcon />
+              <span className="sr-only">Cerrar</span>
             </Button>
           </DialogPrimitive.Close>
         )}
@@ -130,7 +129,7 @@ function DialogTitle({
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn(
-        "font-heading text-[16.5px] leading-none font-extrabold",
+        "pr-8 font-heading text-[16.5px] leading-none font-extrabold",
         className
       )}
       {...props}

@@ -175,7 +175,7 @@ export function TabTarifa({
         </div>
       </form>
 
-      <div className="grid grid-cols-2 gap-3 rounded-md border p-4 text-sm sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 rounded-md border p-4 text-sm sm:grid-cols-4 [&>div]:min-w-0 [&_p]:break-words">
         <div>
           <p className="text-muted-foreground">Importe del flete</p>
           <p>{totales.importe_flete ? formatoARS.format(Number(totales.importe_flete)) : "—"}</p>

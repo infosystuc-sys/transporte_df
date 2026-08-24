@@ -79,7 +79,7 @@ export function TabDescarga({
       {merma.merma_kg != null && merma.merma_pct != null ? (
         <div className="flex flex-col gap-3 rounded-md border p-4">
           <h3 className="text-sm font-semibold text-muted-foreground">Merma</h3>
-          <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4 [&>div]:min-w-0 [&_p]:break-words">
             <div>
               <p className="text-muted-foreground">Merma</p>
               <p>{(Number(merma.merma_kg) / 1000).toLocaleString("es-AR", { maximumFractionDigits: 2 })} tn</p>

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FileUp } from "lucide-react";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { camiones, choferes, clientes, lugares, productos, viajes } from "@/db/schema";
+import { Button } from "@/components/ui/button";
 import { FormularioDatosGenerales } from "../_componentes/formulario-datos-generales";
 import { crearViaje, crearViajeReemplazo } from "../actions";
 import type { ViajeDatosGeneralesInput } from "@/lib/schemas/viajes";
@@ -97,13 +99,16 @@ export default async function NuevoViajePage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">
           {original ? `Viaje de reemplazo del #${original.numero}` : "Nuevo viaje"}
         </h1>
-        <Link href="/viajes/importar-cpe" className="text-sm text-primary hover:underline">
-          ¿Tenés el PDF de la CPE? Importalo automáticamente
-        </Link>
+        <Button variant="outline" asChild>
+          <Link href="/viajes/importar-cpe">
+            <FileUp className="size-4" />
+            ¿Tenés el PDF de la CPE? Importalo automáticamente
+          </Link>
+        </Button>
       </div>
       <FormularioDatosGenerales
         valoresIniciales={valores}

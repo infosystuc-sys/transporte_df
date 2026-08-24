@@ -40,7 +40,7 @@ export function TabLiquidacion({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3 rounded-md border p-4 text-sm sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 rounded-md border p-4 text-sm sm:grid-cols-3 [&>div]:min-w-0 [&_p]:break-words">
         <div>
           <p className="text-muted-foreground">Chofer</p>
           <p>{choferNombre}</p>

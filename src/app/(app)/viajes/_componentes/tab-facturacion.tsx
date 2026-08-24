@@ -101,7 +101,7 @@ export function TabFacturacion({
         </div>
       </form>
 
-      <div className="grid grid-cols-2 gap-3 rounded-md border p-4 text-sm sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 rounded-md border p-4 text-sm sm:grid-cols-3 [&>div]:min-w-0 [&_p]:break-words">
         <div>
           <p className="text-muted-foreground">Vencimiento de cobro</p>
           <p>{fechaVtoCobro ? formatoFecha.format(fechaVtoCobro) : "—"}</p>
