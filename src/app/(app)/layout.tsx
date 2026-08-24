@@ -37,11 +37,15 @@ export default async function AppLayout({
         </div>
         <UserMenu email={user.email ?? ""} />
       </header>
-      <div className="flex flex-1">
+      <div className="flex min-w-0 flex-1">
         <div className="hidden md:block">
           <Sidebar />
         </div>
-        <main className="flex-1 p-6">{children}</main>
+        {/* min-w-0: sin esto, un flex item no se achica más allá del ancho
+            de su contenido -- una tabla ancha (o cualquier otra cosa)
+            estiraba el <main>, y con él toda la página, en vez de quedar
+            contenida con su propio scroll horizontal interno. */}
+        <main className="min-w-0 flex-1 p-6">{children}</main>
       </div>
     </div>
   );
