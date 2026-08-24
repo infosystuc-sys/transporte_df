@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,9 @@ export function Sidebar() {
 
   return (
     <aside className="h-full w-full bg-sidebar md:w-56 md:shrink-0">
+      <div className="flex items-center justify-center border-b border-sidebar-border p-3">
+        <Image src="/logo-don-felix.png" alt="Grupo Don Félix" width={48} height={48} />
+      </div>
       <nav className="flex flex-col gap-1 p-3">
         {navItems.map((item) => {
           const activo = pathname === item.href;
