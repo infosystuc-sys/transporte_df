@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import path from "node:path";
 import { createCanvas, loadImage } from "@napi-rs/canvas";
+import { aplicarTransformExif, leerOrientacionExif, orientacionRotada } from "./exif-orientacion";
 
 const require = createRequire(import.meta.url);
 
@@ -61,8 +62,19 @@ async function renderizarPaginaPdf(buffer: Buffer, escala: number) {
 
 async function renderizarImagen(buffer: Buffer) {
   const imagen = await loadImage(buffer);
-  const canvas = createCanvas(imagen.width, imagen.height);
+
+  // Las fotos de celular traen la rotación real en un tag EXIF en vez de
+  // en los píxeles — @napi-rs/canvas decodifica tal cual viene el sensor,
+  // así que sin esto una CPE fotografiada en vertical llega de costado a
+  // la IA (spec: ver exif-orientacion.ts).
+  const orientacion = leerOrientacionExif(buffer);
+  const rotada = orientacionRotada(orientacion);
+  const canvas = createCanvas(
+    rotada ? imagen.height : imagen.width,
+    rotada ? imagen.width : imagen.height
+  );
   const contexto = canvas.getContext("2d");
+  aplicarTransformExif(contexto, orientacion, imagen.width, imagen.height);
   contexto.drawImage(imagen, 0, 0);
   return canvas;
 }
