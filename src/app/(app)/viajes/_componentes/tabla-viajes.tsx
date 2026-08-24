@@ -168,6 +168,12 @@ export function TablaViajes({
       datos={filas}
       sinFilas="No hay viajes para estos filtros."
       onFilaClick={(fila) => router.push(`/viajes/${fila.id}`)}
+      etiquetasMobil={{
+        numero: "N°",
+        fecha_carga: "Fecha de carga",
+        ctg: "CTG / CPE",
+        estado: "Estado",
+      }}
     />
   );
 }

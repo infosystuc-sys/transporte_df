@@ -76,7 +76,12 @@ export default async function ConfiguracionPage() {
       <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Configuración</h1>
 
       <Tabs defaultValue="general">
-        <TabsList className="flex-wrap">
+        {/* flex-wrap chocaba con la altura fija (h-8) de TabsList: en
+            mobile, con 9 pestañas, el contenido que no entraba en una
+            línea se salía de esa caja y quedaba flotando encima del
+            contenido de abajo. Scroll horizontal en una sola línea evita
+            el solapamiento sin perder ninguna pestaña. */}
+        <TabsList className="w-full justify-start overflow-x-auto">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="productos">Productos</TabsTrigger>
           <TabsTrigger value="lugares">Lugares</TabsTrigger>

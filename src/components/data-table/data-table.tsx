@@ -16,6 +16,13 @@ type Props<TData extends Record<string, unknown>> = {
   datos: TData[];
   sinFilas?: string;
   onFilaClick?: (fila: TData) => void;
+  /**
+   * En mobile cada fila se muestra como tarjeta con "etiqueta: valor" por
+   * columna (ver TableCell). La etiqueta sale del header de la columna
+   * cuando es texto plano; para columnas con header custom (ej. un botón
+   * de orden) hay que pasar acá la etiqueta por id de columna.
+   */
+  etiquetasMobil?: Record<string, string>;
 };
 
 /**
@@ -29,6 +36,7 @@ export function DataTable<TData extends Record<string, unknown>>({
   datos,
   sinFilas = "Sin resultados.",
   onFilaClick,
+  etiquetasMobil,
 }: Props<TData>) {
   const table = useTable({ features: tableFeaturesBase, columns: columnas, data: datos });
 
@@ -64,7 +72,15 @@ export function DataTable<TData extends Record<string, unknown>>({
                 className={onFilaClick ? "cursor-pointer" : undefined}
               >
                 {row.getAllCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell
+                    key={cell.id}
+                    data-label={
+                      etiquetasMobil?.[cell.column.id] ??
+                      (typeof cell.column.columnDef.header === "string"
+                        ? cell.column.columnDef.header
+                        : "")
+                    }
+                  >
                     <table.FlexRender cell={cell} />
                   </TableCell>
                 ))}
