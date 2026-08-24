@@ -100,11 +100,11 @@ export function BarraFiltros({
   return (
     <form onSubmit={aplicar} className="flex flex-col gap-4 rounded-md border p-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <div className="flex flex-col gap-1.5">
+        <div className="flex min-w-0 flex-col gap-1.5">
           <Label htmlFor="q">Buscar (CTG / CPE / dominio)</Label>
           <Input id="q" value={filtros.q} onChange={(e) => set("q", e.target.value)} />
         </div>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex min-w-0 flex-col gap-1.5">
           <Label htmlFor="fecha_desde">Fecha desde</Label>
           <Input
             id="fecha_desde"
@@ -113,7 +113,7 @@ export function BarraFiltros({
             onChange={(e) => set("fecha_desde", e.target.value)}
           />
         </div>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex min-w-0 flex-col gap-1.5">
           <Label htmlFor="fecha_hasta">Fecha hasta</Label>
           <Input
             id="fecha_hasta"
@@ -202,7 +202,7 @@ function SelectFiltro({
   opciones: { value: string; label: string }[];
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex min-w-0 flex-col gap-1.5">
       <Label>{etiqueta}</Label>
       <Select value={valor} onValueChange={onChange}>
         <SelectTrigger className="w-full">

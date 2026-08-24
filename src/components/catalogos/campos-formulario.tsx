@@ -37,7 +37,7 @@ export function CampoTexto<T extends FieldValues>({
   const error = form.formState.errors[name]?.message as string | undefined;
   const Componente = textarea ? Textarea : Input;
   return (
-    <div className={`flex flex-col gap-2 ${textarea ? "sm:col-span-2" : ""}`}>
+    <div className={`flex min-w-0 flex-col gap-2 ${textarea ? "sm:col-span-2" : ""}`}>
       <Label htmlFor={name}>{label}</Label>
       <Componente id={name} type={tipo} {...form.register(name)} />
       <ErrorCampo mensaje={error} />
@@ -77,7 +77,7 @@ export function CampoSelect<T extends FieldValues>({
       control={form.control}
       name={name}
       render={({ field }) => (
-        <div className="flex flex-col gap-2">
+        <div className="flex min-w-0 flex-col gap-2">
           <Label htmlFor={name}>{label}</Label>
           <Select
             value={field.value != null ? String(field.value) : undefined}
@@ -152,9 +152,9 @@ function CampoPesoControlado({
         : `≈ ${(kg / 1000).toFixed(3)} tn`;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
       <Label htmlFor={id}>{label}</Label>
-      <div className="flex gap-2">
+      <div className="flex min-w-0 gap-2">
         <Input
           id={id}
           type="text"
