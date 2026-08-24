@@ -6,20 +6,19 @@ const client = postgres(process.env.DATABASE_URL!, {
   // DATABASE_URL apunta al pooler de Supabase (Session o Transaction mode,
   // puerto 5432/6543): no soporta prepared statements de sesión.
   //
-  // max: 5 (ni 1 ni 10) — el dashboard ("/") dispara ~12 queries con
-  // Promise.all esperando que corran en paralelo. Con max: 1 se
-  // serializaban todas sobre una sola conexión, y esa cola alcanzó a
-  // hacer que Postgres cancelara alguna por "statement timeout". Pero en
-  // Session pooler el pool_size del proyecto está limitado a 15
-  // conexiones en total: con max: 10, dos invocaciones concurrentes ya
-  // superaban ese límite y todo empezaba a fallar con "max clients
-  // reached in session mode" (o, en Transaction pooler, se quedaba
-  // colgado esperando un slot libre hasta el timeout de Vercel). max: 5
-  // deja margen para varias invocaciones simultáneas sin acercarse al
-  // límite. idle_timeout libera las que quedan ociosas.
+  // El Session pooler del proyecto tiene pool_size: 15 conexiones en
+  // total, compartidas entre TODAS las invocaciones serverless activas al
+  // mismo tiempo. Con max: 5 alcanzaba con 3 invocaciones concurrentes
+  // (uso real + Fluid Compute manteniendo instancias "warm") para volver
+  // a pegar en el límite y tirar "max clients reached in session mode".
+  // max: 2 deja margen para bastantes más invocaciones simultáneas antes
+  // de acercarse al techo; el dashboard sigue corriendo sus ~12 queries
+  // en paralelo, solo que de a 2 en vez de a 5 (más lento, no serializado
+  // 1 a 1 como con max: 1, que sí llegó a disparar "statement timeout").
+  // idle_timeout más corto libera las conexiones ociosas más rápido.
   prepare: false,
-  max: 5,
-  idle_timeout: 20,
+  max: 2,
+  idle_timeout: 10,
 });
 
 export const db = drizzle(client, { schema });
