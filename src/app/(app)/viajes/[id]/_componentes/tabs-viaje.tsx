@@ -35,7 +35,10 @@ export function TabsViaje({
 }) {
   return (
     <Tabs defaultValue="generales">
-      <TabsList className="flex-wrap">
+      {/* overflow-x-auto en vez de flex-wrap: con la altura fija (h-8) de
+          TabsList, envolver a varias filas en mobile hacía que el
+          sobrante quedara flotando encima del contenido de abajo. */}
+      <TabsList className="w-full justify-start overflow-x-auto">
         <TabsTrigger value="generales">Datos generales</TabsTrigger>
         <TabsTrigger value="carga">Carga</TabsTrigger>
         <TabsTrigger value="descarga">Descarga y merma</TabsTrigger>

@@ -219,7 +219,7 @@ export function FormularioImportacionHistorica({
       {hojas && (
         <>
           <Tabs defaultValue={hojas[0]?.hoja}>
-            <TabsList className="flex-wrap">
+            <TabsList className="w-full justify-start overflow-x-auto">
               {hojas.map((h) => (
                 <TabsTrigger key={h.hoja} value={h.hoja}>
                   {h.hoja} ({h.filas.length})
