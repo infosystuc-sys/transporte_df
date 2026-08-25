@@ -81,13 +81,28 @@ function esHeic(buffer: Buffer): boolean {
 
 async function renderizarPaginaPdf(buffer: Buffer, escala: number) {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+
+  // En Node.js pdfjs-dist siempre corre en modo "fake worker" (no hay
+  // Worker real) y ese modo hace `import(GlobalWorkerOptions.workerSrc)`
+  // para conseguir el código que necesita -- si nunca se fija ese valor,
+  // usa el default "./pdf.worker.mjs" (una ruta RELATIVA al propio
+  // paquete). En local esa ruta relativa resuelve bien porque el archivo
+  // está ahí nomás, pero en el serverless de Vercel el import dinámico
+  // con string no se puede rastrear en build time y el archivo queda
+  // afuera del bundle -- "Cannot find module .../pdf.worker.mjs" recién
+  // al procesar el primer PDF escaneado (probado en vivo). Mismo truco
+  // que rutaFactory: un require.resolve con el string literal SÍ lo
+  // detecta el tracer de Vercel e incluye el archivo.
+  try {
+    pdfjs.GlobalWorkerOptions.workerSrc = require.resolve(
+      "pdfjs-dist/legacy/build/pdf.worker.mjs"
+    );
+  } catch {
+    // Sigue con el default relativo -- en local nunca hace falta este catch.
+  }
+
   const doc = await pdfjs.getDocument({
     data: new Uint8Array(buffer),
-    // No está en los tipos de esta versión, pero pdfjs sí lo respeta en
-    // runtime — sin esto intenta levantar un worker thread que no hace
-    // falta acá (todo corre sync en el mismo proceso de Node).
-    // @ts-expect-error -- ver comentario arriba.
-    disableWorker: true,
     standardFontDataUrl: rutaFactory("standard_fonts"),
     cMapUrl: rutaFactory("cmaps"),
     cMapPacked: true,
