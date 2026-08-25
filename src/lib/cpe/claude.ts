@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { renderizarPrimeraPagina } from "./render";
+import { canvasParaClaude, LADO_LARGO_MAX_IA, renderizarPrimeraPagina } from "./render";
 import type { CpeExtraido } from "./parser";
 
 const CAMPOS_TEXTO = [
@@ -76,8 +76,8 @@ export async function extraerConClaude(buffer: Buffer): Promise<CpeExtraido | nu
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return null;
 
-  const canvas = await renderizarPrimeraPagina(buffer, 2.5);
-  const png = canvas.toBuffer("image/png");
+  const canvas = await renderizarPrimeraPagina(buffer, 2.5, LADO_LARGO_MAX_IA);
+  const imagen = canvasParaClaude(canvas);
 
   const client = new Anthropic({ apiKey });
   const mensaje = await client.messages.create({
@@ -89,7 +89,7 @@ export async function extraerConClaude(buffer: Buffer): Promise<CpeExtraido | nu
       {
         role: "user",
         content: [
-          { type: "image", source: { type: "base64", media_type: "image/png", data: png.toString("base64") } },
+          { type: "image", source: { type: "base64", media_type: imagen.media_type, data: imagen.data } },
           {
             type: "text",
             text: "Esta es una Carta de Porte Electrónica (CPE) Automotor de ARCA (ex AFIP), Argentina. Extraé todos los campos pedidos. Fechas: cpe_fecha_emision en formato yyyy-mm-dd; ctg_vencimiento, fecha_partida, fecha_arribo y fecha_descarga en formato yyyy-mm-ddTHH:mm:ss (si falta la hora, usá 00:00:00). Si un campo no aparece en el documento, poné null — no inventes valores.",

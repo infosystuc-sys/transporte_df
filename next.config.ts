@@ -11,9 +11,11 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@napi-rs/canvas", "pdfjs-dist", "heic-convert", "heic-decode", "libheif-js"],
   experimental: {
     // Server Actions limitan el body a 1MB por defecto. Un PDF de CPE
-    // escaneado (en vez de generado digitalmente) puede superar eso.
+    // escaneado (en vez de generado digitalmente) o una foto de celular
+    // de alta resolución (los modos de 48-200MP superan fácil los
+    // 10-15MB, sobre todo si el archivo es HEIC) pueden superar eso.
     serverActions: {
-      bodySizeLimit: "10mb",
+      bodySizeLimit: "20mb",
     },
   },
 };

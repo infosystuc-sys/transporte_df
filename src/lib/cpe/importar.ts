@@ -45,11 +45,22 @@ export async function procesarCpe(buffer: Buffer): Promise<ResultadoImportacionC
   let fuente: FuenteExtraccionCpe = "texto";
 
   if (extraccionInsuficiente(extraido)) {
-    const porClaude = await extraerConClaude(buffer);
-    if (porClaude) {
-      extraido = porClaude;
-      fuente = "claude";
-    } else {
+    // Si Claude tira (red, límite de tasa, lo que sea) esto no puede
+    // reventar sin capturar: Next.js redacta cualquier error no
+    // capturado que salga de una Server Action, y el resultado sería un
+    // 500 con un digest genérico en vez de caer prolijo a carga manual
+    // (mismo motivo por el que previsualizarComprobante* devuelven
+    // {error} en vez de tirar).
+    try {
+      const porClaude = await extraerConClaude(buffer);
+      if (porClaude) {
+        extraido = porClaude;
+        fuente = "claude";
+      } else {
+        fuente = "manual";
+      }
+    } catch (err) {
+      console.error("procesarCpe: falló el fallback de Claude:", err);
       fuente = "manual";
     }
   }

@@ -25,6 +25,31 @@ function rutaFactory(sub: string): string | undefined {
   }
 }
 
+/**
+ * Lado largo máximo (en px) al que se reescala una foto antes de
+ * mandarla a Claude. Por encima de ~1568px de lado largo Claude ya la
+ * reescala él mismo para procesarla -- ir más grande que esto no suma
+ * nitidez real, solo infla el archivo. Se deja un margen sobre ese valor.
+ */
+export const LADO_LARGO_MAX_IA = 2000;
+
+/** Calidad JPEG para las imágenes que se mandan a Claude (0-1). */
+const CALIDAD_JPEG_IA = 0.92;
+
+/**
+ * Codifica el canvas para mandarlo a Claude. JPEG en vez de PNG: para
+ * contenido con ruido fotográfico (una foto de celular), JPEG comprime
+ * muchísimo mejor que PNG para el mismo detalle visible, lo que ayuda a
+ * no acercarse al límite de tamaño de la Server Action en fotos de alta
+ * resolución. A esta calidad no se nota en texto renderizado desde PDF.
+ */
+export function canvasParaClaude(canvas: { toBuffer(mime: "image/jpeg", quality?: number): Buffer }) {
+  return {
+    media_type: "image/jpeg" as const,
+    data: canvas.toBuffer("image/jpeg", CALIDAD_JPEG_IA).toString("base64"),
+  };
+}
+
 // Todo PDF arranca con estos 4 bytes ("%PDF"), sea cual sea la versión.
 const MAGIC_PDF = Buffer.from("%PDF");
 
@@ -83,7 +108,7 @@ async function renderizarPaginaPdf(buffer: Buffer, escala: number) {
   return canvas;
 }
 
-async function renderizarImagen(buffer: Buffer) {
+async function renderizarImagen(buffer: Buffer, ladoLargoMax?: number) {
   const imagen = await loadImage(buffer);
 
   // Las fotos de celular traen la rotación real en un tag EXIF en vez de
@@ -92,14 +117,29 @@ async function renderizarImagen(buffer: Buffer) {
   // la IA (spec: ver exif-orientacion.ts).
   const orientacion = leerOrientacionExif(buffer);
   const rotada = orientacionRotada(orientacion);
-  const canvas = createCanvas(
-    rotada ? imagen.height : imagen.width,
-    rotada ? imagen.width : imagen.height
-  );
-  const contexto = canvas.getContext("2d");
-  aplicarTransformExif(contexto, orientacion, imagen.width, imagen.height);
-  contexto.drawImage(imagen, 0, 0);
-  return canvas;
+  const anchoOrientado = rotada ? imagen.height : imagen.width;
+  const altoOrientado = rotada ? imagen.width : imagen.height;
+
+  const canvasOrientado = createCanvas(anchoOrientado, altoOrientado);
+  const contextoOrientado = canvasOrientado.getContext("2d");
+  aplicarTransformExif(contextoOrientado, orientacion, imagen.width, imagen.height);
+  contextoOrientado.drawImage(imagen, 0, 0);
+
+  const ladoLargo = Math.max(anchoOrientado, altoOrientado);
+  if (!ladoLargoMax || ladoLargo <= ladoLargoMax) return canvasOrientado;
+
+  // Una foto de celular moderna (3000-8000px de lado largo) supera por
+  // mucho la resolución que Claude aprovecha (~1568px) -- mandarla entera
+  // solo infla el archivo (arriesgando el límite de tamaño de la Server
+  // Action) sin sumar nitidez real, y deja el downscale final en manos de
+  // un algoritmo que no controlamos. Se reescala acá una sola vez, antes
+  // de codificarla, en vez de confiar en el resize automático de Claude.
+  const factor = ladoLargoMax / ladoLargo;
+  const anchoFinal = Math.round(anchoOrientado * factor);
+  const altoFinal = Math.round(altoOrientado * factor);
+  const canvasFinal = createCanvas(anchoFinal, altoFinal);
+  canvasFinal.getContext("2d").drawImage(canvasOrientado, 0, 0, anchoFinal, altoFinal);
+  return canvasFinal;
 }
 
 /**
@@ -110,8 +150,17 @@ async function renderizarImagen(buffer: Buffer) {
  * archivo ni el content-type declarado, que no son confiables. Devuelve
  * el canvas directamente para poder leer tanto ImageData (jsQR) como PNG
  * (Claude) sin re-decodificar.
+ *
+ * ladoLargoMaxImagen solo aplica al camino de foto (no al de PDF): la
+ * lectura de QR quiere la resolución nativa completa (un QR chico dentro
+ * de la foto necesita esos píxeles), así que por defecto no se toca; los
+ * llamados que arman la imagen para Claude sí lo piden explícitamente.
  */
-export async function renderizarPrimeraPagina(buffer: Buffer, escala = 2) {
+export async function renderizarPrimeraPagina(
+  buffer: Buffer,
+  escala = 2,
+  ladoLargoMaxImagen?: number
+) {
   if (esPdf(buffer)) return renderizarPaginaPdf(buffer, escala);
   if (esHeic(buffer)) {
     // libheif ya aplica la rotación (irot/imir) al decodificar, así que
@@ -119,7 +168,7 @@ export async function renderizarPrimeraPagina(buffer: Buffer, escala = 2) {
     // por la corrección EXIF de renderizarImagen (que igual no encontrará
     // tag de orientación en un JPEG recién codificado y no hará nada).
     const jpeg = await convertirHeic({ buffer, format: "JPEG", quality: 0.92 });
-    return renderizarImagen(Buffer.from(jpeg));
+    return renderizarImagen(Buffer.from(jpeg), ladoLargoMaxImagen);
   }
-  return renderizarImagen(buffer);
+  return renderizarImagen(buffer, ladoLargoMaxImagen);
 }

@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { renderizarPrimeraPagina } from "@/lib/cpe/render";
+import { canvasParaClaude, LADO_LARGO_MAX_IA, renderizarPrimeraPagina } from "@/lib/cpe/render";
 
 export type ComprobanteDescargaExtraido = {
   fecha_arribo: string | null; // yyyy-mm-dd
@@ -51,8 +51,8 @@ export async function extraerComprobanteDescarga(
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return null;
 
-  const canvas = await renderizarPrimeraPagina(buffer, 2.5);
-  const png = canvas.toBuffer("image/png");
+  const canvas = await renderizarPrimeraPagina(buffer, 2.5, LADO_LARGO_MAX_IA);
+  const imagen = canvasParaClaude(canvas);
 
   const client = new Anthropic({ apiKey });
   const mensaje = await client.messages.create({
@@ -66,7 +66,7 @@ export async function extraerComprobanteDescarga(
         content: [
           {
             type: "image",
-            source: { type: "base64", media_type: "image/png", data: png.toString("base64") },
+            source: { type: "base64", media_type: imagen.media_type, data: imagen.data },
           },
           {
             type: "text",
