@@ -26,19 +26,17 @@ export function BotonCargarIA({
     if (!archivo) return;
 
     startTransition(async () => {
-      try {
-        const formData = new FormData();
-        formData.set("archivo", archivo);
-        const datos = await previsualizarComprobante(formData);
-        onExtraido(archivo, datos);
+      const formData = new FormData();
+      formData.set("archivo", archivo);
+      const resultado = await previsualizarComprobante(formData);
+      if ("error" in resultado) {
+        toast.error(resultado.error);
+      } else {
+        onExtraido(archivo, resultado);
         toast.success("Datos precargados desde el comprobante — revisá antes de guardar.");
-      } catch (err) {
-        const mensaje = err instanceof Error ? err.message : String(err);
-        toast.error(mensaje);
-      } finally {
-        // Permite volver a elegir el mismo archivo si hace falta reintentar.
-        if (inputRef.current) inputRef.current.value = "";
       }
+      // Permite volver a elegir el mismo archivo si hace falta reintentar.
+      if (inputRef.current) inputRef.current.value = "";
     });
   }
 

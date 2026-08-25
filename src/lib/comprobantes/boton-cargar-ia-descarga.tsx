@@ -24,18 +24,16 @@ export function BotonCargarIADescarga({
     if (!archivo) return;
 
     startTransition(async () => {
-      try {
-        const formData = new FormData();
-        formData.set("archivo", archivo);
-        const datos = await previsualizarComprobanteDescarga(formData);
-        onExtraido(archivo, datos);
+      const formData = new FormData();
+      formData.set("archivo", archivo);
+      const resultado = await previsualizarComprobanteDescarga(formData);
+      if ("error" in resultado) {
+        toast.error(resultado.error);
+      } else {
+        onExtraido(archivo, resultado);
         toast.success("Datos precargados desde el ticket — revisá antes de guardar.");
-      } catch (err) {
-        const mensaje = err instanceof Error ? err.message : String(err);
-        toast.error(mensaje);
-      } finally {
-        if (inputRef.current) inputRef.current.value = "";
       }
+      if (inputRef.current) inputRef.current.value = "";
     });
   }
 
