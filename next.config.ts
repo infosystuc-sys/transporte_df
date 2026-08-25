@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   // dejaba afuera del bundle desplegado (probado en vivo: el
   // require.resolve solo no alcanzó). Esto lo fuerza explícitamente.
   outputFileTracingIncludes: {
-    "/**/*": ["./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"],
+    "/*": ["node_modules/pdfjs-dist/legacy/build/**/*"],
   },
   experimental: {
     // Server Actions limitan el body a 1MB por defecto. Un PDF de CPE
