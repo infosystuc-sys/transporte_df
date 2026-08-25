@@ -83,23 +83,21 @@ async function renderizarPaginaPdf(buffer: Buffer, escala: number) {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
   // En Node.js pdfjs-dist siempre corre en modo "fake worker" (no hay
-  // Worker real) y ese modo hace `import(GlobalWorkerOptions.workerSrc)`
-  // para conseguir el código que necesita -- si nunca se fija ese valor,
-  // usa el default "./pdf.worker.mjs" (una ruta RELATIVA al propio
-  // paquete). En local esa ruta relativa resuelve bien porque el archivo
-  // está ahí nomás, pero en el serverless de Vercel el import dinámico
-  // con string no se puede rastrear en build time y el archivo queda
-  // afuera del bundle -- "Cannot find module .../pdf.worker.mjs" recién
-  // al procesar el primer PDF escaneado (probado en vivo). Mismo truco
-  // que rutaFactory: un require.resolve con el string literal SÍ lo
-  // detecta el tracer de Vercel e incluye el archivo.
-  try {
-    pdfjs.GlobalWorkerOptions.workerSrc = require.resolve(
-      "pdfjs-dist/legacy/build/pdf.worker.mjs"
-    );
-  } catch {
-    // Sigue con el default relativo -- en local nunca hace falta este catch.
-  }
+  // Worker real). Para conseguir el código que necesita, primero se fija
+  // si alguien ya dejó `globalThis.pdfjsWorker` puesto -- y si no, recién
+  // ahí intenta `import(GlobalWorkerOptions.workerSrc)`, con un string
+  // que arma en runtime (no un specifier literal), así que ningún
+  // bundler puede rastrearlo: en el serverless de Vercel el archivo
+  // queda afuera del bundle y explota con "Cannot find module
+  // .../pdf.worker.mjs" (probado en vivo, dos veces, con dos intentos
+  // de forzar el include vía config que tampoco llegaron a buen puerto).
+  // La salida es no depender de ese import dinámico para nada: el propio
+  // pdf.worker.mjs, con solo importarlo, deja `globalThis.pdfjsWorker`
+  // seteado como efecto de lado -- y como acá el specifier SÍ es un
+  // string literal, el bundler lo ve y lo incluye solo, sin config extra.
+  // @ts-expect-error -- pdfjs-dist no publica tipos para este subpath;
+  // el import es solo por el efecto de lado, no hace falta lo que exporte.
+  await import("pdfjs-dist/legacy/build/pdf.worker.mjs");
 
   const doc = await pdfjs.getDocument({
     data: new Uint8Array(buffer),
