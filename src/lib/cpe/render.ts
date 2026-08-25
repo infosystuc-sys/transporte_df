@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import path from "node:path";
 import { createCanvas, loadImage } from "@napi-rs/canvas";
+import convertirHeic from "heic-convert";
 import { aplicarTransformExif, leerOrientacionExif, orientacionRotada } from "./exif-orientacion";
 
 const require = createRequire(import.meta.url);
@@ -29,6 +30,28 @@ const MAGIC_PDF = Buffer.from("%PDF");
 
 function esPdf(buffer: Buffer): boolean {
   return buffer.subarray(0, MAGIC_PDF.length).equals(MAGIC_PDF);
+}
+
+// HEIC/HEIF (formato por defecto de la cámara de iPhone) es un contenedor
+// ISO-BMFF: bytes 4-8 dicen "ftyp" y bytes 8-12 son el "major brand". No
+// hay forma de detectarlo por los primeros bytes solos como con PDF.
+const MARCAS_HEIC = new Set([
+  "heic",
+  "heix",
+  "heim",
+  "heis",
+  "hevc",
+  "hevx",
+  "hevm",
+  "hevs",
+  "mif1",
+  "msf1",
+]);
+
+function esHeic(buffer: Buffer): boolean {
+  if (buffer.length < 12) return false;
+  if (buffer.subarray(4, 8).toString("ascii") !== "ftyp") return false;
+  return MARCAS_HEIC.has(buffer.subarray(8, 12).toString("ascii"));
 }
 
 async function renderizarPaginaPdf(buffer: Buffer, escala: number) {
@@ -81,13 +104,22 @@ async function renderizarImagen(buffer: Buffer) {
 
 /**
  * Renderiza la primera página del documento a canvas (usado para leer el
- * QR y para el fallback de Claude). Acepta tanto PDF como una foto
- * (JPG/PNG) de la Carta de Porte — se detecta por los magic bytes, no por
- * el nombre de archivo ni el content-type declarado, que no son
- * confiables. Devuelve el canvas directamente para poder leer tanto
- * ImageData (jsQR) como PNG (Claude) sin re-decodificar.
+ * QR y para el fallback de Claude). Acepta PDF, JPG/PNG y HEIC/HEIF (el
+ * formato por defecto de la cámara de iPhone, que @napi-rs/canvas no sabe
+ * decodificar) — se detecta por los magic bytes, no por el nombre de
+ * archivo ni el content-type declarado, que no son confiables. Devuelve
+ * el canvas directamente para poder leer tanto ImageData (jsQR) como PNG
+ * (Claude) sin re-decodificar.
  */
 export async function renderizarPrimeraPagina(buffer: Buffer, escala = 2) {
-  if (!esPdf(buffer)) return renderizarImagen(buffer);
-  return renderizarPaginaPdf(buffer, escala);
+  if (esPdf(buffer)) return renderizarPaginaPdf(buffer, escala);
+  if (esHeic(buffer)) {
+    // libheif ya aplica la rotación (irot/imir) al decodificar, así que
+    // el JPEG que sale acá viene derecho -- no necesita pasar de nuevo
+    // por la corrección EXIF de renderizarImagen (que igual no encontrará
+    // tag de orientación en un JPEG recién codificado y no hará nada).
+    const jpeg = await convertirHeic({ buffer, format: "JPEG", quality: 0.92 });
+    return renderizarImagen(Buffer.from(jpeg));
+  }
+  return renderizarImagen(buffer);
 }

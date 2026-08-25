@@ -464,7 +464,7 @@ export function FormularioRevisionCpe({
             <Input
               id="archivo-cpe"
               type="file"
-              accept="application/pdf,image/jpeg,image/png"
+              accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
               onChange={onSeleccionarArchivo}
             />
           </div>

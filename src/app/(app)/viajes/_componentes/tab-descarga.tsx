@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -9,8 +9,9 @@ import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CampoPeso, CampoTexto } from "@/components/catalogos/campos-formulario";
+import { BotonCargarIADescarga } from "@/lib/comprobantes/boton-cargar-ia-descarga";
 import { viajeDescargaSchema, type ViajeDescargaInput } from "@/lib/schemas/viajes";
-import { actualizarDescarga } from "../actions";
+import { actualizarDescarga, actualizarDescargaConAdjunto } from "../actions";
 
 const formatoARS = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
@@ -38,6 +39,12 @@ export function TabDescarga({
     defaultValues: valoresIniciales,
   });
 
+  // El archivo del ticket de balanza se guarda acá (no en el form) hasta
+  // el submit final -- recién se sube y se adjunta al viaje cuando el
+  // usuario confirma los datos precargados, no en el momento en que se
+  // procesa por IA (mismo patrón que gasoil).
+  const [archivoIA, setArchivoIA] = useState<File | null>(null);
+
   const bruto = form.watch("bruto_destino");
   const tara = form.watch("tara_destino");
 
@@ -54,11 +61,20 @@ export function TabDescarga({
 
   function onSubmit(valores: ViajeDescargaInput) {
     startTransition(async () => {
-      const resultado = await actualizarDescarga(viajeId, valores);
+      let resultado;
+      if (archivoIA) {
+        const formData = new FormData();
+        formData.set("archivo", archivoIA);
+        formData.set("datos", JSON.stringify(valores));
+        resultado = await actualizarDescargaConAdjunto(viajeId, formData);
+      } else {
+        resultado = await actualizarDescarga(viajeId, valores);
+      }
       if (resultado?.error) {
         toast.error(resultado.error);
         return;
       }
+      setArchivoIA(null);
       toast.success("Guardado.");
       router.refresh();
     });
@@ -66,6 +82,38 @@ export function TabDescarga({
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <BotonCargarIADescarga
+          onExtraido={(archivo, datos) => {
+            setArchivoIA(archivo);
+            form.reset({
+              ...form.getValues(),
+              fecha_arribo: (datos.fecha_arribo ?? form.getValues("fecha_arribo")) as unknown as Date,
+              fecha_descarga: (datos.fecha_descarga ??
+                form.getValues("fecha_descarga")) as unknown as Date,
+              n_turno_descarga: datos.n_turno_descarga ?? form.getValues("n_turno_descarga"),
+              bruto_destino:
+                datos.bruto_destino_kg != null
+                  ? String(datos.bruto_destino_kg)
+                  : form.getValues("bruto_destino"),
+              tara_destino:
+                datos.tara_destino_kg != null
+                  ? String(datos.tara_destino_kg)
+                  : form.getValues("tara_destino"),
+              neto_destino:
+                datos.neto_destino_kg != null
+                  ? String(datos.neto_destino_kg)
+                  : form.getValues("neto_destino"),
+              humedad_pct:
+                datos.humedad_pct != null ? String(datos.humedad_pct) : form.getValues("humedad_pct"),
+            });
+          }}
+        />
+        <p className="text-xs text-muted-foreground">
+          Subí una foto o PDF del ticket de balanza y se completan los campos solos — revisalos
+          antes de guardar.
+        </p>
+      </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <CampoTexto form={form} name="fecha_arribo" label="Fecha de arribo" tipo="date" />
         <CampoTexto form={form} name="fecha_descarga" label="Fecha de descarga" tipo="date" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, type FieldValues, type Path, type UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -124,6 +124,18 @@ function CampoPesoControlado({
   const [texto, setTexto] = useState(() =>
     kg === undefined || Number.isNaN(kg) ? "" : String(unidad === "tn" ? kg / 1000 : kg)
   );
+  // Recuerda el último kg que salió de esta misma edición, para poder
+  // distinguirlo de un cambio externo (ej. precarga por IA) en el efecto
+  // de abajo -- si no, cada tecleo dispararía un re-render que pisa lo que
+  // el usuario está escribiendo.
+  const kgEnviado = useRef(kg);
+
+  useEffect(() => {
+    if (kg === kgEnviado.current) return;
+    kgEnviado.current = kg;
+    setTexto(kg === undefined || Number.isNaN(kg) ? "" : String(unidad === "tn" ? kg / 1000 : kg));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kg]);
 
   function cambiarUnidad(nueva: UnidadPeso) {
     setUnidad(nueva);
@@ -136,12 +148,15 @@ function CampoPesoControlado({
     setTexto(valor);
     const normalizado = valor.trim().replace(",", ".");
     if (normalizado === "") {
+      kgEnviado.current = undefined;
       onChangeKg("");
       return;
     }
     const num = Number(normalizado);
     if (Number.isNaN(num)) return;
-    onChangeKg(String(unidad === "tn" ? num * 1000 : num));
+    const kgNuevo = unidad === "tn" ? num * 1000 : num;
+    kgEnviado.current = kgNuevo;
+    onChangeKg(String(kgNuevo));
   }
 
   const equivalente =

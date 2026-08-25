@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import {
@@ -116,6 +116,46 @@ export async function actualizarDescarga(
   revalidatePath(rutaViaje(id));
 }
 
+/**
+ * Igual que actualizarDescarga, pero además adjunta el ticket de balanza
+ * que se usó para precargar el formulario por IA (mismo patrón que
+ * crearCargaGasoilConAdjunto en gasoil/actions.ts) -- así queda guardado
+ * como adjunto del viaje sin que el usuario tenga que subirlo de nuevo a
+ * mano desde la pestaña Adjuntos.
+ */
+export async function actualizarDescargaConAdjunto(
+  id: number,
+  formData: FormData
+): Promise<{ error?: string } | void> {
+  const archivo = formData.get("archivo");
+  const datosJson = formData.get("datos");
+  if (!(archivo instanceof File) || typeof datosJson !== "string") {
+    return { error: "Faltan datos." };
+  }
+
+  const datos = viajeDescargaSchema.parse(JSON.parse(datosJson) as ViajeDescargaInput);
+  await db
+    .update(viajes)
+    .set({ ...datos, actualizado_en: new Date() })
+    .where(eq(viajes.id, id));
+  await recalcularMerma(id);
+  await recalcularFlete(id);
+  await recalcularLiquidacionChofer(id);
+
+  const buffer = Buffer.from(await archivo.arrayBuffer());
+  const rutaStorage = `viaje/${id}/${randomUUID()}-${archivo.name}`;
+  await subirAdjunto(rutaStorage, buffer, archivo.type || "application/octet-stream");
+  await db.insert(adjuntos).values({
+    entidad: "viaje",
+    entidad_id: id,
+    tipo: "ticket_balanza",
+    nombre_archivo: archivo.name,
+    storage_path: rutaStorage,
+  });
+
+  revalidatePath(rutaViaje(id));
+}
+
 export async function actualizarTarifa(
   id: number,
   valores: ViajeTarifaInput
@@ -143,7 +183,40 @@ export async function actualizarFacturacion(
   revalidatePath(rutaViaje(id));
 }
 
-export async function eliminarViaje(id: number) {
+/**
+ * Los gastos, adicionales y contingencias del viaje se borran solos (FK en
+ * cascada), pero si ya tiene un cobro imputado o entró en una liquidación
+ * no se deja borrar -- son registros contables que ya salieron del viaje
+ * y romperían esos otros módulos. Los adjuntos no tienen FK real (la
+ * tabla es polimórfica) así que hay que limpiarlos a mano, storage
+ * incluido, o quedan huérfanos apuntando a un viaje que ya no existe.
+ */
+export async function eliminarViaje(id: number): Promise<{ error?: string } | void> {
+  const [viaje] = await db.select({ liquidado: viajes.liquidado }).from(viajes).where(eq(viajes.id, id));
+  if (!viaje) return;
+
+  if (viaje.liquidado) {
+    return { error: "No se puede eliminar: el viaje ya está liquidado. Sacalo de la liquidación primero." };
+  }
+
+  const [imputacion] = await db
+    .select({ id: cobroImputaciones.id })
+    .from(cobroImputaciones)
+    .where(eq(cobroImputaciones.viaje_id, id))
+    .limit(1);
+  if (imputacion) {
+    return { error: "No se puede eliminar: el viaje ya tiene un cobro imputado. Corregí el cobro primero." };
+  }
+
+  const filasAdjuntos = await db
+    .select({ storage_path: adjuntos.storage_path })
+    .from(adjuntos)
+    .where(and(eq(adjuntos.entidad, "viaje"), eq(adjuntos.entidad_id, id)));
+  for (const a of filasAdjuntos) {
+    await eliminarAdjunto(a.storage_path).catch(() => {});
+  }
+  await db.delete(adjuntos).where(and(eq(adjuntos.entidad, "viaje"), eq(adjuntos.entidad_id, id)));
+
   await db.delete(viajes).where(eq(viajes.id, id));
   revalidatePath("/viajes");
   redirect("/viajes");

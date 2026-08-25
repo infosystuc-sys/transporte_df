@@ -3,20 +3,18 @@
 import { useRef, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { previsualizarComprobante } from "./actions";
-import type { ComprobanteExtraido } from "./claude";
+import { previsualizarComprobanteDescarga } from "./actions";
+import type { ComprobanteDescargaExtraido } from "./claude-descarga";
 
 /**
- * Botón compartido por los tres formularios que aceptan comprobantes por
- * IA (gasoil, gastos del viaje, adicionales/estadía). Solo se ocupa de
- * subir el archivo y devolver lo que Claude extrajo — cada formulario
- * decide qué campos precargar y guarda el archivo elegido para adjuntarlo
- * cuando el usuario confirma el alta (nunca se guarda nada acá).
+ * Igual que BotonCargarIA pero para el ticket de balanza de descarga —
+ * campos y prompt de extracción distintos (pesos y fechas, no plata), así
+ * que no comparte el mismo componente.
  */
-export function BotonCargarIA({
+export function BotonCargarIADescarga({
   onExtraido,
 }: {
-  onExtraido: (archivo: File, datos: ComprobanteExtraido) => void;
+  onExtraido: (archivo: File, datos: ComprobanteDescargaExtraido) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
@@ -29,14 +27,13 @@ export function BotonCargarIA({
       try {
         const formData = new FormData();
         formData.set("archivo", archivo);
-        const datos = await previsualizarComprobante(formData);
+        const datos = await previsualizarComprobanteDescarga(formData);
         onExtraido(archivo, datos);
-        toast.success("Datos precargados desde el comprobante — revisá antes de guardar.");
+        toast.success("Datos precargados desde el ticket — revisá antes de guardar.");
       } catch (err) {
         const mensaje = err instanceof Error ? err.message : String(err);
         toast.error(mensaje);
       } finally {
-        // Permite volver a elegir el mismo archivo si hace falta reintentar.
         if (inputRef.current) inputRef.current.value = "";
       }
     });
@@ -58,7 +55,7 @@ export function BotonCargarIA({
         disabled={isPending}
         onClick={() => inputRef.current?.click()}
       >
-        {isPending ? "Leyendo comprobante..." : "Cargar por IA"}
+        {isPending ? "Leyendo ticket..." : "Cargar ticket de balanza por IA"}
       </Button>
     </>
   );

@@ -1,0 +1,84 @@
+import Anthropic from "@anthropic-ai/sdk";
+import { renderizarPrimeraPagina } from "@/lib/cpe/render";
+
+export type ComprobanteDescargaExtraido = {
+  fecha_arribo: string | null; // yyyy-mm-dd
+  fecha_descarga: string | null; // yyyy-mm-dd
+  n_turno_descarga: string | null;
+  bruto_destino_kg: number | null;
+  tara_destino_kg: number | null;
+  neto_destino_kg: number | null;
+  humedad_pct: number | null;
+};
+
+const HERRAMIENTA_EXTRACCION = {
+  name: "extraer_ticket_balanza",
+  description:
+    "Extrae los datos de un ticket de balanza o comprobante de descarga de una empresa de transporte de granos a partir de la imagen de su primera página.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      fecha_arribo: { type: ["string", "null"] },
+      fecha_descarga: { type: ["string", "null"] },
+      n_turno_descarga: { type: ["string", "null"] },
+      bruto_destino_kg: { type: ["number", "null"] },
+      tara_destino_kg: { type: ["number", "null"] },
+      neto_destino_kg: { type: ["number", "null"] },
+      humedad_pct: { type: ["number", "null"] },
+    },
+    required: [
+      "fecha_arribo",
+      "fecha_descarga",
+      "n_turno_descarga",
+      "bruto_destino_kg",
+      "tara_destino_kg",
+      "neto_destino_kg",
+      "humedad_pct",
+    ],
+  },
+};
+
+/**
+ * Extracción por IA del ticket de balanza / comprobante de descarga.
+ * Separada de src/lib/comprobantes/claude.ts a propósito: ese extrae
+ * comprobantes de gasto (plata), este extrae pesos y fechas de descarga —
+ * campos y prompt distintos, mismo renderizarPrimeraPagina de base.
+ * Devuelve null si no hay ANTHROPIC_API_KEY configurada.
+ */
+export async function extraerComprobanteDescarga(
+  buffer: Buffer
+): Promise<ComprobanteDescargaExtraido | null> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+
+  const canvas = await renderizarPrimeraPagina(buffer, 2.5);
+  const png = canvas.toBuffer("image/png");
+
+  const client = new Anthropic({ apiKey });
+  const mensaje = await client.messages.create({
+    model: "claude-sonnet-5",
+    max_tokens: 1024,
+    tools: [HERRAMIENTA_EXTRACCION],
+    tool_choice: { type: "tool", name: "extraer_ticket_balanza" },
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image",
+            source: { type: "base64", media_type: "image/png", data: png.toString("base64") },
+          },
+          {
+            type: "text",
+            text: 'Esta es una foto o PDF de un ticket de balanza o comprobante de descarga de un camión con granos en destino. Extraé fecha de arribo, fecha de descarga, número de turno, peso bruto, tara y peso neto (todos los pesos en KILOGRAMOS — si el ticket los muestra en toneladas, convertilos multiplicando por 1000) y el porcentaje de humedad si figura. Fechas en formato yyyy-mm-dd. Si un campo no aparece en el documento, poné null — no inventes valores.',
+          },
+        ],
+      },
+    ],
+  });
+
+  const usoHerramienta = mensaje.content.find((b) => b.type === "tool_use");
+  if (!usoHerramienta || usoHerramienta.type !== "tool_use") return null;
+
+  return usoHerramienta.input as ComprobanteDescargaExtraido;
+}

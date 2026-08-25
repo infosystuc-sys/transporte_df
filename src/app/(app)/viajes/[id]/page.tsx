@@ -29,6 +29,7 @@ import { formatoFechaInput } from "@/lib/schemas/campos-fecha";
 import { urlFirmadaAdjunto } from "@/lib/supabase/storage";
 import { StepperEstado } from "../_componentes/stepper-estado";
 import { BotonRechazar } from "../_componentes/boton-rechazar";
+import { BotonEliminar } from "../_componentes/boton-eliminar";
 import { TabsViaje } from "./_componentes/tabs-viaje";
 import { actualizarDatosGenerales } from "../actions";
 import { totalAdicionalesEmpresa } from "../_lib/flete";
@@ -182,7 +183,12 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <StepperEstado viajeId={viaje.id} estadoActual={viaje.estado} facturaNroActual={viaje.factura_nro} />
-        <BotonRechazar viajeId={viaje.id} estadoActual={viaje.estado} />
+        <div className="flex flex-wrap gap-2">
+          <BotonRechazar viajeId={viaje.id} estadoActual={viaje.estado} />
+          {!viaje.liquidado && filasImputaciones.length === 0 && (
+            <BotonEliminar viajeId={viaje.id} numero={viaje.numero} />
+          )}
+        </div>
       </div>
 
       {viaje.merma_excede_tolerancia && (
