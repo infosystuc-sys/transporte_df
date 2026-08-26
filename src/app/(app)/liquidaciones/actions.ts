@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { liquidacionesChofer, liquidacionViajes, movimientosChofer, viajes } from "@/db/schema";
 import { crearLiquidacionSchema, type CrearLiquidacionInput } from "@/lib/schemas/liquidaciones";
 import { signoTipoMovimiento } from "@/lib/cuenta-corriente/signo";
+import { avanzarEstadoAutomatico } from "../viajes/_lib/avance-estado";
 
 export async function crearLiquidacion(
   valores: CrearLiquidacionInput
@@ -108,6 +109,10 @@ export async function crearLiquidacion(
       });
     }
   });
+
+  for (const v of datos.viajes) {
+    await avanzarEstadoAutomatico(v.viaje_id);
+  }
 
   revalidatePath("/liquidaciones");
   revalidatePath(`/choferes/${datos.cabecera.chofer_id}`);

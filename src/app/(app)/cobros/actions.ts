@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { cobroImputaciones, cobros, retencionesCobro } from "@/db/schema";
 import { crearCobroSchema, type CrearCobroInput } from "@/lib/schemas/cobros";
 import { recalcularCobro } from "../viajes/_lib/cobro";
+import { avanzarEstadoAutomatico } from "../viajes/_lib/avance-estado";
 
 export async function crearCobro(valores: CrearCobroInput): Promise<{ error?: string } | void> {
   const datos = crearCobroSchema.parse(valores);
@@ -38,6 +39,7 @@ export async function crearCobro(valores: CrearCobroInput): Promise<{ error?: st
 
   for (const i of datos.imputaciones) {
     await recalcularCobro(i.viaje_id);
+    await avanzarEstadoAutomatico(i.viaje_id);
   }
 
   revalidatePath("/cobros");

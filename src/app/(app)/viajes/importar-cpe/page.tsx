@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
-import { camiones, choferes, clientes, lugares, productos } from "@/db/schema";
+import { camiones, choferes, clientes, configuracion, lugares, productos } from "@/db/schema";
 import { FormularioRevisionCpe } from "./_componentes/formulario-revision-cpe";
 
 export const metadata: Metadata = {
@@ -9,10 +9,15 @@ export const metadata: Metadata = {
 };
 
 export default async function ImportarCpePage() {
-  const [filasClientes, filasCamiones, filasChoferes, filasProductos, filasLugares] =
+  const [filasClientes, filasCamiones, filasChoferes, filasProductos, filasLugares, filaConfig] =
     await Promise.all([
       db
-        .select({ id: clientes.id, nombre: clientes.razon_social, cuit: clientes.cuit })
+        .select({
+          id: clientes.id,
+          nombre: clientes.razon_social,
+          cuit: clientes.cuit,
+          base_calculo_flete: clientes.base_calculo_flete,
+        })
         .from(clientes)
         .orderBy(asc(clientes.razon_social)),
       db
@@ -29,7 +34,18 @@ export default async function ImportarCpePage() {
         .orderBy(asc(choferes.nombre_completo)),
       db.select({ id: productos.id, nombre: productos.nombre }).from(productos).orderBy(asc(productos.nombre)),
       db.select({ id: lugares.id, nombre: lugares.nombre }).from(lugares).orderBy(asc(lugares.nombre)),
+      db
+        .select({
+          base_calculo_flete_default: configuracion.base_calculo_flete_default,
+          modalidad_tarifa_default: configuracion.modalidad_tarifa_default,
+        })
+        .from(configuracion)
+        .limit(1),
     ]);
+  const configDefaults = filaConfig[0] ?? {
+    base_calculo_flete_default: null,
+    modalidad_tarifa_default: null,
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -46,6 +62,7 @@ export default async function ImportarCpePage() {
         choferes={filasChoferes}
         productos={filasProductos}
         lugares={filasLugares}
+        configDefaults={configDefaults}
       />
     </div>
   );

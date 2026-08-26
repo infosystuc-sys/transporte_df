@@ -22,6 +22,7 @@ import { subirAdjunto } from "@/lib/supabase/storage";
 import { recalcularMerma } from "../_lib/merma";
 import { recalcularFlete } from "../_lib/flete";
 import { recalcularLiquidacionChofer } from "../_lib/liquidacion";
+import { avanzarEstadoAutomatico } from "../_lib/avance-estado";
 
 function archivoDeFormData(formData: FormData): File {
   const archivo = formData.get("archivo");
@@ -57,6 +58,11 @@ export async function confirmarImportacionCpe(
   await recalcularMerma(viaje.id);
   await recalcularFlete(viaje.id);
   await recalcularLiquidacionChofer(viaje.id);
+  // La pantalla de revisión junta generales + carga + descarga + tarifa
+  // en un solo guardado -- si ya venían fecha_partida/fecha_descarga
+  // cargadas desde la CPE, el viaje puede nacer directamente más
+  // adelante en la secuencia, no siempre en "planificado".
+  await avanzarEstadoAutomatico(viaje.id);
 
   const buffer = Buffer.from(await archivo.arrayBuffer());
   const rutaStorage = `viaje/${viaje.id}/${randomUUID()}-${archivo.name}`;

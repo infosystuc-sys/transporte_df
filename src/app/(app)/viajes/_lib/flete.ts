@@ -1,8 +1,25 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { clientes, configuracion, viajeAdicionales, viajes } from "@/db/schema";
+import { resolverCascadaTarifa, type BaseCalculo, type ModalidadTarifa } from "@/lib/tarifa-defaults";
 
-type BaseCalculo = "origen" | "destino";
+/**
+ * Trae lo que necesita resolverCascadaTarifa desde la DB. Separada de la
+ * cascada en sí (que es pura, en @/lib/tarifa-defaults) para poder
+ * reusar esa lógica también del lado del cliente, en la precarga de la
+ * pantalla de revisión de Importar CPE antes de crear el viaje.
+ */
+export async function resolverDefaultsTarifa(clienteId: number | null | undefined) {
+  const [cliente] = clienteId
+    ? await db.select().from(clientes).where(eq(clientes.id, clienteId))
+    : [];
+  const [config] = await db.select().from(configuracion).limit(1);
+
+  return resolverCascadaTarifa(cliente?.base_calculo_flete, {
+    base_calculo_flete_default: config?.base_calculo_flete_default,
+    modalidad_tarifa_default: config?.modalidad_tarifa_default,
+  });
+}
 
 /**
  * Recalcula importe_flete, importe_adicionales (los a cargo del cliente),
@@ -15,19 +32,18 @@ export async function recalcularFlete(viajeId: number) {
   const [viaje] = await db.select().from(viajes).where(eq(viajes.id, viajeId));
   if (!viaje) return;
 
-  // Base de cálculo: la que ya tiene el viaje (elegida a mano o resuelta
-  // antes); si nunca se resolvió, cliente > configuración global > destino.
+  // base_calculo y modalidad_tarifa: los que ya tiene el viaje (elegidos
+  // a mano o resueltos antes); si alguno nunca se resolvió, se completa
+  // con la cascada de defaults. Sin esto, un viaje al que nunca se le
+  // eligió modalidad_tarifa a mano se queda con importe_flete en null
+  // para siempre, aunque valor_tarifa esté cargado -- modalidad_tarifa
+  // nunca tenía ningún mecanismo de default, a diferencia de base_calculo.
   let baseCalculo: BaseCalculo | null = viaje.base_calculo;
-  if (!baseCalculo) {
-    const [cliente] = viaje.cliente_id
-      ? await db.select().from(clientes).where(eq(clientes.id, viaje.cliente_id))
-      : [];
-    if (cliente?.base_calculo_flete && cliente.base_calculo_flete !== "heredar") {
-      baseCalculo = cliente.base_calculo_flete;
-    } else {
-      const [config] = await db.select().from(configuracion).limit(1);
-      baseCalculo = config?.base_calculo_flete_default ?? "destino";
-    }
+  let modalidadTarifa: ModalidadTarifa | null = viaje.modalidad_tarifa;
+  if (!baseCalculo || !modalidadTarifa) {
+    const defaults = await resolverDefaultsTarifa(viaje.cliente_id);
+    baseCalculo ??= defaults.baseCalculo;
+    modalidadTarifa ??= defaults.modalidadTarifa;
   }
 
   // Neto de la base elegida; si no está cargado, se usa el otro (spec 4.5).
@@ -39,7 +55,7 @@ export async function recalcularFlete(viajeId: number) {
   const valorTarifa = viaje.valor_tarifa != null ? Number(viaje.valor_tarifa) : null;
   let importeFlete: number | null = null;
   if (valorTarifa != null) {
-    switch (viaje.modalidad_tarifa) {
+    switch (modalidadTarifa) {
       case "por_tonelada":
         importeFlete = netoBaseKg != null ? valorTarifa * (netoBaseKg / 1000) : null;
         break;
@@ -79,6 +95,7 @@ export async function recalcularFlete(viajeId: number) {
     .update(viajes)
     .set({
       base_calculo: baseCalculo,
+      modalidad_tarifa: modalidadTarifa,
       importe_flete: importeFlete != null ? importeFlete.toFixed(2) : null,
       importe_adicionales: adicionalesCliente.toFixed(2),
       importe_comision: importeComision.toFixed(2),

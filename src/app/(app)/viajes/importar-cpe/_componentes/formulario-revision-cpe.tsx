@@ -18,6 +18,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CampoBooleano, CampoTexto } from "@/components/catalogos/campos-formulario";
 import { viajeDesdeCpeSchema, type ViajeDesdeCpeInput } from "@/lib/schemas/cpe-importacion";
+import { resolverCascadaTarifa, type BaseCalculo, type ModalidadTarifa } from "@/lib/tarifa-defaults";
 import type { ResultadoImportacionCpe } from "@/lib/cpe/importar";
 import type { EntidadFaltante, TipoEntidadFaltante } from "@/lib/cpe/matching";
 import {
@@ -98,8 +99,20 @@ const opcionesBase = [
 const soloFecha = (iso: string | null) => (iso ? iso.slice(0, 10) : "");
 const numStr = (n: number | null) => (n == null ? "" : String(n));
 
-function construirValoresIniciales(resultado: ResultadoImportacionCpe): ViajeDesdeCpeInput {
+function construirValoresIniciales(
+  resultado: ResultadoImportacionCpe,
+  clientes: { id: number; base_calculo_flete: BaseCalculo | "heredar" | null }[],
+  configDefaults: {
+    base_calculo_flete_default: BaseCalculo | null;
+    modalidad_tarifa_default: ModalidadTarifa | null;
+  }
+): ViajeDesdeCpeInput {
   const { extraido: e, coincidencias: c } = resultado;
+  const cliente = clientes.find((cl) => cl.id === c.cliente_id);
+  const { baseCalculo, modalidadTarifa } = resolverCascadaTarifa(
+    cliente?.base_calculo_flete,
+    configDefaults
+  );
   return {
     tiene_cpe: true,
     tipo_carga: "grano",
@@ -146,13 +159,18 @@ function construirValoresIniciales(resultado: ResultadoImportacionCpe): ViajeDes
     neto_destino: numStr(e.neto_destino_kg),
     merma_precio_unitario: undefined,
 
-    modalidad_tarifa: undefined,
+    // Precargados con la misma cascada de defaults que recalcularFlete
+    // usa para autocorregir un viaje ya existente (cliente > config
+    // global) -- así el usuario ve el valor correcto acá mismo, antes de
+    // crear el viaje, en vez de que quede en blanco hasta el próximo
+    // guardado. Siempre editables si hace falta corregirlos.
+    modalidad_tarifa: modalidadTarifa ?? undefined,
     // Lo que trae la CPE es lo declarado en el documento, no necesariamente
     // lo que se termina cobrando — valor_tarifa (el real) queda vacío para
     // cargarlo a mano.
     valor_tarifa: numStr(null),
     valor_tarifa_declarada: numStr(e.valor_tarifa),
-    base_calculo: undefined,
+    base_calculo: baseCalculo,
   };
 }
 
@@ -292,12 +310,22 @@ export function FormularioRevisionCpe({
   choferes,
   productos,
   lugares,
+  configDefaults,
 }: {
-  clientes: { id: number; nombre: string; cuit: string | null }[];
+  clientes: {
+    id: number;
+    nombre: string;
+    cuit: string | null;
+    base_calculo_flete: BaseCalculo | "heredar" | null;
+  }[];
   camiones: { id: number; dominio_tractor: string; dominio_acoplado: string | null }[];
   choferes: { id: number; nombre: string; cuil: string | null }[];
   productos: { id: number; nombre: string }[];
   lugares: { id: number; nombre: string }[];
+  configDefaults: {
+    base_calculo_flete_default: BaseCalculo | null;
+    modalidad_tarifa_default: ModalidadTarifa | null;
+  };
 }) {
   const router = useRouter();
   const [archivo, setArchivo] = useState<File | null>(null);
@@ -363,7 +391,7 @@ export function FormularioRevisionCpe({
         const r = await importarCpe(formData);
         setResultado(r);
         setFaltantes(r.faltantes);
-        form.reset(construirValoresIniciales(r));
+        form.reset(construirValoresIniciales(r, clientes, configDefaults));
       } catch (err) {
         console.error("importarCpe falló:", err);
         const mensaje = err instanceof Error ? err.message : String(err);

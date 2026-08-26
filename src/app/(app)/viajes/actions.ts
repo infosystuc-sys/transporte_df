@@ -40,6 +40,7 @@ import { recalcularMerma } from "./_lib/merma";
 import { recalcularFlete } from "./_lib/flete";
 import { recalcularCobro } from "./_lib/cobro";
 import { recalcularLiquidacionChofer } from "./_lib/liquidacion";
+import { avanzarEstadoAutomatico } from "./_lib/avance-estado";
 import { registrarMovimientoAutomatico } from "@/lib/cuenta-corriente/movimientos";
 
 function rutaViaje(id: number) {
@@ -98,6 +99,7 @@ export async function actualizarCarga(
   await recalcularMerma(id);
   await recalcularFlete(id);
   await recalcularLiquidacionChofer(id);
+  await avanzarEstadoAutomatico(id);
   revalidatePath(rutaViaje(id));
 }
 
@@ -113,6 +115,7 @@ export async function actualizarDescarga(
   await recalcularMerma(id);
   await recalcularFlete(id);
   await recalcularLiquidacionChofer(id);
+  await avanzarEstadoAutomatico(id);
   revalidatePath(rutaViaje(id));
 }
 
@@ -141,6 +144,7 @@ export async function actualizarDescargaConAdjunto(
   await recalcularMerma(id);
   await recalcularFlete(id);
   await recalcularLiquidacionChofer(id);
+  await avanzarEstadoAutomatico(id);
 
   const buffer = Buffer.from(await archivo.arrayBuffer());
   const rutaStorage = `viaje/${id}/${randomUUID()}-${archivo.name}`;
@@ -180,6 +184,7 @@ export async function actualizarFacturacion(
     .set({ ...datos, actualizado_en: new Date() })
     .where(eq(viajes.id, id));
   await recalcularCobro(id);
+  await avanzarEstadoAutomatico(id);
   revalidatePath(rutaViaje(id));
 }
 
