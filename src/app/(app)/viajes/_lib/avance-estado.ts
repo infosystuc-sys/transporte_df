@@ -44,10 +44,21 @@ export async function avanzarEstadoAutomatico(viajeId: number) {
     .limit(1);
   if (imputacion) idxObjetivo = Math.max(idxObjetivo, idx("cobrado"));
 
-  if (idxObjetivo <= idxActual) return;
+  // El stepper manual, al pasar a "facturado", además prende el booleano
+  // separado viajes.facturado (lo usan el dashboard, Nuevo cobro y las
+  // alertas para filtrar "viajes ya facturados" -- estado='facturado' no
+  // alcanza para esas consultas). Se chequea aparte de idxObjetivo >
+  // idxActual: si por lo que sea el viaje ya está en "facturado" o más
+  // adelante pero esta columna quedó sin actualizar, también se corrige
+  // acá (no solo cuando hay un avance de estado nuevo en esta llamada).
+  const debeEstarFacturado = idxObjetivo >= idx("facturado");
+  const cambios: Partial<typeof viajes.$inferInsert> = {};
+  if (idxObjetivo > idxActual) cambios.estado = ESTADOS_ORDEN[idxObjetivo];
+  if (debeEstarFacturado && !viaje.facturado) cambios.facturado = true;
+  if (Object.keys(cambios).length === 0) return;
 
   await db
     .update(viajes)
-    .set({ estado: ESTADOS_ORDEN[idxObjetivo], actualizado_en: new Date() })
+    .set({ ...cambios, actualizado_en: new Date() })
     .where(eq(viajes.id, viajeId));
 }
