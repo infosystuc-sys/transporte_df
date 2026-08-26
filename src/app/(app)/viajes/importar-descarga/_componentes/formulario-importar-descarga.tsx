@@ -51,6 +51,7 @@ export function FormularioImportarDescarga() {
   const [error, setError] = useState<string | null>(null);
   const [ctgBuscado, setCtgBuscado] = useState<string | null>(null);
   const [viajesEncontrados, setViajesEncontrados] = useState<ViajeEncontradoPorCtg[] | null>(null);
+  const [datosExtraidos, setDatosExtraidos] = useState<ComprobanteDescargaExtraido | null>(null);
   const [viajeElegido, setViajeElegido] = useState<ViajeEncontradoPorCtg | null>(null);
   const [confirmaSobrescribir, setConfirmaSobrescribir] = useState(false);
 
@@ -63,6 +64,7 @@ export function FormularioImportarDescarga() {
     setArchivo(e.target.files?.[0] ?? null);
     setError(null);
     setViajesEncontrados(null);
+    setDatosExtraidos(null);
     setViajeElegido(null);
   }
 
@@ -70,6 +72,7 @@ export function FormularioImportarDescarga() {
     if (!archivo) return;
     setError(null);
     setViajesEncontrados(null);
+    setDatosExtraidos(null);
     setViajeElegido(null);
     startTransitionProcesar(async () => {
       const formData = new FormData();
@@ -81,6 +84,7 @@ export function FormularioImportarDescarga() {
       }
       setCtgBuscado(resultado.datos.ctg);
       setViajesEncontrados(resultado.viajes);
+      setDatosExtraidos(resultado.datos);
       if (resultado.viajes.length === 0) {
         setError(`No se encontró ningún viaje cargado con el CTG ${resultado.datos.ctg}.`);
         return;
@@ -190,18 +194,7 @@ export function FormularioImportarDescarga() {
               <button
                 key={v.id}
                 type="button"
-                onClick={() =>
-                  elegirViaje(v, {
-                    ctg: ctgBuscado,
-                    fecha_arribo: null,
-                    fecha_descarga: null,
-                    n_turno_descarga: null,
-                    bruto_destino_kg: null,
-                    tara_destino_kg: null,
-                    neto_destino_kg: null,
-                    humedad_pct: null,
-                  })
-                }
+                onClick={() => datosExtraidos && elegirViaje(v, datosExtraidos)}
                 className="flex items-center justify-between rounded-md border p-3 text-left text-sm hover:bg-muted"
               >
                 <span>
