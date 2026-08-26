@@ -6,6 +6,8 @@ type Resultado = {
   ok: boolean;
   archivoOriginal?: { nombre: string; tipo: string; tamañoKB: number; primerosBytesHex: string };
   imagenFinal?: { ancho: number; alto: number; tamañoKB: number };
+  textoEmbebido?: { largo: number; muestra: string; cpe_nro: string | null; titular_cuit: string | null };
+  claude?: { tieneApiKey: boolean; resultado: unknown; error: string | null };
   dataUrl?: string;
   error?: unknown;
 };
@@ -50,7 +52,14 @@ export default function DebugImagenPage() {
       {resultado && (
         <pre className="overflow-auto rounded-md border bg-muted p-3 text-xs">
           {JSON.stringify(
-            { ok: resultado.ok, archivoOriginal: resultado.archivoOriginal, imagenFinal: resultado.imagenFinal, error: resultado.error },
+            {
+              ok: resultado.ok,
+              archivoOriginal: resultado.archivoOriginal,
+              imagenFinal: resultado.imagenFinal,
+              textoEmbebido: resultado.textoEmbebido,
+              claude: resultado.claude,
+              error: resultado.error,
+            },
             null,
             2
           )}
