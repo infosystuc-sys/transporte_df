@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { formatoFechaInput } from "@/lib/schemas/campos-fecha";
 import {
   Select,
   SelectContent,
@@ -70,13 +71,31 @@ export function BarraFiltros({
     setFiltros((prev) => ({ ...prev, [clave]: valor }));
   }
 
+  function enviar(f: Filtros) {
+    const params = new URLSearchParams();
+    for (const c of CAMPOS_TEXTO) if (f[c]) params.set(c, f[c]);
+    for (const c of CAMPOS_SELECT) if (f[c] && f[c] !== "todos") params.set(c, f[c]);
+    for (const c of CAMPOS_BOOL) if (f[c]) params.set(c, "1");
+    router.push(`/viajes?${params.toString()}`);
+  }
+
   function aplicar(e: React.FormEvent) {
     e.preventDefault();
-    const params = new URLSearchParams();
-    for (const c of CAMPOS_TEXTO) if (filtros[c]) params.set(c, filtros[c]);
-    for (const c of CAMPOS_SELECT) if (filtros[c] && filtros[c] !== "todos") params.set(c, filtros[c]);
-    for (const c of CAMPOS_BOOL) if (filtros[c]) params.set(c, "1");
-    router.push(`/viajes?${params.toString()}`);
+    enviar(filtros);
+  }
+
+  /** offset 0 = mes actual, -1 = mes anterior. Aplica de una, sin esperar el click en "Aplicar". */
+  function aplicarRangoMes(offset: number) {
+    const hoy = new Date();
+    const desde = new Date(hoy.getFullYear(), hoy.getMonth() + offset, 1);
+    const hasta = new Date(hoy.getFullYear(), hoy.getMonth() + offset + 1, 0);
+    const nuevos: Filtros = {
+      ...filtros,
+      fecha_desde: formatoFechaInput(desde),
+      fecha_hasta: formatoFechaInput(hasta),
+    };
+    setFiltros(nuevos);
+    enviar(nuevos);
   }
 
   function limpiar() {
@@ -121,6 +140,29 @@ export function BarraFiltros({
             value={filtros.fecha_hasta}
             onChange={(e) => set("fecha_hasta", e.target.value)}
           />
+        </div>
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <Label>Atajos de fecha</Label>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => aplicarRangoMes(0)}
+            >
+              Este mes
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => aplicarRangoMes(-1)}
+            >
+              Mes anterior
+            </Button>
+          </div>
         </div>
 
         <SelectFiltro

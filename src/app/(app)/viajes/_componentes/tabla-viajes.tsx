@@ -131,8 +131,32 @@ export function TablaViajes({
       header: "Origen → Destino",
       cell: ({ row }) => `${row.original.origen_nombre ?? "—"} → ${row.original.destino_nombre ?? "—"}`,
     },
-    { accessorKey: "dominio_tractor", header: "Dominio", cell: ({ getValue }) => getValue() ?? "—" },
-    { accessorKey: "chofer_nombre", header: "Chofer", cell: ({ getValue }) => getValue() ?? "—" },
+    {
+      accessorKey: "dominio_tractor",
+      header: () => (
+        <EncabezadoOrdenable
+          columna="camion"
+          etiqueta="Dominio"
+          sortActual={sort}
+          dirActual={dir}
+          queryString={queryString}
+        />
+      ),
+      cell: ({ getValue }) => getValue() ?? "—",
+    },
+    {
+      accessorKey: "chofer_nombre",
+      header: () => (
+        <EncabezadoOrdenable
+          columna="chofer"
+          etiqueta="Chofer"
+          sortActual={sort}
+          dirActual={dir}
+          queryString={queryString}
+        />
+      ),
+      cell: ({ getValue }) => getValue() ?? "—",
+    },
     {
       accessorKey: "neto_destino",
       header: "TN destino",

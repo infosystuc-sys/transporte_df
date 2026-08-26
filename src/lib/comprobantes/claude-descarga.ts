@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { canvasParaClaude, LADO_LARGO_MAX_IA, renderizarPrimeraPagina } from "@/lib/cpe/render";
 
 export type ComprobanteDescargaExtraido = {
+  ctg: string | null;
   fecha_arribo: string | null; // yyyy-mm-dd
   fecha_descarga: string | null; // yyyy-mm-dd
   n_turno_descarga: string | null;
@@ -18,6 +19,7 @@ const HERRAMIENTA_EXTRACCION = {
   input_schema: {
     type: "object" as const,
     properties: {
+      ctg: { type: ["string", "null"] },
       fecha_arribo: { type: ["string", "null"] },
       fecha_descarga: { type: ["string", "null"] },
       n_turno_descarga: { type: ["string", "null"] },
@@ -27,6 +29,7 @@ const HERRAMIENTA_EXTRACCION = {
       humedad_pct: { type: ["number", "null"] },
     },
     required: [
+      "ctg",
       "fecha_arribo",
       "fecha_descarga",
       "n_turno_descarga",
@@ -70,7 +73,7 @@ export async function extraerComprobanteDescarga(
           },
           {
             type: "text",
-            text: 'Esta es una foto o PDF de un ticket de balanza o comprobante de descarga de un camión con granos en destino. Extraé fecha de arribo, fecha de descarga, número de turno, peso bruto, tara y peso neto (todos los pesos en KILOGRAMOS — si el ticket los muestra en toneladas, convertilos multiplicando por 1000) y el porcentaje de humedad si figura. Fechas en formato yyyy-mm-dd. Si un campo no aparece en el documento, poné null — no inventes valores.',
+            text: 'Esta es una foto o PDF de un ticket de balanza o comprobante de descarga de un camión con granos en destino (puede ser una nota de recepción de una empresa como Cargill, Vicentin, ACA, etc., no necesariamente un formulario oficial de ARCA). Extraé el CTG (Código de Trazabilidad de Granos, un número largo que suele figurar como "CTG", "Carta de Porte" o similar — es el mismo número que identifica el viaje de origen a destino), fecha de arribo, fecha de descarga, número de turno, peso bruto, tara y peso neto (todos los pesos en KILOGRAMOS — si el ticket los muestra en toneladas, convertilos multiplicando por 1000) y el porcentaje de humedad si figura. Fechas en formato yyyy-mm-dd. Si un campo no aparece en el documento, poné null — no inventes valores.',
           },
         ],
       },

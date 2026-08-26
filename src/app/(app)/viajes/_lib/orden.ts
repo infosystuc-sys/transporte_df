@@ -6,6 +6,12 @@ export const COLUMNAS_ORDENABLES = {
   fecha_carga: viajes.fecha_carga,
   estado: viajes.estado,
   ctg: viajes.ctg,
+  // Ordenar por el id alcanza para lo que se pide: que las filas de un
+  // mismo camión/chofer queden consecutivas en vez de mezcladas por
+  // fecha -- no hace falta el nombre para eso, y evitar el join acá
+  // mantiene la consulta simple.
+  camion: viajes.camion_id,
+  chofer: viajes.chofer_id,
 } as const;
 
 export type ColumnaOrdenable = keyof typeof COLUMNAS_ORDENABLES;

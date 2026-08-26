@@ -83,6 +83,9 @@ export default async function ViajesPage({
             <Link href="/viajes/importar-cpe">Importar CPE</Link>
           </Button>
           <Button variant="outline" asChild>
+            <Link href="/viajes/importar-descarga">Importar descarga</Link>
+          </Button>
+          <Button variant="outline" asChild>
             <Link href="/viajes/importar-historico">Importar histórico</Link>
           </Button>
           <Button asChild>

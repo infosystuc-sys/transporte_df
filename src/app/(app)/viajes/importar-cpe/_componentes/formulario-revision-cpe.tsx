@@ -479,16 +479,23 @@ export function FormularioRevisionCpe({
       {resultado && e && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <form onSubmit={form.handleSubmit(confirmar)} className="flex flex-col gap-6">
-            {resultado.fuente === "claude" && (
+            {resultado.motivoManual === "ilegible" && (
+              <p className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+                La IA no pudo leer bien el documento (foto borrosa, con poca luz, o mal encuadrada).
+                Probá sacar la foto de nuevo con más luz, más de cerca y bien derecha, o cargá los
+                datos a mano abajo (el archivo igual se guarda como adjunto).
+              </p>
+            )}
+            {resultado.motivoManual === "sin_conexion_ia" && (
+              <p className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+                No se pudo conectar con la IA para leer el documento (no es un problema de la foto).
+                Cargá los datos a mano abajo (el archivo igual se guarda como adjunto).
+              </p>
+            )}
+            {resultado.fuente === "claude" && !resultado.motivoManual && (
               <p className="rounded-md border border-amber/40 bg-amber/10 p-3 text-sm text-amber">
                 Este PDF no tenía texto seleccionable: los datos se extrajeron con ayuda de IA a
                 partir de la imagen. Revisá todos los campos con cuidado antes de confirmar.
-              </p>
-            )}
-            {resultado.fuente === "manual" && (
-              <p className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
-                No se pudo extraer el contenido del PDF automáticamente. Cargá los datos a mano
-                abajo (el PDF igual se guarda como adjunto).
               </p>
             )}
             {resultado.referenciaQr && (
