@@ -80,8 +80,12 @@ export default async function ConfiguracionPage() {
             mobile, con 9 pestañas, el contenido que no entraba en una
             línea se salía de esa caja y quedaba flotando encima del
             contenido de abajo. Scroll horizontal en una sola línea evita
-            el solapamiento sin perder ninguna pestaña. */}
-        <TabsList className="w-full justify-start overflow-x-auto">
+            el solapamiento sin perder ninguna pestaña.
+            min-w-0: sin esto, el ancho mínimo automático de los triggers
+            (flex-1) empuja el ancho de TabsList por encima del viewport en
+            vez de scrollear -- agranda la página entera en mobile, no solo
+            la lista de pestañas. */}
+        <TabsList className="w-full min-w-0 justify-start overflow-x-auto">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="productos">Productos</TabsTrigger>
           <TabsTrigger value="lugares">Lugares</TabsTrigger>

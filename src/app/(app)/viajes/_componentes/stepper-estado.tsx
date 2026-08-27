@@ -78,7 +78,15 @@ export function StepperEstado({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    // min-w-0: este div es un item flex de la fila del header (título +
+    // stepper) -- sin esto el párrafo de abajo no ajusta su ancho al
+    // espacio disponible y empuja toda la página en mobile en vez de
+    // hacer wrap del texto.
+    <div className="flex min-w-0 flex-col gap-3">
+      <p className="text-xs text-muted-foreground">
+        El estado avanza solo al guardar los datos correspondientes (fecha de partida, descarga,
+        factura, cobro, liquidación). Usá Avanzar/Retroceder solo para forzar un cambio manual.
+      </p>
       <div className="flex items-center gap-1 overflow-x-auto">
         {ESTADOS.map((estado, i) => (
           <button
@@ -124,7 +132,8 @@ export function StepperEstado({
           </DialogHeader>
           <div className="flex flex-col gap-2">
             <p className="text-sm text-muted-foreground">
-              Para pasar a Facturado hace falta un N° de factura.
+              Para pasar a Facturado hace falta un N° de factura. También podés cargarlo desde la
+              pestaña &quot;Facturación y cobro&quot;: el estado avanza solo al guardar ahí.
             </p>
             <Label htmlFor="factura_nro">N° de factura</Label>
             <Input

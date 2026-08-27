@@ -37,8 +37,13 @@ export function TabsViaje({
     <Tabs defaultValue="generales">
       {/* overflow-x-auto en vez de flex-wrap: con la altura fija (h-8) de
           TabsList, envolver a varias filas en mobile hacía que el
-          sobrante quedara flotando encima del contenido de abajo. */}
-      <TabsList className="w-full justify-start overflow-x-auto">
+          sobrante quedara flotando encima del contenido de abajo.
+          min-w-0: TabsList es un item flex dentro de Tabs (flex-col) -- sin
+          esto, el ancho mínimo automático de sus 9 triggers (flex-1) empuja
+          el ancho de TabsList por encima del viewport en vez de scrollear,
+          y en mobile terminaba agrandando la página entera (no solo la
+          lista de pestañas). */}
+      <TabsList className="w-full min-w-0 justify-start overflow-x-auto">
         <TabsTrigger value="generales">Datos generales</TabsTrigger>
         <TabsTrigger value="carga">Carga</TabsTrigger>
         <TabsTrigger value="descarga">Descarga y merma</TabsTrigger>

@@ -241,7 +241,10 @@ export async function cambiarEstadoViaje(
   if (!viaje) return { error: "Viaje no encontrado." };
 
   if (nuevoEstado === "descargado" && !viaje.fecha_descarga) {
-    return { error: "No se puede pasar a Descargado sin fecha de descarga." };
+    return {
+      error:
+        "No se puede pasar a Descargado sin fecha de descarga. Completala en la pestaña \"Descarga y merma\" y guardá: el estado avanza solo, no hace falta volver a tocar este botón.",
+    };
   }
 
   if (nuevoEstado === "facturado") {
@@ -263,12 +266,18 @@ export async function cambiarEstadoViaje(
       .from(cobroImputaciones)
       .where(eq(cobroImputaciones.viaje_id, id));
     if (imputaciones.length === 0) {
-      return { error: "No se puede pasar a Cobrado sin un cobro imputado." };
+      return {
+        error:
+          "No se puede pasar a Cobrado sin un cobro imputado. Registralo desde Cobros → Nuevo cobro: el estado avanza solo, no hace falta volver a tocar este botón.",
+      };
     }
   }
 
   if (nuevoEstado === "liquidado" && !viaje.liquidado) {
-    return { error: "No se puede pasar a Liquidado sin incluir el viaje en una liquidación." };
+    return {
+      error:
+        "No se puede pasar a Liquidado sin incluir el viaje en una liquidación. Hacelo desde Liquidaciones → Nueva liquidación: el estado avanza solo, no hace falta volver a tocar este botón.",
+    };
   }
 
   await db

@@ -219,7 +219,11 @@ export function FormularioImportacionHistorica({
       {hojas && (
         <>
           <Tabs defaultValue={hojas[0]?.hoja}>
-            <TabsList className="w-full justify-start overflow-x-auto">
+            {/* min-w-0: sin esto, el ancho mínimo automático de los
+                triggers (flex-1) empuja el ancho de TabsList por encima del
+                viewport en vez de scrollear -- agranda la página entera en
+                mobile, no solo la lista de pestañas. */}
+            <TabsList className="w-full min-w-0 justify-start overflow-x-auto">
               {hojas.map((h) => (
                 <TabsTrigger key={h.hoja} value={h.hoja}>
                   {h.hoja} ({h.filas.length})
