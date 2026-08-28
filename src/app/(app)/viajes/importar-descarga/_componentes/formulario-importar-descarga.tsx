@@ -32,6 +32,15 @@ const valoresPorDefecto: ViajeDescargaInput = {
 
 const formatoFecha = new Intl.DateTimeFormat("es-AR", { timeZone: "America/Argentina/Cordoba" });
 
+const ETIQUETAS_CAMPOS_DESCARGA: Record<string, string> = {
+  ctg: "CTG",
+  n_turno_descarga: "N° de turno",
+  bruto_destino_kg: "Peso bruto (destino)",
+  tara_destino_kg: "Tara (destino)",
+  neto_destino_kg: "Peso neto (destino)",
+  humedad_pct: "Humedad (%)",
+};
+
 const ETIQUETAS_ESTADO: Record<string, string> = {
   planificado: "Planificado",
   cargado: "Cargado",
@@ -220,6 +229,17 @@ export function FormularioImportarDescarga() {
               {ETIQUETAS_ESTADO[viajeElegido.estado] ?? viajeElegido.estado}
             </p>
           </div>
+
+          {datosExtraidos && datosExtraidos.campos_dudosos.length > 0 && (
+            <p className="rounded-md border border-amber/40 bg-amber/10 p-3 text-sm text-amber">
+              La IA no está segura de estos campos (foto poco clara en esa zona) — revisalos con
+              más atención:{" "}
+              {datosExtraidos.campos_dudosos
+                .map((c) => ETIQUETAS_CAMPOS_DESCARGA[c] ?? c)
+                .join(", ")}
+              .
+            </p>
+          )}
 
           {yaTieneDescarga && (
             <Alert variant="destructive">

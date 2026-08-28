@@ -33,17 +33,34 @@ function rutaFactory(sub: string): string | undefined {
  */
 export const LADO_LARGO_MAX_IA = 2000;
 
-/** Calidad JPEG para las imágenes que se mandan a Claude (0-1). */
+/** Calidad JPEG para las imágenes que se mandan a Claude (0-1), usada solo como respaldo (ver canvasParaClaude). */
 const CALIDAD_JPEG_IA = 0.92;
 
 /**
- * Codifica el canvas para mandarlo a Claude. JPEG en vez de PNG: para
- * contenido con ruido fotográfico (una foto de celular), JPEG comprime
- * muchísimo mejor que PNG para el mismo detalle visible, lo que ayuda a
- * no acercarse al límite de tamaño de la Server Action en fotos de alta
- * resolución. A esta calidad no se nota en texto renderizado desde PDF.
+ * Margen bajo el límite de tamaño de imagen de la API de Claude: por
+ * encima de esto se prefiere arriesgar la compresión de JPEG antes que
+ * acercarse a un límite que tiraría error.
  */
-export function canvasParaClaude(canvas: { toBuffer(mime: "image/jpeg", quality?: number): Buffer }) {
+const LIMITE_BYTES_PNG_IA = 4 * 1024 * 1024;
+
+/**
+ * Codifica el canvas para mandarlo a Claude. PNG por default (sin pérdida):
+ * la foto que llega acá ya viene comprimida por el celular o por WhatsApp,
+ * así que recomprimirla otra vez en JPEG solo suma una segunda pérdida
+ * encima de la que ya sufrió antes de llegar a este código. Para fotos con
+ * mucho ruido (a diferencia de un documento escaneado con áreas planas de
+ * color) el PNG puede pesar bastante más que el JPEG -- si se pasa de
+ * LIMITE_BYTES_PNG_IA se cae a JPEG en vez de arriesgar el límite de
+ * tamaño de imagen de la API.
+ */
+export function canvasParaClaude(canvas: {
+  toBuffer(mime: "image/png"): Buffer;
+  toBuffer(mime: "image/jpeg", quality?: number): Buffer;
+}) {
+  const png = canvas.toBuffer("image/png");
+  if (png.length <= LIMITE_BYTES_PNG_IA) {
+    return { media_type: "image/png" as const, data: png.toString("base64") };
+  }
   return {
     media_type: "image/jpeg" as const,
     data: canvas.toBuffer("image/jpeg", CALIDAD_JPEG_IA).toString("base64"),

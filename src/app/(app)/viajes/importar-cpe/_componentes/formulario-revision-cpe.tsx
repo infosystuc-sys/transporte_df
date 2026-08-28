@@ -99,6 +99,36 @@ const opcionesBase = [
 const soloFecha = (iso: string | null) => (iso ? iso.slice(0, 10) : "");
 const numStr = (n: number | null) => (n == null ? "" : String(n));
 
+/** Etiquetas en español de campos_dudosos, para el aviso de "revisá esto con más cuidado". */
+const ETIQUETAS_CAMPOS_CPE: Record<string, string> = {
+  ctg: "CTG",
+  cpe_nro: "N° CPE",
+  campania: "Campaña",
+  titular_cuit: "CUIT del titular",
+  titular_nombre: "Titular de la carta de porte",
+  destinatario_cuit: "CUIT del destinatario",
+  destinatario_nombre: "Destinatario",
+  pagador_cuit: "CUIT del cliente (flete pagador)",
+  pagador_nombre: "Cliente (flete pagador)",
+  chofer_cuil: "CUIL del chofer",
+  chofer_nombre: "Chofer",
+  producto_nombre: "Producto",
+  origen_localidad: "Localidad de origen",
+  origen_provincia: "Provincia de origen",
+  destino_n_planta: "N° de planta de destino",
+  destino_direccion: "Dirección de destino",
+  destino_localidad: "Localidad de destino",
+  destino_provincia: "Provincia de destino",
+  dominio_tractor: "Dominio tractor",
+  dominio_acoplado: "Dominio acoplado",
+  n_turno_descarga: "N° de turno",
+  bruto_origen_kg: "Peso bruto (origen)",
+  tara_origen_kg: "Tara (origen)",
+  neto_origen_kg: "Peso neto (origen)",
+  km: "Km a recorrer",
+  valor_tarifa: "Tarifa",
+};
+
 function construirValoresIniciales(
   resultado: ResultadoImportacionCpe,
   clientes: { id: number; base_calculo_flete: BaseCalculo | "heredar" | null }[],
@@ -529,6 +559,13 @@ export function FormularioRevisionCpe({
               <p className="rounded-md border border-amber/40 bg-amber/10 p-3 text-sm text-amber">
                 Este PDF no tenía texto seleccionable: los datos se extrajeron con ayuda de IA a
                 partir de la imagen. Revisá todos los campos con cuidado antes de confirmar.
+              </p>
+            )}
+            {resultado.fuente === "claude" && e.campos_dudosos.length > 0 && (
+              <p className="rounded-md border border-amber/40 bg-amber/10 p-3 text-sm text-amber">
+                La IA no está segura de estos campos (foto poco clara en esa zona) — revisalos con
+                más atención:{" "}
+                {e.campos_dudosos.map((c) => ETIQUETAS_CAMPOS_CPE[c] ?? c).join(", ")}.
               </p>
             )}
             {resultado.referenciaQr && (

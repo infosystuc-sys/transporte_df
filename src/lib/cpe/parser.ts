@@ -53,6 +53,14 @@ export type CpeExtraido = {
   bruto_destino_kg: number | null;
   tara_destino_kg: number | null;
   neto_destino_kg: number | null;
+
+  /**
+   * Nombres de campos (mismas claves que este tipo) que la IA marcó como
+   * poco confiables al leer la imagen -- vacío en el parser de texto
+   * (acá no hay ambigüedad posible, es texto plano exacto del PDF), lo
+   * completa solo la extracción por Claude (ver claude.ts).
+   */
+  campos_dudosos: string[];
 };
 
 function aIso(fechaDDMMYYYY: string): string {
@@ -103,6 +111,7 @@ export function parseTextoCpe(texto: string): CpeExtraido {
     bruto_destino_kg: null,
     tara_destino_kg: null,
     neto_destino_kg: null,
+    campos_dudosos: [],
   };
 
   const ctg = texto.match(/CTG:\s*(\d+)/);
