@@ -98,8 +98,8 @@ export function ImportadorMasivoCpe({
   );
 
   // CTG repetido DENTRO del lote (además de contra la base, ya chequeado
-  // por item en procesarUno): se recalcula acá porque depende de ver
-  // todos los items juntos, no de uno solo.
+  // por item en procesarUno): se memoiza a partir de items porque depende
+  // de ver todos los items juntos, no de uno solo.
   const ctgsRepetidosEnLote = useMemo(() => {
     const conteo = new Map<string, number>();
     for (const it of items) {
@@ -139,6 +139,7 @@ export function ImportadorMasivoCpe({
       actualizarItem(item.id, {
         estado: necesitaRevision ? "revisar" : "listo",
         resultado: r,
+        error: null,
         ctgYaExisteViajeNro: viajesExistentes[0]?.numero ?? null,
       });
     } catch (err) {
@@ -238,14 +239,20 @@ export function ImportadorMasivoCpe({
       const formData = new FormData();
       formData.set("archivo", item.archivo);
       formData.set("datos", JSON.stringify(valores));
-      const r = await confirmarImportacionCpeEnTanda(formData);
-      if ("error" in r) {
-        toast.error(r.error);
-        return;
+      try {
+        const r = await confirmarImportacionCpeEnTanda(formData);
+        if ("error" in r) {
+          toast.error(r.error);
+          return;
+        }
+        actualizarItem(itemId, { estado: "confirmado", viajeId: r.viajeId });
+        toast.success(`Viaje #${r.viajeId} creado.`);
+        if (idAbierto === itemId) setIdAbierto(null);
+      } catch (err) {
+        console.error("confirmarImportacionCpeEnTanda falló:", err);
+        const mensaje = err instanceof Error ? err.message : String(err);
+        toast.error(`No se pudo crear el viaje: ${mensaje}`);
       }
-      actualizarItem(itemId, { estado: "confirmado", viajeId: r.viajeId });
-      toast.success(`Viaje #${r.viajeId} creado.`);
-      if (idAbierto === itemId) setIdAbierto(null);
     });
   }
 
