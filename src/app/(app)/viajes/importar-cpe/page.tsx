@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { obtenerCatalogosImportacionCpe } from "@/lib/cpe/datos-catalogos";
 import { FormularioRevisionCpe } from "./_componentes/formulario-revision-cpe";
 
@@ -19,9 +20,9 @@ export default async function ImportarCpePage() {
         </p>
         <p className="text-sm text-muted-foreground">
           ¿Tenés varios archivos para cargar de una?{" "}
-          <a href="/viajes/importar-cpe-masivo" className="text-primary underline">
+          <Link href="/viajes/importar-cpe-masivo" className="text-primary underline">
             Importar CPE (varios)
-          </a>
+          </Link>
           .
         </p>
       </div>

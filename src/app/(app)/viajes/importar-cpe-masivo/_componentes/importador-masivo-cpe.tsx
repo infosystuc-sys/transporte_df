@@ -259,6 +259,12 @@ export function ImportadorMasivoCpe({
   function confirmarRapido(item: ItemLote) {
     if (!item.resultado) return;
     const valores = construirValoresIniciales(item.resultado, clientes, configDefaults);
+    const parseado = viajeDesdeCpeSchema.safeParse(valores);
+    if (!parseado.success) {
+      toast.error("Faltan datos obligatorios (por ejemplo el cliente) — revisá el detalle antes de confirmar.");
+      abrirDetalle(item);
+      return;
+    }
     confirmarValores(item.id, valores);
   }
 

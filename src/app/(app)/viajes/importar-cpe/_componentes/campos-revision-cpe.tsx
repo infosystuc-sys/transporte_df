@@ -73,7 +73,7 @@ export function agruparFaltantes(faltantes: EntidadFaltante[]): GrupoFaltante[] 
     const huella = calcularHuellaFaltante(f);
     const existente = grupos.get(huella);
     if (existente) {
-      existente.roles.push(f.etiqueta);
+      if (!existente.roles.includes(f.etiqueta)) existente.roles.push(f.etiqueta);
       continue;
     }
     grupos.set(huella, {
