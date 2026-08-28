@@ -2,6 +2,7 @@
 
 import { extraerComprobante, type ComprobanteExtraido } from "./claude";
 import { extraerComprobanteDescarga, type ComprobanteDescargaExtraido } from "./claude-descarga";
+import { buscarCamionPorPatente, buscarChoferPorNombreParcial } from "./matching";
 
 type Resultado<T> = T | { error: string };
 
@@ -33,7 +34,11 @@ export async function previsualizarComprobante(
     const buffer = Buffer.from(await archivo.arrayBuffer());
     const extraido = await extraerComprobante(buffer);
     if (!extraido) return { error: MENSAJE_NO_LEIDO };
-    return extraido;
+    const [camion_id, chofer_id] = await Promise.all([
+      buscarCamionPorPatente(extraido.patente),
+      buscarChoferPorNombreParcial(extraido.chofer_nombre),
+    ]);
+    return { ...extraido, camion_id, chofer_id };
   } catch (err) {
     console.error("previsualizarComprobante:", err);
     return { error: MENSAJE_NO_LEIDO };

@@ -161,12 +161,20 @@ export function GestorGasoil({
                       ? String(datos.importe_total)
                       : form.getValues("importe"),
                   comprobante_nro: datos.comprobante_nro ?? form.getValues("comprobante_nro"),
+                  // Muchos tickets de surtidor traen patente y chofer al pie
+                  // (ver claude.ts) -- se precargan solo si matchearon un
+                  // único registro existente, siempre editables. El
+                  // odómetro no sale de acá: el "Km" que a veces trae el
+                  // ticket no es el odómetro real del camión.
+                  camion_id: datos.camion_id ?? form.getValues("camion_id"),
+                  chofer_id: datos.chofer_id ?? form.getValues("chofer_id"),
                 });
               }}
             />
             <p className="text-xs text-muted-foreground">
-              Precarga litros, importe, fecha y N° de comprobante. Camión y odómetro siempre se
-              completan a mano.
+              Precarga litros, importe, fecha, N° de comprobante y (si los reconoce) camión y
+              chofer. Revisá esos dos igual antes de guardar — el odómetro siempre se completa a
+              mano.
             </p>
           </div>
           <CampoTexto form={form} name="fecha" label="Fecha" tipo="date" />

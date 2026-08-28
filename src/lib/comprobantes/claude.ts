@@ -1,5 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { canvasParaClaude, LADO_LARGO_MAX_IA, renderizarPrimeraPagina } from "@/lib/cpe/render";
+import { limpiarCamposTexto } from "@/lib/ia/sanear";
+
+const CAMPOS_TEXTO_COMPROBANTE = [
+  "proveedor_nombre",
+  "proveedor_cuit",
+  "comprobante_nro",
+  "patente",
+  "chofer_nombre",
+] as const;
 
 export type ComprobanteExtraido = {
   fecha: string | null; // yyyy-mm-dd
@@ -9,7 +18,18 @@ export type ComprobanteExtraido = {
   proveedor_cuit: string | null;
   comprobante_nro: string | null;
   patente: string | null;
+  /** Muchos tickets de surtidor imprimen el chofer al pie (ver prompt más abajo). */
+  chofer_nombre: string | null;
   tipo_sugerido: "combustible" | "gasto" | "estadia" | "otro" | null;
+  /**
+   * Coincidencias contra los catálogos, calculadas en previsualizarComprobante
+   * (no acá: esta función solo llama a Claude, no toca la base) a partir de
+   * patente y chofer_nombre. null si no se encontró o no había dato para
+   * buscar -- el formulario de Gasoil los usa para precargar camión/chofer,
+   * siempre editables.
+   */
+  camion_id: number | null;
+  chofer_id: number | null;
 };
 
 const HERRAMIENTA_EXTRACCION = {
@@ -26,6 +46,7 @@ const HERRAMIENTA_EXTRACCION = {
       proveedor_cuit: { type: ["string", "null"] },
       comprobante_nro: { type: ["string", "null"] },
       patente: { type: ["string", "null"] },
+      chofer_nombre: { type: ["string", "null"] },
       tipo_sugerido: {
         type: ["string", "null"],
         enum: ["combustible", "gasto", "estadia", "otro", null],
@@ -39,6 +60,7 @@ const HERRAMIENTA_EXTRACCION = {
       "proveedor_cuit",
       "comprobante_nro",
       "patente",
+      "chofer_nombre",
       "tipo_sugerido",
     ],
   },
@@ -74,7 +96,7 @@ export async function extraerComprobante(buffer: Buffer): Promise<ComprobanteExt
           },
           {
             type: "text",
-            text: 'Esta es una foto o PDF de un comprobante de gasto de una empresa de transporte — puede ser un ticket de balanza, una factura de combustible, un remito, o similar. Extraé lo que encuentres. fecha en formato yyyy-mm-dd. Si un campo no aparece en el documento, poné null — no inventes valores. Para tipo_sugerido: "combustible" si es un ticket o factura de carga de combustible, "estadia" si es un comprobante de espera/estadía, "gasto" para cualquier otro gasto de viaje (peaje, balanza, lavado, reparación, viático, guía, etc.), "otro" si no podés determinarlo.',
+            text: 'Esta es una foto o PDF de un comprobante de gasto de una empresa de transporte — puede ser un ticket de balanza, una factura de combustible, un remito, o similar. Extraé lo que encuentres. fecha en formato yyyy-mm-dd. Si un campo no aparece en el documento, poné null — no inventes valores. Para tipo_sugerido: "combustible" si es un ticket o factura de carga de combustible, "estadia" si es un comprobante de espera/estadía, "gasto" para cualquier otro gasto de viaje (peaje, balanza, lavado, reparación, viático, guía, etc.), "otro" si no podés determinarlo. Muchos tickets de surtidor imprimen el vehículo y el chofer en una línea al pie, aparte del resto del comprobante (por ejemplo "Vehiculo: ah499kv scania..Chofer: portillo carlos..Km: 0" o "VEH: CAMION PAT: AI362JX / CHOFER: GUERRA") — buscá esa línea con cuidado para patente y chofer_nombre. El chofer ahí a veces aparece solo con el apellido, y el papel térmico angosto a veces corta una palabra larga a la mitad y la sigue en el renglón de abajo (ej. "portillo carlo" + "lo carlos" en dos líneas es en realidad "portillo carlos" partido) — reconstruí el nombre completo en ese caso en vez de tomar el fragmento cortado literal. El "Km" de esa misma línea NO es el odómetro del camión, ignoralo.',
           },
         ],
       },
@@ -84,5 +106,10 @@ export async function extraerComprobante(buffer: Buffer): Promise<ComprobanteExt
   const usoHerramienta = mensaje.content.find((b) => b.type === "tool_use");
   if (!usoHerramienta || usoHerramienta.type !== "tool_use") return null;
 
-  return usoHerramienta.input as ComprobanteExtraido;
+  return {
+    ...limpiarCamposTexto(usoHerramienta.input as ComprobanteExtraido, CAMPOS_TEXTO_COMPROBANTE),
+    // Se completan después, en previsualizarComprobante: acá no hay acceso a la base.
+    camion_id: null,
+    chofer_id: null,
+  };
 }
