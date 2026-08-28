@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { canvasParaClaude, LADO_LARGO_MAX_IA, renderizarPrimeraPagina } from "@/lib/cpe/render";
+import { limpiarCamposTexto } from "@/lib/ia/sanear";
 
 export type ComprobanteDescargaExtraido = {
   ctg: string | null;
@@ -83,5 +84,9 @@ export async function extraerComprobanteDescarga(
   const usoHerramienta = mensaje.content.find((b) => b.type === "tool_use");
   if (!usoHerramienta || usoHerramienta.type !== "tool_use") return null;
 
-  return usoHerramienta.input as ComprobanteDescargaExtraido;
+  // Ver sanear.ts: Claude a veces contesta "unknown"/"n/a" en vez de null.
+  return limpiarCamposTexto(usoHerramienta.input as ComprobanteDescargaExtraido, [
+    "ctg",
+    "n_turno_descarga",
+  ]);
 }

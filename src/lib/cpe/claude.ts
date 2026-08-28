@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { canvasParaClaude, LADO_LARGO_MAX_IA, renderizarPrimeraPagina } from "./render";
+import { limpiarCamposTexto } from "@/lib/ia/sanear";
 import type { CpeExtraido } from "./parser";
 
 const CAMPOS_TEXTO = [
@@ -102,5 +103,9 @@ export async function extraerConClaude(buffer: Buffer): Promise<CpeExtraido | nu
   const usoHerramienta = mensaje.content.find((b) => b.type === "tool_use");
   if (!usoHerramienta || usoHerramienta.type !== "tool_use") return null;
 
-  return usoHerramienta.input as CpeExtraido;
+  // Claude a veces contesta "unknown"/"n/a" en vez de null pese al prompt --
+  // ver sanear.ts. Sin esto, extraccionInsuficiente() no detecta el CTG
+  // ilegible (piensa que sí hay un valor) y el matching intentaría buscar
+  // un cliente/chofer literal llamado "unknown".
+  return limpiarCamposTexto(usoHerramienta.input as CpeExtraido, CAMPOS_TEXTO);
 }

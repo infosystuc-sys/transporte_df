@@ -117,7 +117,11 @@ function construirValoresIniciales(
     tiene_cpe: true,
     tipo_carga: "grano",
     cpe_nro: e.cpe_nro ?? "",
-    ctg: e.ctg ?? "",
+    // El QR es más confiable que la lectura de texto/IA para este campo
+    // puntual (siempre trae el CTG, aunque el resto de la imagen esté
+    // ilegible) -- si la extracción no lo encontró, se usa esa referencia
+    // como default en vez de dejarlo en blanco.
+    ctg: e.ctg ?? resultado.referenciaQr ?? "",
     cpe_fecha_emision: soloFecha(e.cpe_fecha_emision) as unknown as Date | undefined,
     ctg_vencimiento: soloFecha(e.ctg_vencimiento) as unknown as Date | undefined,
     campania: e.campania ?? "",
@@ -165,10 +169,11 @@ function construirValoresIniciales(
     // crear el viaje, en vez de que quede en blanco hasta el próximo
     // guardado. Siempre editables si hace falta corregirlos.
     modalidad_tarifa: modalidadTarifa ?? undefined,
-    // Lo que trae la CPE es lo declarado en el documento, no necesariamente
-    // lo que se termina cobrando — valor_tarifa (el real) queda vacío para
-    // cargarlo a mano.
-    valor_tarifa: numStr(null),
+    // En la inmensa mayoría de los viajes la tarifa que se termina
+    // cobrando es la misma que declara la CPE -- precargarla ahorra
+    // retipearla, y sigue siendo editable acá mismo para el caso
+    // (excepcional) en que difiera de lo declarado.
+    valor_tarifa: numStr(e.valor_tarifa),
     valor_tarifa_declarada: numStr(e.valor_tarifa),
     base_calculo: baseCalculo,
   };
