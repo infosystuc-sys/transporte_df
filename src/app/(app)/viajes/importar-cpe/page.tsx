@@ -17,6 +17,13 @@ export default async function ImportarCpePage() {
           Subí el PDF o una foto de la Carta de Porte Electrónica: el sistema intenta completar los
           datos del viaje automáticamente, pero siempre revisás y confirmás antes de guardar nada.
         </p>
+        <p className="text-sm text-muted-foreground">
+          ¿Tenés varios archivos para cargar de una?{" "}
+          <a href="/viajes/importar-cpe-masivo" className="text-primary underline">
+            Importar CPE (varios)
+          </a>
+          .
+        </p>
       </div>
       <FormularioRevisionCpe {...catalogos} />
     </div>
