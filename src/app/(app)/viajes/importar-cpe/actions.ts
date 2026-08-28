@@ -23,6 +23,7 @@ import { recalcularMerma } from "../_lib/merma";
 import { recalcularFlete } from "../_lib/flete";
 import { recalcularLiquidacionChofer } from "../_lib/liquidacion";
 import { avanzarEstadoAutomatico } from "../_lib/avance-estado";
+import { buscarViajesPorCtg, type ViajeEncontradoPorCtg } from "../_lib/buscar-ctg";
 
 function archivoDeFormData(formData: FormData): File {
   const archivo = formData.get("archivo");
@@ -35,6 +36,32 @@ export async function importarCpe(formData: FormData): Promise<ResultadoImportac
   const archivo = archivoDeFormData(formData);
   const buffer = Buffer.from(await archivo.arrayBuffer());
   return procesarCpe(buffer);
+}
+
+async function crearViajeDesdeCpe(datos: ReturnType<typeof viajeDesdeCpeSchema.parse>) {
+  const [viaje] = await db.insert(viajes).values(datos).returning({ id: viajes.id });
+  await recalcularMerma(viaje.id);
+  await recalcularFlete(viaje.id);
+  await recalcularLiquidacionChofer(viaje.id);
+  // La pantalla de revisión junta generales + carga + descarga + tarifa
+  // en un solo guardado -- si ya venían fecha_partida/fecha_descarga
+  // cargadas desde la CPE, el viaje puede nacer directamente más
+  // adelante en la secuencia, no siempre en "planificado".
+  await avanzarEstadoAutomatico(viaje.id);
+  return viaje;
+}
+
+async function subirAdjuntoDeCpe(viajeId: number, archivo: File) {
+  const buffer = Buffer.from(await archivo.arrayBuffer());
+  const rutaStorage = `viaje/${viajeId}/${randomUUID()}-${archivo.name}`;
+  await subirAdjunto(rutaStorage, buffer, archivo.type || "application/pdf");
+  await db.insert(adjuntos).values({
+    entidad: "viaje",
+    entidad_id: viajeId,
+    tipo: "cpe_pdf",
+    nombre_archivo: archivo.name,
+    storage_path: rutaStorage,
+  });
 }
 
 /**
@@ -51,31 +78,40 @@ export async function confirmarImportacionCpe(
     return { error: "Faltan los datos del viaje." };
   }
 
-  const valores = JSON.parse(datosJson) as ViajeDesdeCpeInput;
-  const datos = viajeDesdeCpeSchema.parse(valores);
-
-  const [viaje] = await db.insert(viajes).values(datos).returning({ id: viajes.id });
-  await recalcularMerma(viaje.id);
-  await recalcularFlete(viaje.id);
-  await recalcularLiquidacionChofer(viaje.id);
-  // La pantalla de revisión junta generales + carga + descarga + tarifa
-  // en un solo guardado -- si ya venían fecha_partida/fecha_descarga
-  // cargadas desde la CPE, el viaje puede nacer directamente más
-  // adelante en la secuencia, no siempre en "planificado".
-  await avanzarEstadoAutomatico(viaje.id);
-
-  const buffer = Buffer.from(await archivo.arrayBuffer());
-  const rutaStorage = `viaje/${viaje.id}/${randomUUID()}-${archivo.name}`;
-  await subirAdjunto(rutaStorage, buffer, archivo.type || "application/pdf");
-  await db.insert(adjuntos).values({
-    entidad: "viaje",
-    entidad_id: viaje.id,
-    tipo: "cpe_pdf",
-    nombre_archivo: archivo.name,
-    storage_path: rutaStorage,
-  });
+  const datos = viajeDesdeCpeSchema.parse(JSON.parse(datosJson) as ViajeDesdeCpeInput);
+  const viaje = await crearViajeDesdeCpe(datos);
+  await subirAdjuntoDeCpe(viaje.id, archivo);
 
   redirect(`/viajes/${viaje.id}`);
+}
+
+/**
+ * Misma lógica que confirmarImportacionCpe, pero para una fila del
+ * checklist de Importar CPE en tanda: no puede redirigir (sacaría al
+ * usuario del checklist antes de terminar de confirmar el resto), así que
+ * devuelve el id del viaje creado en vez de navegar.
+ */
+export async function confirmarImportacionCpeEnTanda(
+  formData: FormData
+): Promise<{ error: string } | { viajeId: number }> {
+  const archivo = archivoDeFormData(formData);
+  const datosJson = formData.get("datos");
+  if (typeof datosJson !== "string") {
+    return { error: "Faltan los datos del viaje." };
+  }
+
+  const datos = viajeDesdeCpeSchema.parse(JSON.parse(datosJson) as ViajeDesdeCpeInput);
+  const viaje = await crearViajeDesdeCpe(datos);
+  await subirAdjuntoDeCpe(viaje.id, archivo);
+
+  revalidatePath("/viajes");
+  return { viajeId: viaje.id };
+}
+
+/** Viajes ya cargados con este CTG -- para avisar de un posible duplicado antes de confirmar. */
+export async function verificarCtgExistente(ctg: string): Promise<ViajeEncontradoPorCtg[]> {
+  if (!ctg.trim()) return [];
+  return buscarViajesPorCtg(ctg.trim());
 }
 
 // --- Creación rápida de entidades no encontradas por el matching ---
