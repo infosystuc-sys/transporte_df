@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useForm, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -37,7 +37,6 @@ export type ItemLote = {
   resultado: ResultadoImportacionCpe | null;
   error: string | null;
   viajeId: number | null;
-  ctgDuplicadoEnLote: boolean;
   ctgYaExisteViajeNro: number | null;
 };
 
@@ -98,6 +97,19 @@ export function ImportadorMasivoCpe({
     [items]
   );
 
+  // CTG repetido DENTRO del lote (además de contra la base, ya chequeado
+  // por item en procesarUno): se recalcula acá porque depende de ver
+  // todos los items juntos, no de uno solo.
+  const ctgsRepetidosEnLote = useMemo(() => {
+    const conteo = new Map<string, number>();
+    for (const it of items) {
+      const ctg = it.resultado?.extraido.ctg ?? it.resultado?.referenciaQr;
+      if (!ctg) continue;
+      conteo.set(ctg, (conteo.get(ctg) ?? 0) + 1);
+    }
+    return new Set([...conteo.entries()].filter(([, n]) => n > 1).map(([ctg]) => ctg));
+  }, [items]);
+
   function actualizarItem(id: string, cambios: Partial<ItemLote>) {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...cambios } : it)));
   }
@@ -145,7 +157,6 @@ export function ImportadorMasivoCpe({
       resultado: null,
       error: null,
       viajeId: null,
-      ctgDuplicadoEnLote: false,
       ctgYaExisteViajeNro: null,
     }));
     setItems(nuevosItems);
@@ -158,27 +169,6 @@ export function ImportadorMasivoCpe({
     }
     setProcesando(false);
   }
-
-  // CTG repetido DENTRO del lote (además de contra la base, ya chequeado
-  // por item en procesarUno): se recalcula acá porque depende de ver
-  // todos los items juntos, no de uno solo.
-  useEffect(() => {
-    if (procesando) return;
-    setItems((prev) => {
-      const conteo = new Map<string, number>();
-      for (const it of prev) {
-        const ctg = it.resultado?.extraido.ctg ?? it.resultado?.referenciaQr;
-        if (!ctg) continue;
-        conteo.set(ctg, (conteo.get(ctg) ?? 0) + 1);
-      }
-      return prev.map((it) => {
-        const ctg = it.resultado?.extraido.ctg ?? it.resultado?.referenciaQr;
-        const duplicado = !!ctg && (conteo.get(ctg) ?? 0) > 1;
-        return duplicado === it.ctgDuplicadoEnLote ? it : { ...it, ctgDuplicadoEnLote: duplicado };
-      });
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [procesando]);
 
   function darDeAltaFaltantesGlobal() {
     startTransitionFaltantes(async () => {
@@ -336,7 +326,9 @@ export function ImportadorMasivoCpe({
         <div className="flex flex-col gap-2 rounded-md border p-4">
           <h3 className="text-sm font-bold">{items.length} archivo(s)</h3>
           <ul className="flex flex-col gap-2">
-            {items.map((it) => (
+            {items.map((it) => {
+              const ctgDeItem = it.resultado?.extraido.ctg ?? it.resultado?.referenciaQr;
+              return (
               <li key={it.id} className="flex flex-col gap-2 rounded-md border p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-col gap-0.5">
@@ -347,7 +339,7 @@ export function ImportadorMasivoCpe({
                         {it.resultado.extraido.dominio_tractor ?? "—"} · CTG {it.resultado.extraido.ctg ?? it.resultado.referenciaQr ?? "—"}
                       </span>
                     )}
-                    {it.ctgDuplicadoEnLote && (
+                    {!!ctgDeItem && ctgsRepetidosEnLote.has(ctgDeItem) && (
                       <span className="text-xs text-destructive">CTG repetido en esta misma tanda.</span>
                     )}
                     {it.ctgYaExisteViajeNro != null && (
@@ -414,7 +406,8 @@ export function ImportadorMasivoCpe({
                   </form>
                 )}
               </li>
-            ))}
+              );
+            })}
           </ul>
         </div>
       )}
