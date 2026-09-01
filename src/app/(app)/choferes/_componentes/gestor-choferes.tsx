@@ -35,23 +35,29 @@ type Fila = {
   activo: boolean;
 };
 
-const valoresPorDefecto: ChoferInput = {
-  nombre_completo: "",
-  cuil: "",
-  dni: "",
-  telefono: "",
-  email: "",
-  direccion: "",
-  localidad: "",
-  licencia_nro: "",
-  licencia_vto: undefined,
-  linti_vto: undefined,
-  modalidad_pago: "porcentaje_flete",
-  valor_pago: "15",
-  camion_habitual_id: undefined,
-  observaciones: "",
-  activo: true,
-};
+function valoresPorDefectoDe(porcentajeChoferDefault: string): ChoferInput {
+  return {
+    nombre_completo: "",
+    cuil: "",
+    dni: "",
+    telefono: "",
+    email: "",
+    direccion: "",
+    localidad: "",
+    licencia_nro: "",
+    licencia_vto: undefined,
+    linti_vto: undefined,
+    modalidad_pago: "porcentaje_flete",
+    // Antes hardcodeado en "15" -- el campo "% del chofer por defecto" de
+    // Configuración no tenía ningún efecto real, así que cambiarlo ahí no
+    // cambiaba nada acá. Ahora sí lo toma como punto de partida para un
+    // chofer nuevo (sigue siendo editable por chofer).
+    valor_pago: porcentajeChoferDefault,
+    camion_habitual_id: undefined,
+    observaciones: "",
+    activo: true,
+  };
+}
 
 const opcionesModalidadPago: { value: ModalidadPago; label: string }[] = [
   { value: "porcentaje_flete", label: "Porcentaje del flete" },
@@ -64,9 +70,11 @@ const opcionesModalidadPago: { value: ModalidadPago; label: string }[] = [
 export function GestorChoferes({
   filas,
   camiones,
+  porcentajeChoferDefault,
 }: {
   filas: Fila[];
   camiones: { id: number; dominio_tractor: string }[];
+  porcentajeChoferDefault: string;
 }) {
   const opcionesCamion = camiones.map((c) => ({ value: String(c.id), label: c.dominio_tractor }));
 
@@ -76,7 +84,7 @@ export function GestorChoferes({
       filas={filas}
       etiquetaFila={(f) => f.nombre_completo}
       resolver={zodResolver(choferSchema)}
-      valoresPorDefecto={valoresPorDefecto}
+      valoresPorDefecto={valoresPorDefectoDe(porcentajeChoferDefault)}
       aValoresFormulario={(f) => ({
         nombre_completo: f.nombre_completo,
         cuil: f.cuil ?? "",
@@ -89,7 +97,7 @@ export function GestorChoferes({
         licencia_vto: formatoFechaInput(f.licencia_vto),
         linti_vto: formatoFechaInput(f.linti_vto),
         modalidad_pago: f.modalidad_pago ?? "porcentaje_flete",
-        valor_pago: f.valor_pago ?? "15",
+        valor_pago: f.valor_pago ?? porcentajeChoferDefault,
         camion_habitual_id: f.camion_habitual_id ?? undefined,
         observaciones: f.observaciones ?? "",
         activo: f.activo,

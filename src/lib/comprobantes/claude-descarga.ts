@@ -77,7 +77,10 @@ export async function extraerComprobanteDescarga(
 
   const client = new Anthropic({ apiKey });
   const mensaje = await client.messages.create({
-    model: "claude-sonnet-5",
+    // Opus en vez de Sonnet: lee bastante mejor fotos degradadas (poca luz,
+    // comprimidas por WhatsApp) -- el volumen de comprobantes es bajo, así
+    // que el costo extra por token no pesa frente a la mejora de precisión.
+    model: "claude-opus-5",
     max_tokens: 1024,
     tools: [HERRAMIENTA_EXTRACCION],
     tool_choice: { type: "tool", name: "extraer_ticket_balanza" },
@@ -91,7 +94,7 @@ export async function extraerComprobanteDescarga(
           },
           {
             type: "text",
-            text: 'Esta es una foto o PDF de un ticket de balanza o comprobante de descarga de un camión con granos en destino (puede ser una nota de recepción de una empresa como Cargill, Vicentin, ACA, etc., no necesariamente un formulario oficial de ARCA). Extraé el CTG (Código de Trazabilidad de Granos, un número largo que suele figurar como "CTG", "Carta de Porte" o similar — es el mismo número que identifica el viaje de origen a destino), fecha de arribo, fecha de descarga, número de turno, peso bruto, tara y peso neto (todos los pesos en KILOGRAMOS — si el ticket los muestra en toneladas, convertilos multiplicando por 1000) y el porcentaje de humedad si figura. Fechas en formato yyyy-mm-dd. Si un campo no aparece en el documento, poné null — no inventes valores. La imagen puede venir con calidad degradada (foto de celular comprimida, poca luz, texto chico) — cuando completes un campo pero no estés del todo seguro de haberlo leído bien, agregá el nombre de ese campo a campos_dudosos en vez de fingir certeza. Es preferible marcar de más que de menos.',
+            text: 'Esta es una foto o PDF de un ticket de balanza o comprobante de descarga de un camión con granos en destino (puede ser una nota de recepción de una empresa como Cargill, Vicentin, ACA, etc., no necesariamente un formulario oficial de ARCA). Extraé el CTG (Código de Trazabilidad de Granos, un número largo que suele figurar como "CTG", "Carta de Porte" o similar — es el mismo número que identifica el viaje de origen a destino), fecha de arribo, fecha de descarga, número de turno, peso bruto, tara y peso neto (todos los pesos en KILOGRAMOS — si el ticket los muestra en toneladas, convertilos multiplicando por 1000) y el porcentaje de humedad si figura. Para el peso neto: algunos tickets muestran DOS valores de neto -- uno antes de descontar una merma de calidad (a veces etiquetado "Neto S/Merma", "Neto sin merma" o similar) y otro después de descontarla (etiquetado simplemente "Neto"). Esa merma de calidad la absorbe el productor y es un concepto distinto de la merma de transporte que este sistema calcula aparte (origen menos destino) -- cuando el ticket muestre los dos valores, neto_destino_kg tiene que ser el que NO tiene la merma de calidad descontada (el "Neto S/Merma" o equivalente), nunca el que ya viene descontado. Si el ticket solo muestra un único valor de "Neto" (sin la distinción), usá ese. Fechas en formato yyyy-mm-dd. Si un campo no aparece en el documento, poné null — no inventes valores. La imagen puede venir con calidad degradada (foto de celular comprimida, poca luz, texto chico) — cuando completes un campo pero no estés del todo seguro de haberlo leído bien, agregá el nombre de ese campo a campos_dudosos en vez de fingir certeza. Es preferible marcar de más que de menos.',
           },
         ],
       },

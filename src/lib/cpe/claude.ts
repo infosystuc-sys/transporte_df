@@ -91,7 +91,10 @@ export async function extraerConClaude(buffer: Buffer): Promise<CpeExtraido | nu
 
   const client = new Anthropic({ apiKey });
   const mensaje = await client.messages.create({
-    model: "claude-sonnet-5",
+    // Opus en vez de Sonnet: lee bastante mejor fotos degradadas (poca luz,
+    // comprimidas por WhatsApp) -- el volumen de CPE es bajo, así que el
+    // costo extra por token no pesa frente a la mejora de precisión.
+    model: "claude-opus-5",
     max_tokens: 2048,
     tools: [HERRAMIENTA_EXTRACCION],
     tool_choice: { type: "tool", name: "extraer_cpe" },
