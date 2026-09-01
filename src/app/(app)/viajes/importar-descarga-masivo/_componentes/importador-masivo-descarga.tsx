@@ -71,23 +71,34 @@ export function ImportadorMasivoDescarga() {
 
   async function procesarUno(item: ItemLoteDescarga) {
     actualizarItem(item.id, { estado: "procesando", error: null });
-    const formData = new FormData();
-    formData.set("archivo", item.archivo);
-    const r = await previsualizarImportacionDescarga(formData);
-    if (!r.ok) {
-      actualizarItem(item.id, { estado: "error", error: r.error });
-      return;
+    try {
+      const formData = new FormData();
+      formData.set("archivo", item.archivo);
+      const r = await previsualizarImportacionDescarga(formData);
+      if (!r.ok) {
+        actualizarItem(item.id, { estado: "error", error: r.error });
+        return;
+      }
+      const viajeUnico = r.viajes.length === 1 ? r.viajes[0] : null;
+      const yaTieneDescarga = !!viajeUnico?.fecha_descarga;
+      const necesitaRevision = !viajeUnico || yaTieneDescarga || r.datos.campos_dudosos.length > 0;
+      actualizarItem(item.id, {
+        estado: necesitaRevision ? "revisar" : "listo",
+        ctgBuscado: r.datos.ctg,
+        viajesEncontrados: r.viajes,
+        datosExtraidos: r.datos,
+        viajeElegido: viajeUnico,
+      });
+    } catch (err) {
+      // Sin esto, una falla de red o de DB (no el {ok:false} que ya
+      // maneja la acción) deja la fila trabada en "procesando" para
+      // siempre y corta el resto de la tanda -- igual que el catch de
+      // confirmarValores, un archivo problemático no puede tirar abajo
+      // los demás.
+      console.error("previsualizarImportacionDescarga falló:", err);
+      const mensaje = err instanceof Error ? err.message : String(err);
+      actualizarItem(item.id, { estado: "error", error: mensaje });
     }
-    const viajeUnico = r.viajes.length === 1 ? r.viajes[0] : null;
-    const yaTieneDescarga = !!viajeUnico?.fecha_descarga;
-    const necesitaRevision = !viajeUnico || yaTieneDescarga || r.datos.campos_dudosos.length > 0;
-    actualizarItem(item.id, {
-      estado: necesitaRevision ? "revisar" : "listo",
-      ctgBuscado: r.datos.ctg,
-      viajesEncontrados: r.viajes,
-      datosExtraidos: r.datos,
-      viajeElegido: viajeUnico,
-    });
   }
 
   async function onSeleccionarArchivos(e: React.ChangeEvent<HTMLInputElement>) {
@@ -108,10 +119,13 @@ export function ImportadorMasivoDescarga() {
     e.target.value = "";
 
     setProcesando(true);
-    for (const item of nuevosItems) {
-      await procesarUno(item);
+    try {
+      for (const item of nuevosItems) {
+        await procesarUno(item);
+      }
+    } finally {
+      setProcesando(false);
     }
-    setProcesando(false);
   }
 
   function abrirDetalle(item: ItemLoteDescarga) {
