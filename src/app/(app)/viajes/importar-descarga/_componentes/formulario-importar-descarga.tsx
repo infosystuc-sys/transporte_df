@@ -65,22 +65,31 @@ export function FormularioImportarDescarga() {
     setDatosExtraidos(null);
     setViajeElegido(null);
     startTransitionProcesar(async () => {
-      const formData = new FormData();
-      formData.set("archivo", archivo);
-      const resultado = await previsualizarImportacionDescarga(formData);
-      if (!resultado.ok) {
-        setError(resultado.error);
-        return;
-      }
-      setCtgBuscado(resultado.datos.ctg);
-      setViajesEncontrados(resultado.viajes);
-      setDatosExtraidos(resultado.datos);
-      if (resultado.viajes.length === 0) {
-        setError(`No se encontró ningún viaje cargado con el CTG ${resultado.datos.ctg}.`);
-        return;
-      }
-      if (resultado.viajes.length === 1) {
-        elegirViaje(resultado.viajes[0], resultado.datos);
+      try {
+        const formData = new FormData();
+        formData.set("archivo", archivo);
+        const resultado = await previsualizarImportacionDescarga(formData);
+        if (!resultado.ok) {
+          setError(resultado.error);
+          return;
+        }
+        setCtgBuscado(resultado.datos.ctg);
+        setViajesEncontrados(resultado.viajes);
+        setDatosExtraidos(resultado.datos);
+        if (resultado.viajes.length === 0) {
+          setError(`No se encontró ningún viaje cargado con el CTG ${resultado.datos.ctg}.`);
+          return;
+        }
+        if (resultado.viajes.length === 1) {
+          elegirViaje(resultado.viajes[0], resultado.datos);
+        }
+      } catch (err) {
+        // La búsqueda de CTG posterior a la extracción por IA no tiene
+        // su propio try/catch dentro de la acción -- sin este catch acá,
+        // una falla de DB deja el botón trabado en "Leyendo...".
+        console.error("previsualizarImportacionDescarga falló:", err);
+        const mensaje = err instanceof Error ? err.message : String(err);
+        setError(mensaje);
       }
     });
   }
@@ -100,16 +109,25 @@ export function FormularioImportarDescarga() {
       return;
     }
     startTransitionGuardar(async () => {
-      const formData = new FormData();
-      formData.set("archivo", archivo);
-      formData.set("datos", JSON.stringify(valores));
-      const resultado = await actualizarDescargaConAdjunto(viajeElegido.id, formData);
-      if (resultado?.error) {
-        toast.error(resultado.error);
-        return;
+      try {
+        const formData = new FormData();
+        formData.set("archivo", archivo);
+        formData.set("datos", JSON.stringify(valores));
+        const resultado = await actualizarDescargaConAdjunto(viajeElegido.id, formData);
+        if (resultado?.error) {
+          toast.error(resultado.error);
+          return;
+        }
+        toast.success("Descarga cargada.");
+        router.push(`/viajes/${viajeElegido.id}`);
+      } catch (err) {
+        // El parse del schema, los recalcular*/avanzarEstadoAutomatico y
+        // la subida a Supabase pueden tirar -- sin este catch, el botón
+        // queda trabado en "Guardando..." sin ningún aviso.
+        console.error("actualizarDescargaConAdjunto falló:", err);
+        const mensaje = err instanceof Error ? err.message : String(err);
+        toast.error(`No se pudo cargar la descarga: ${mensaje}`);
       }
-      toast.success("Descarga cargada.");
-      router.push(`/viajes/${viajeElegido.id}`);
     });
   }
 

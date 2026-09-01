@@ -17,7 +17,6 @@ import { previsualizarImportacionDescarga } from "../../importar-descarga/action
 import {
   CamposRevisionDescarga,
   construirValoresDescarga,
-  ETIQUETAS_ESTADO,
   PickerViajesEncontrados,
 } from "../../importar-descarga/_componentes/campos-revision-descarga";
 
@@ -32,6 +31,8 @@ export type ItemLoteDescarga = {
   datosExtraidos: ComprobanteDescargaExtraido | null;
   viajeElegido: ViajeEncontradoPorCtg | null;
   error: string | null;
+  /** Se bajó a "revisar" porque otra fila de esta misma tanda ya confirmó este viaje. */
+  actualizadoPorOtroEnLote: boolean;
 };
 
 const ETIQUETAS_ESTADO_ITEM: Record<EstadoItemDescarga, string> = {
@@ -49,8 +50,6 @@ export function ImportadorMasivoDescarga() {
   const [idAbierto, setIdAbierto] = useState<string | null>(null);
   const [confirmaSobrescribir, setConfirmaSobrescribir] = useState(false);
   const [isPendingConfirmar, startTransitionConfirmar] = useTransition();
-
-  const itemAbierto = items.find((it) => it.id === idAbierto) ?? null;
 
   const form = useForm<ViajeDescargaInput>({ resolver: zodResolver(viajeDescargaSchema) });
 
@@ -113,6 +112,7 @@ export function ImportadorMasivoDescarga() {
       datosExtraidos: null,
       viajeElegido: null,
       error: null,
+      actualizadoPorOtroEnLote: false,
     }));
     setItems(nuevosItems);
     setIdAbierto(null);
@@ -165,7 +165,32 @@ export function ImportadorMasivoDescarga() {
           toast.error(r.error);
           return;
         }
-        actualizarItem(itemId, { estado: "confirmado" });
+        const viajeConfirmadoId = item.viajeElegido!.id;
+        // La acción no devuelve el registro actualizado -- reconstruimos
+        // la fecha que quedó guardada para que los hermanos que apuntan
+        // al mismo viaje reflejen que ya tiene descarga.
+        const fechaDescargaValores = valores.fecha_descarga as unknown as Date | undefined;
+        const fechaDescargaGuardada =
+          fechaDescargaValores ?? item.viajeElegido!.fecha_descarga ?? new Date();
+        setItems((prev) =>
+          prev.map((it) => {
+            if (it.id === itemId) return { ...it, estado: "confirmado" };
+            // Otra fila de esta tanda apuntaba al mismo viaje: bajarla a
+            // "revisar" en vez de dejarla ofrecer un "Confirmar" ciego
+            // que pisaría lo que se acaba de guardar -- el aviso de
+            // sobrescritura de CamposRevisionDescarga se activa solo con
+            // este snapshot actualizado.
+            if (it.viajeElegido?.id === viajeConfirmadoId && it.estado !== "confirmado") {
+              return {
+                ...it,
+                estado: "revisar",
+                actualizadoPorOtroEnLote: true,
+                viajeElegido: { ...it.viajeElegido, fecha_descarga: fechaDescargaGuardada },
+              };
+            }
+            return it;
+          })
+        );
         toast.success(`Descarga cargada en el viaje #${item.viajeElegido!.numero}.`);
         if (idAbierto === itemId) setIdAbierto(null);
       } catch (err) {
@@ -214,10 +239,17 @@ export function ImportadorMasivoDescarga() {
                           CTG {it.viajeElegido.ctg}
                         </span>
                       )}
-                      {repetido && (
-                        <span className="text-xs text-destructive">
-                          Otro archivo de esta tanda también apunta a este viaje.
+                      {it.actualizadoPorOtroEnLote ? (
+                        <span className="text-xs text-amber">
+                          Ya actualizado por otro archivo de esta tanda.
                         </span>
+                      ) : (
+                        repetido &&
+                        it.estado !== "confirmado" && (
+                          <span className="text-xs text-destructive">
+                            Otro archivo de esta tanda también apunta a este viaje.
+                          </span>
+                        )
                       )}
                     </div>
                     <div className="flex items-center gap-2">
