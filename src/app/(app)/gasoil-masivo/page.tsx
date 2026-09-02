@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { obtenerCatalogosGasoil } from "@/lib/gasoil/datos-catalogos";
 import { ImportadorMasivoGasoil } from "./_componentes/importador-masivo-gasoil";
 
@@ -16,6 +17,13 @@ export default async function GasoilMasivoPage() {
         <p className="text-sm text-muted-foreground">
           Subí varios comprobantes de carga de combustible de una: la app va buscando el camión de
           cada uno por patente y te deja confirmar sin salir de esta pantalla.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          ¿Es un solo comprobante?{" "}
+          <Link href="/gasoil" className="text-primary underline">
+            Cargalo desde Gasoil
+          </Link>
+          .
         </p>
       </div>
       <ImportadorMasivoGasoil

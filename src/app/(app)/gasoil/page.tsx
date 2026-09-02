@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { and, desc, eq, gte, lte, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { cargasGasoil } from "@/db/schema";
 import { obtenerCatalogosGasoil } from "@/lib/gasoil/datos-catalogos";
+import { Button } from "@/components/ui/button";
 import { GestorGasoil } from "./_componentes/gestor-gasoil";
 import { FiltrosGasoil } from "./_componentes/filtros-gasoil";
 import { PanelRendimiento } from "./_componentes/panel-rendimiento";
@@ -39,7 +41,12 @@ export default async function GasoilPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Gasoil</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Gasoil</h1>
+        <Button variant="outline" asChild>
+          <Link href="/gasoil-masivo">Cargar varios comprobantes</Link>
+        </Button>
+      </div>
 
       <FiltrosGasoil camiones={catalogos.camiones} estaciones={catalogos.estaciones} />
 
