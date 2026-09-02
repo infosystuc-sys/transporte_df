@@ -14,5 +14,7 @@ export const fechaRequerida = (mensaje = "Ingresá una fecha.") =>
 export function formatoFechaInput(fecha: Date | string | null | undefined): string {
   if (!fecha) return "";
   const d = typeof fecha === "string" ? new Date(fecha) : fecha;
+  // Una extracción de IA puede devolver un string que no parsea a fecha válida.
+  if (Number.isNaN(d.getTime())) return "";
   return d.toISOString().slice(0, 10);
 }

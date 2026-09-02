@@ -239,7 +239,9 @@ export function ImportadorMasivoGasoil({
                       )}
                       {it.estado === "confirmado" && (
                         <Button size="sm" variant="outline" asChild>
-                          <Link href="/gasoil">Ver en Gasoil</Link>
+                          <Link href="/gasoil" target="_blank" rel="noopener">
+                            Ver en Gasoil
+                          </Link>
                         </Button>
                       )}
                     </div>
