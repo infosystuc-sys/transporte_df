@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { and, asc, desc, eq, gte, lte, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, lte, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { camiones, cargasGasoil, choferes, estacionesServicio, viajes } from "@/db/schema";
+import { cargasGasoil } from "@/db/schema";
+import { obtenerCatalogosGasoil } from "@/lib/gasoil/datos-catalogos";
 import { GestorGasoil } from "./_componentes/gestor-gasoil";
 import { FiltrosGasoil } from "./_componentes/filtros-gasoil";
 import { PanelRendimiento } from "./_componentes/panel-rendimiento";
@@ -28,49 +29,33 @@ export default async function GasoilPage({
   if (fechaHasta) condiciones.push(lte(cargasGasoil.fecha, new Date(fechaHasta)));
   const where = condiciones.length ? and(...condiciones) : undefined;
 
-  const [filasCargas, filasCamiones, filasChoferes, filasEstaciones, filasViajes] = await Promise.all([
+  const [catalogos, filasCargas] = await Promise.all([
+    obtenerCatalogosGasoil(),
     (where
       ? db.select().from(cargasGasoil).where(where)
       : db.select().from(cargasGasoil)
     ).orderBy(desc(cargasGasoil.fecha)),
-    db
-      .select({ id: camiones.id, nombre: camiones.dominio_tractor })
-      .from(camiones)
-      .orderBy(asc(camiones.dominio_tractor)),
-    db
-      .select({ id: choferes.id, nombre: choferes.nombre_completo })
-      .from(choferes)
-      .orderBy(asc(choferes.nombre_completo)),
-    db
-      .select({ id: estacionesServicio.id, nombre: estacionesServicio.nombre })
-      .from(estacionesServicio)
-      .orderBy(asc(estacionesServicio.nombre)),
-    db
-      .select({ id: viajes.id, numero: viajes.numero })
-      .from(viajes)
-      .where(eq(viajes.liquidado, false))
-      .orderBy(desc(viajes.numero)),
   ]);
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Gasoil</h1>
 
-      <FiltrosGasoil camiones={filasCamiones} estaciones={filasEstaciones} />
+      <FiltrosGasoil camiones={catalogos.camiones} estaciones={catalogos.estaciones} />
 
       <div className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-muted-foreground">
           Rendimiento (según los filtros aplicados)
         </h2>
-        <PanelRendimiento cargas={filasCargas} camiones={filasCamiones} />
+        <PanelRendimiento cargas={filasCargas} camiones={catalogos.camiones} />
       </div>
 
       <GestorGasoil
         filas={filasCargas}
-        camiones={filasCamiones}
-        choferes={filasChoferes}
-        estaciones={filasEstaciones}
-        viajes={filasViajes.map((v) => ({ id: v.id, nombre: `#${v.numero}` }))}
+        camiones={catalogos.camiones}
+        choferes={catalogos.choferes}
+        estaciones={catalogos.estaciones}
+        viajes={catalogos.viajes}
       />
     </div>
   );

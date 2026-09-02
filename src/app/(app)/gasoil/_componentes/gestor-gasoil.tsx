@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AbmCatalogoSimple } from "@/components/catalogos/abm-catalogo-simple";
-import { CampoBooleano, CampoSelect, CampoTexto } from "@/components/catalogos/campos-formulario";
 import { Badge } from "@/components/ui/badge";
 import { BotonCargarIA } from "@/lib/comprobantes/boton-cargar-ia";
 import { cargaGasoilSchema, type CargaGasoilInput } from "@/lib/schemas/gasoil";
@@ -14,6 +13,7 @@ import {
   crearCargaGasoilConAdjunto,
   eliminarCargaGasoil,
 } from "../actions";
+import { CamposRevisionGasoil } from "./campos-revision-gasoil";
 
 type Opcion = { id: number; nombre: string };
 
@@ -36,12 +36,6 @@ type Fila = {
 
 const formatoARS = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 const formatoFecha = new Intl.DateTimeFormat("es-AR", { timeZone: "America/Argentina/Cordoba" });
-
-const opcionesModalidad = [
-  { value: "cuenta_corriente", label: "Cuenta corriente (empresa)" },
-  { value: "pagado_por_chofer", label: "Pagado por el chofer" },
-  { value: "surtidor_propio", label: "Surtidor propio" },
-];
 
 const valoresPorDefecto: CargaGasoilInput = {
   fecha: formatoFechaInput(new Date()) as unknown as Date,
@@ -72,7 +66,6 @@ export function GestorGasoil({
   estaciones: Opcion[];
   viajes: Opcion[];
 }) {
-  const opciones = (lista: Opcion[]) => lista.map((o) => ({ value: String(o.id), label: o.nombre }));
   const nombreCamion = (id: number) => camiones.find((c) => c.id === id)?.nombre ?? "—";
 
   // El archivo de "Cargar por IA" se guarda acá (no en el form) hasta el
@@ -177,24 +170,13 @@ export function GestorGasoil({
               mano.
             </p>
           </div>
-          <CampoTexto form={form} name="fecha" label="Fecha" tipo="date" />
-          <CampoSelect form={form} name="camion_id" label="Camión" opciones={opciones(camiones)} />
-          <CampoSelect form={form} name="chofer_id" label="Chofer" opciones={opciones(choferes)} />
-          <CampoSelect form={form} name="estacion_id" label="Estación" opciones={opciones(estaciones)} />
-          <CampoSelect form={form} name="viaje_id" label="Viaje (opcional)" opciones={opciones(viajes)} />
-          <CampoTexto form={form} name="litros" label="Litros" />
-          <CampoTexto form={form} name="precio_litro" label="Precio por litro ($)" />
-          <CampoTexto form={form} name="importe" label="Importe total ($)" />
-          <CampoTexto form={form} name="odometro" label="Odómetro (km)" tipo="number" />
-          <CampoSelect
+          <CamposRevisionGasoil
             form={form}
-            name="modalidad"
-            label="Modalidad de pago"
-            opciones={opcionesModalidad}
+            camiones={camiones}
+            choferes={choferes}
+            estaciones={estaciones}
+            viajes={viajes}
           />
-          <CampoBooleano form={form} name="rendido" label="Rendido (si lo pagó el chofer)" />
-          <CampoTexto form={form} name="comprobante_nro" label="N° de comprobante" />
-          <CampoTexto form={form} name="observaciones" label="Observaciones" textarea />
         </>
       )}
       crear={crearConPosibleAdjunto}
