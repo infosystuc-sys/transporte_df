@@ -193,12 +193,14 @@ export function construirValoresIniciales(
 
     observaciones: "",
 
-    fecha_carga: undefined,
-    // Si la CPE no trae una fecha de partida propia, la fecha de emisión
-    // suele coincidir con la fecha real de carga en la práctica -- se usa
-    // como respaldo editable en vez de dejar el campo vacío. Si la CPE sí
-    // trae su propia fecha de partida (más específica, con hora), esa se
-    // respeta y no se pisa.
+    // Pedido explícito del cliente: la CPE no tiene un campo propio de
+    // "fecha de carga" (es un concepto interno de la app), así que se
+    // toma directamente de la fecha de emisión de la CPE -- siempre
+    // editable si en algún caso puntual no coincidiera.
+    fecha_carga: soloFecha(e.cpe_fecha_emision) as unknown as Date | undefined,
+    // Acá sí la CPE puede traer su propio dato ("Partida", con hora): si
+    // lo trae, se respeta tal cual; si no, la fecha de emisión sirve de
+    // respaldo editable en vez de dejar el campo vacío.
     fecha_partida: soloFecha(e.fecha_partida ?? e.cpe_fecha_emision) as unknown as Date | undefined,
     bruto_origen: numStr(e.bruto_origen_kg),
     tara_origen: numStr(e.tara_origen_kg),
