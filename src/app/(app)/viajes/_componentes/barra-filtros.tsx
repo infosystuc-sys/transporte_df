@@ -38,7 +38,7 @@ const CAMPOS_SELECT = [
   "origen_id",
   "destino_id",
 ] as const;
-const CAMPOS_BOOL = ["merma", "pendiente_cobro"] as const;
+const CAMPOS_BOOL = ["merma", "pendiente_cobro", "sin_descarga"] as const;
 
 type Filtros = Record<(typeof CAMPOS_TEXTO)[number] | (typeof CAMPOS_SELECT)[number], string> &
   Record<(typeof CAMPOS_BOOL)[number], boolean>;
@@ -112,6 +112,7 @@ export function BarraFiltros({
       destino_id: "todos",
       merma: false,
       pendiente_cobro: false,
+      sin_descarga: false,
     });
     router.push("/viajes");
   }
@@ -220,6 +221,13 @@ export function BarraFiltros({
             onCheckedChange={(v) => set("pendiente_cobro", !!v)}
           />
           Solo pendientes de cobro
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox
+            checked={filtros.sin_descarga}
+            onCheckedChange={(v) => set("sin_descarga", !!v)}
+          />
+          Solo sin descarga
         </label>
         <div className="ml-auto flex gap-2">
           <Button type="button" variant="ghost" onClick={limpiar}>

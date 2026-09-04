@@ -1,4 +1,4 @@
-import { and, eq, gt, gte, ilike, lte, or, type SQL } from "drizzle-orm";
+import { and, eq, gt, gte, ilike, isNull, lte, or, type SQL } from "drizzle-orm";
 import { viajes } from "@/db/schema";
 import type { EstadoViaje } from "./estados";
 
@@ -55,6 +55,7 @@ export function condicionesFiltroViajes(sp: BusquedaViajes): SQL | undefined {
   if (estado) condiciones.push(eq(viajes.estado, estado as EstadoViaje));
 
   if (texto(sp, "merma") === "1") condiciones.push(eq(viajes.merma_excede_tolerancia, true));
+  if (texto(sp, "sin_descarga") === "1") condiciones.push(isNull(viajes.fecha_descarga));
   if (texto(sp, "pendiente_cobro") === "1") condiciones.push(gt(viajes.saldo_pendiente, "0"));
   if (texto(sp, "importado_de_excel") === "1") condiciones.push(eq(viajes.importado_de_excel, true));
 
