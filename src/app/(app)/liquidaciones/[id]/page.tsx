@@ -90,9 +90,14 @@ export default async function LiquidacionDetallePage({
           <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Liquidación #{liq.id}</h1>
           <p className="text-sm text-muted-foreground">{liq.chofer_nombre}</p>
         </div>
-        <Button variant="outline" asChild>
-          <Link href="/liquidaciones">Volver al listado</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <a href={`/api/reportes/liquidacion?liquidacion_id=${liq.id}`}>Exportar a Excel</a>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/liquidaciones">Volver al listado</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 rounded-md border p-4 text-sm sm:grid-cols-4">
