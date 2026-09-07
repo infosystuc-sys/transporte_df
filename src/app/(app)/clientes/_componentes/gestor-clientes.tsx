@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { AbmCatalogoSimple } from "@/components/catalogos/abm-catalogo-simple";
 import { CampoBooleano, CampoSelect, CampoTexto } from "@/components/catalogos/campos-formulario";
 import { BadgeActivo } from "@/components/catalogos/badge-activo";
@@ -93,7 +94,19 @@ export function GestorClientes({
         activo: f.activo,
       })}
       columnas={[
-        { accessorKey: "razon_social", header: "Razón social" },
+        {
+          accessorKey: "razon_social",
+          header: "Razón social",
+          cell: ({ row }) => (
+            <Link
+              href={`/clientes/${row.original.id}`}
+              className="hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {row.original.razon_social}
+            </Link>
+          ),
+        },
         { accessorKey: "cuit", header: "CUIT" },
         { accessorKey: "localidad", header: "Localidad" },
         {
