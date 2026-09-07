@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { CampoPeso, CampoTexto } from "@/components/catalogos/campos-formulario";
+import { CampoBooleano, CampoPeso, CampoTexto } from "@/components/catalogos/campos-formulario";
 import { viajeCargaSchema, type ViajeCargaInput } from "@/lib/schemas/viajes";
 import { actualizarCarga } from "../actions";
 
@@ -62,6 +62,16 @@ export function TabCarga({
       <p className="text-xs text-muted-foreground">
         El neto se calcula solo al cargar bruto y tara, si todavía no lo escribiste a mano. Siempre
         podés editarlo directamente.
+      </p>
+      <CampoBooleano
+        form={form}
+        name="origen_estimado"
+        label="Peso de origen estimado (sin balanza en el campo)"
+      />
+      <p className="text-xs text-muted-foreground">
+        Tildá esto cuando la carta de porte trae un peso de origen estimado (por no tener balanza al
+        cargar) en vez de uno pesado de verdad. Con esto tildado, el sistema no calcula merma para
+        este viaje -- comparar un peso estimado contra el real de destino daría una merma falsa.
       </p>
       <div>
         <Button type="submit" disabled={isPending}>

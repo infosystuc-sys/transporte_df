@@ -93,6 +93,12 @@ export const viajes = pgTable(
     bruto_origen: pesoKg("bruto_origen"),
     tara_origen: pesoKg("tara_origen"),
     neto_origen: pesoKg("neto_origen"),
+    // Carta de porte sin balanza en el campo: el peso de origen es una
+    // estimación (ej. "capacidad declarada" del camión), no algo pesado de
+    // verdad. Con esto tildado, recalcularMerma no compara contra destino
+    // -- comparar un estimado contra un peso real daría una "merma" falsa
+    // que en realidad es solo el margen de error de la estimación.
+    origen_estimado: boolean("origen_estimado").notNull().default(false),
     bruto_destino: pesoKg("bruto_destino"),
     tara_destino: pesoKg("tara_destino"),
     neto_destino: pesoKg("neto_destino"),

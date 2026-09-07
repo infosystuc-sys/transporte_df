@@ -1,0 +1,1 @@
+ALTER TABLE "viajes" ADD COLUMN "origen_estimado" boolean DEFAULT false NOT NULL;

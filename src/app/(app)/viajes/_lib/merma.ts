@@ -17,7 +17,10 @@ export async function recalcularMerma(viajeId: number) {
   const [viaje] = await db.select().from(viajes).where(eq(viajes.id, viajeId));
   if (!viaje) return;
 
-  if (!viaje.neto_origen || !viaje.neto_destino) {
+  // Con origen estimado (sin balanza en el campo) no hay un peso real de
+  // origen contra el cual comparar -- la diferencia con destino sería el
+  // margen de error de la estimación, no una merma real.
+  if (!viaje.neto_origen || !viaje.neto_destino || viaje.origen_estimado) {
     await db
       .update(viajes)
       .set({ merma_kg: null, merma_pct: null, merma_excede_tolerancia: false })

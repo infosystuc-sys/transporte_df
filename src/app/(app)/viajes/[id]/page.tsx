@@ -249,6 +249,7 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
               bruto_origen: viaje.bruto_origen ?? undefined,
               tara_origen: viaje.tara_origen ?? undefined,
               neto_origen: viaje.neto_origen ?? undefined,
+              origen_estimado: viaje.origen_estimado,
             },
           }}
           descarga={{

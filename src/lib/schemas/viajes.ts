@@ -51,6 +51,10 @@ export const viajeCargaSchema = z.object({
   bruto_origen: decimalOpcional(),
   tara_origen: decimalOpcional(),
   neto_origen: decimalOpcional(),
+  // Carta de porte sin balanza en el campo: el peso de origen es una
+  // estimación (capacidad declarada del camión), no un pesaje real -- ver
+  // recalcularMerma, que con esto tildado no compara contra destino.
+  origen_estimado: z.boolean().default(false),
 });
 export type ViajeCargaInput = z.input<typeof viajeCargaSchema>;
 
