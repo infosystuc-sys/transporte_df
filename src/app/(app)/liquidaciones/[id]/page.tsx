@@ -13,6 +13,7 @@ import {
 } from "@/db/schema";
 import { Button } from "@/components/ui/button";
 import { BotonMarcarPagada } from "./_componentes/boton-marcar-pagada";
+import { BotonEliminarLiquidacion } from "./_componentes/boton-eliminar-liquidacion";
 
 const formatoARS = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 const formatoFecha = new Intl.DateTimeFormat("es-AR", { timeZone: "America/Argentina/Cordoba" });
@@ -97,6 +98,7 @@ export default async function LiquidacionDetallePage({
           <Button variant="outline" asChild>
             <Link href="/liquidaciones">Volver al listado</Link>
           </Button>
+          {!liq.pagado && <BotonEliminarLiquidacion liquidacionId={liq.id} />}
         </div>
       </div>
 
