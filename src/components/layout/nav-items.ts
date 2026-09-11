@@ -7,7 +7,7 @@ export type NavItem = {
 // A medida que se construya cada fase del punto 8 del spec, se marca
 // disponible: true y deja de mostrarse como "Próximamente".
 export const navItems: NavItem[] = [
-  { href: "/", label: "Dashboard", disponible: true },
+  { href: "/dashboard", label: "Dashboard", disponible: true },
   { href: "/viajes", label: "Viajes", disponible: true },
   { href: "/clientes", label: "Clientes", disponible: true },
   { href: "/camiones", label: "Camiones", disponible: true },
