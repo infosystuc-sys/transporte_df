@@ -38,6 +38,7 @@ export default async function ClienteDetallePage({ params }: { params: Promise<{
         chofer_nombre: choferes.nombre_completo,
         total_a_cobrar: viajes.total_a_cobrar,
         saldo_pendiente: viajes.saldo_pendiente,
+        facturado: viajes.facturado,
       })
       .from(viajes)
       .leftJoin(camiones, eq(viajes.camion_id, camiones.id))

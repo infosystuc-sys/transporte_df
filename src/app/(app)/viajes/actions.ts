@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import {
@@ -186,6 +186,51 @@ export async function actualizarFacturacion(
   await recalcularCobro(id);
   await avanzarEstadoAutomatico(id);
   revalidatePath(rutaViaje(id));
+}
+
+/**
+ * Marca varios viajes como facturados de una sola vez, bajo el mismo N° y
+ * fecha de factura (spec: un cliente suele recibir una sola factura que
+ * cubre varios viajes, no una por viaje). El importe de cada viaje se
+ * calcula de su propio total_a_cobrar -- no hay un importe único a
+ * repartir porque cada viaje ya tiene el suyo. Salta los que ya estaban
+ * facturados, para no pisar una factura ya cargada por error de doble
+ * selección.
+ */
+export async function facturarViajesEnLote(
+  viajeIds: number[],
+  valores: { factura_nro: string; factura_fecha: Date }
+): Promise<{ error?: string } | void> {
+  const nro = valores.factura_nro.trim();
+  if (!nro) return { error: "Ingresá el N° de factura." };
+  if (viajeIds.length === 0) return { error: "Elegí al menos un viaje." };
+
+  const filas = await db.select().from(viajes).where(inArray(viajes.id, viajeIds));
+  const pendientes = filas.filter((v) => !v.facturado);
+  if (pendientes.length === 0) return { error: "Los viajes elegidos ya estaban facturados." };
+
+  for (const v of pendientes) {
+    const neto = v.total_a_cobrar != null ? Number(v.total_a_cobrar) : 0;
+    const iva = neto * 0.21;
+    await db
+      .update(viajes)
+      .set({
+        factura_nro: nro,
+        factura_fecha: valores.factura_fecha,
+        factura_importe_neto: neto.toFixed(2),
+        factura_iva: iva.toFixed(2),
+        factura_importe_total: (neto + iva).toFixed(2),
+        facturado: true,
+        estado: "facturado",
+        actualizado_en: new Date(),
+      })
+      .where(eq(viajes.id, v.id));
+    await recalcularCobro(v.id);
+    revalidatePath(rutaViaje(v.id));
+  }
+
+  revalidatePath("/viajes");
+  if (pendientes[0]?.cliente_id) revalidatePath(`/clientes/${pendientes[0].cliente_id}`);
 }
 
 /**
