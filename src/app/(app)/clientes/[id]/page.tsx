@@ -39,6 +39,7 @@ export default async function ClienteDetallePage({ params }: { params: Promise<{
         total_a_cobrar: viajes.total_a_cobrar,
         saldo_pendiente: viajes.saldo_pendiente,
         facturado: viajes.facturado,
+        factura_importe_total: viajes.factura_importe_total,
       })
       .from(viajes)
       .leftJoin(camiones, eq(viajes.camion_id, camiones.id))
@@ -53,6 +54,8 @@ export default async function ClienteDetallePage({ params }: { params: Promise<{
         total_a_cobrar: viajes.total_a_cobrar,
         importe_cobrado: viajes.importe_cobrado,
         saldo_pendiente: viajes.saldo_pendiente,
+        facturado: viajes.facturado,
+        factura_importe_total: viajes.factura_importe_total,
       })
       .from(viajes)
       .where(and(eq(viajes.cliente_id, id), gt(viajes.saldo_pendiente, "0")))

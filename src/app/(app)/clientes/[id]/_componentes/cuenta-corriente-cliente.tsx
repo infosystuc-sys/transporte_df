@@ -11,6 +11,8 @@ type FilaViajePendiente = {
   total_a_cobrar: string | null;
   importe_cobrado: string | null;
   saldo_pendiente: string | null;
+  facturado: boolean;
+  factura_importe_total: string | null;
 };
 
 export function CuentaCorrienteCliente({
@@ -55,7 +57,11 @@ export function CuentaCorrienteCliente({
                     {formatoARS.format(Number(v.saldo_pendiente ?? 0))}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    de {formatoARS.format(Number(v.total_a_cobrar ?? 0))}
+                    de{" "}
+                    {formatoARS.format(
+                      Number((v.facturado ? v.factura_importe_total : v.total_a_cobrar) ?? 0)
+                    )}
+                    {v.facturado && " (c/IVA)"}
                   </span>
                 </div>
               </Link>

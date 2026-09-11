@@ -43,6 +43,7 @@ type FilaViaje = {
   total_a_cobrar: string | null;
   saldo_pendiente: string | null;
   facturado: boolean;
+  factura_importe_total: string | null;
 };
 
 export function ViajesCliente({ viajes }: { viajes: FilaViaje[] }) {
@@ -122,7 +123,12 @@ export function ViajesCliente({ viajes }: { viajes: FilaViaje[] }) {
                 </span>
               </div>
               <div className="flex flex-col items-end gap-0.5">
-                <span className="font-medium">{formatoARS.format(Number(v.total_a_cobrar ?? 0))}</span>
+                <span className="font-medium">
+                  {formatoARS.format(
+                    Number((v.facturado ? v.factura_importe_total : v.total_a_cobrar) ?? 0)
+                  )}
+                  {v.facturado && <span className="ml-1 text-xs text-muted-foreground">c/IVA</span>}
+                </span>
                 <div className="flex items-center gap-2">
                   {Number(v.saldo_pendiente ?? 0) > 0 && (
                     <span className="text-xs text-destructive">
