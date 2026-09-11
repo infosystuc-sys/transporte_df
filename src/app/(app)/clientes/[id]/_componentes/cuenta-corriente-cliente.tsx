@@ -59,9 +59,9 @@ export function CuentaCorrienteCliente({
                   <span className="text-xs text-muted-foreground">
                     de{" "}
                     {formatoARS.format(
-                      Number((v.facturado ? v.factura_importe_total : v.total_a_cobrar) ?? 0)
+                      Number((v.facturado ? v.factura_importe_total : null) ?? v.total_a_cobrar ?? 0)
                     )}
-                    {v.facturado && " (c/IVA)"}
+                    {v.facturado && v.factura_importe_total != null && " (c/IVA)"}
                   </span>
                 </div>
               </Link>

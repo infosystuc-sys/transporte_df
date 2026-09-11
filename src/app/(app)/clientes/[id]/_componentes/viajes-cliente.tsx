@@ -125,9 +125,11 @@ export function ViajesCliente({ viajes }: { viajes: FilaViaje[] }) {
               <div className="flex flex-col items-end gap-0.5">
                 <span className="font-medium">
                   {formatoARS.format(
-                    Number((v.facturado ? v.factura_importe_total : v.total_a_cobrar) ?? 0)
+                    Number((v.facturado ? v.factura_importe_total : null) ?? v.total_a_cobrar ?? 0)
                   )}
-                  {v.facturado && <span className="ml-1 text-xs text-muted-foreground">c/IVA</span>}
+                  {v.facturado && v.factura_importe_total != null && (
+                    <span className="ml-1 text-xs text-muted-foreground">c/IVA</span>
+                  )}
                 </span>
                 <div className="flex items-center gap-2">
                   {Number(v.saldo_pendiente ?? 0) > 0 && (
