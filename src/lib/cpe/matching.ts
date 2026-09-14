@@ -1,4 +1,4 @@
-import { eq, ilike } from "drizzle-orm";
+import { ilike, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { camiones, choferes, clientes, productos } from "@/db/schema";
 import { buscarLugarPorNombre } from "@/lib/lugares/buscar";
@@ -89,12 +89,26 @@ function limpiarCuit(cuit: string) {
   return cuit.replace(/[^0-9]/g, "");
 }
 
+/**
+ * Compara una columna CUIT/CUIL contra un valor ya limpio (solo dígitos)
+ * ignorando el formato con el que haya quedado guardada la columna (con
+ * guiones, puntos, espacios). Sin esto, un chofer o cliente cargado a mano
+ * con guiones ("20-12345678-3") nunca matchea contra el CUIL/CUIT que la
+ * CPE trae limpio, y el importador crea un duplicado en vez de reusar la
+ * ficha existente -- ese duplicado nace con los defaults (ej. 15% de
+ * modalidad de pago) mientras la ficha original, si nunca se le configuró
+ * ese dato, sigue sin liquidar viajes previos.
+ */
+export function cuitLimpioIgual(columna: typeof clientes.cuit | typeof choferes.cuil, valorLimpio: string) {
+  return sql`regexp_replace(${columna}, '[^0-9]', '', 'g') = ${valorLimpio}`;
+}
+
 async function buscarClientePorCuit(cuit: string | null) {
   if (!cuit) return null;
   const [fila] = await db
     .select({ id: clientes.id })
     .from(clientes)
-    .where(eq(clientes.cuit, limpiarCuit(cuit)));
+    .where(cuitLimpioIgual(clientes.cuit, limpiarCuit(cuit)));
   return fila?.id ?? null;
 }
 
@@ -102,7 +116,10 @@ export async function buscarCoincidencias(cpe: CpeExtraido): Promise<Coincidenci
   const cliente_id = await buscarClientePorCuit(cpe.pagador_cuit);
 
   const [chofer] = cpe.chofer_cuil
-    ? await db.select({ id: choferes.id }).from(choferes).where(eq(choferes.cuil, limpiarCuit(cpe.chofer_cuil)))
+    ? await db
+        .select({ id: choferes.id })
+        .from(choferes)
+        .where(cuitLimpioIgual(choferes.cuil, limpiarCuit(cpe.chofer_cuil)))
     : [];
 
   const [camion] = cpe.dominio_tractor
