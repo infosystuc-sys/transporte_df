@@ -24,6 +24,12 @@ export const clientes = pgTable(
     }),
     base_calculo_flete: baseCalculoClienteEnum("base_calculo_flete").default("heredar"),
     tolerancia_merma_pct: porcentaje("tolerancia_merma_pct"),
+    // % de comisión que se precarga en comision_intermediario_pct de un
+    // viaje nuevo cuando este cliente queda como intermediario_id (spec:
+    // en la práctica el mismo cliente que paga el flete suele actuar
+    // también como intermediario/bróker, así que conviene poder
+    // configurarle un valor por defecto en vez de retipearlo en cada CPE).
+    comision_intermediario_pct_default: porcentaje("comision_intermediario_pct_default"),
     observaciones: text("observaciones"),
     activo: boolean("activo").notNull().default(true),
   },

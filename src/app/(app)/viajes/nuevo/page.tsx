@@ -52,7 +52,11 @@ export default async function NuevoViajePage({
   const [filasClientes, filasCamiones, filasChoferes, filasProductos, filasLugares, filaOriginal] =
     await Promise.all([
       db
-        .select({ id: clientes.id, nombre: clientes.razon_social })
+        .select({
+          id: clientes.id,
+          nombre: clientes.razon_social,
+          comision_intermediario_pct_default: clientes.comision_intermediario_pct_default,
+        })
         .from(clientes)
         .orderBy(asc(clientes.razon_social)),
       db

@@ -25,6 +25,7 @@ type Fila = {
   condicion_pago_id: number | null;
   base_calculo_flete: "origen" | "destino" | "heredar" | null;
   tolerancia_merma_pct: string | null;
+  comision_intermediario_pct_default: string | null;
   observaciones: string | null;
   activo: boolean;
 };
@@ -45,6 +46,7 @@ const valoresPorDefecto: ClienteInput = {
   condicion_pago_id: undefined,
   base_calculo_flete: "heredar",
   tolerancia_merma_pct: undefined,
+  comision_intermediario_pct_default: undefined,
   observaciones: "",
   activo: true,
 };
@@ -90,6 +92,7 @@ export function GestorClientes({
         condicion_pago_id: f.condicion_pago_id ?? undefined,
         base_calculo_flete: f.base_calculo_flete ?? "heredar",
         tolerancia_merma_pct: f.tolerancia_merma_pct ?? undefined,
+        comision_intermediario_pct_default: f.comision_intermediario_pct_default ?? undefined,
         observaciones: f.observaciones ?? "",
         activo: f.activo,
       })}
@@ -143,6 +146,11 @@ export function GestorClientes({
             form={form}
             name="tolerancia_merma_pct"
             label="Tolerancia de merma (%, opcional)"
+          />
+          <CampoTexto
+            form={form}
+            name="comision_intermediario_pct_default"
+            label="Comisión de intermediario por defecto (%, opcional)"
           />
           <CampoBooleano form={form} name="es_dador_carga" label="Es dador de carga" />
           <CampoBooleano form={form} name="es_pagador_flete" label="Es pagador de flete" />

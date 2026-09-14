@@ -36,6 +36,7 @@ export function FormularioRevisionCpe({
     nombre: string;
     cuit: string | null;
     base_calculo_flete: BaseCalculo | "heredar" | null;
+    comision_intermediario_pct_default: string | null;
   }[];
   camiones: { id: number; dominio_tractor: string; dominio_acoplado: string | null }[];
   choferes: { id: number; nombre: string; cuil: string | null }[];

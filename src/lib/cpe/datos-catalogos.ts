@@ -9,6 +9,7 @@ export type CatalogosImportacionCpe = {
     nombre: string;
     cuit: string | null;
     base_calculo_flete: BaseCalculo | "heredar" | null;
+    comision_intermediario_pct_default: string | null;
   }[];
   camiones: { id: number; dominio_tractor: string; dominio_acoplado: string | null }[];
   choferes: { id: number; nombre: string; cuil: string | null }[];
@@ -35,6 +36,7 @@ export async function obtenerCatalogosImportacionCpe(): Promise<CatalogosImporta
           nombre: clientes.razon_social,
           cuit: clientes.cuit,
           base_calculo_flete: clientes.base_calculo_flete,
+          comision_intermediario_pct_default: clientes.comision_intermediario_pct_default,
         })
         .from(clientes)
         .orderBy(asc(clientes.razon_social)),

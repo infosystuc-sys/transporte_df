@@ -145,7 +145,11 @@ const ETIQUETAS_CAMPOS_CPE: Record<string, string> = {
 
 export function construirValoresIniciales(
   resultado: ResultadoImportacionCpe,
-  clientes: { id: number; base_calculo_flete: BaseCalculo | "heredar" | null }[],
+  clientes: {
+    id: number;
+    base_calculo_flete: BaseCalculo | "heredar" | null;
+    comision_intermediario_pct_default?: string | null;
+  }[],
   configDefaults: {
     base_calculo_flete_default: BaseCalculo | null;
     modalidad_tarifa_default: ModalidadTarifa | null;
@@ -157,6 +161,12 @@ export function construirValoresIniciales(
     cliente?.base_calculo_flete,
     configDefaults
   );
+  // Spec del cliente: en la práctica el mismo cliente que paga el flete
+  // suele actuar también de intermediario/bróker de ese viaje -- si tiene
+  // un % de comisión configurado, se precarga acá para no tener que
+  // volver a elegirlo y tipearlo a mano en cada CPE. Sigue siendo editable
+  // (o se puede vaciar) si en un viaje puntual no corresponde.
+  const comisionDefault = cliente?.comision_intermediario_pct_default;
   return {
     tiene_cpe: true,
     tipo_carga: "grano",
@@ -179,8 +189,8 @@ export function construirValoresIniciales(
     titular_cuit: e.titular_cuit ?? "",
     destinatario_nombre: e.destinatario_nombre ?? "",
     destinatario_cuit: e.destinatario_cuit ?? "",
-    intermediario_id: undefined,
-    comision_intermediario_pct: undefined,
+    intermediario_id: comisionDefault != null ? (c.cliente_id ?? undefined) : undefined,
+    comision_intermediario_pct: comisionDefault ?? undefined,
 
     camion_id: c.camion_id ?? undefined,
     chofer_id: c.chofer_id ?? undefined,
@@ -530,6 +540,20 @@ export function CamposRevisionCpe({
           onAbrirCrear={() =>
             onAbrirCrear("cliente", "Nuevo cliente", e.pagador_nombre ?? "", e.pagador_cuit ?? "", "cliente_id")
           }
+        />
+        <CampoEntidadConCrear
+          form={form}
+          name="intermediario_id"
+          label="Intermediario de flete"
+          opciones={opcionesClientes}
+          onAbrirCrear={() =>
+            onAbrirCrear("cliente", "Nuevo cliente", "", "", "intermediario_id")
+          }
+        />
+        <CampoTexto
+          form={form}
+          name="comision_intermediario_pct"
+          label="Comisión del intermediario (%)"
         />
       </div>
 
