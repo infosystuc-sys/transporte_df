@@ -80,7 +80,11 @@ export default async function ViajeDetallePage({ params }: { params: Promise<{ i
     filaViajeReemplazante,
   ] = await Promise.all([
     db
-      .select({ id: clientes.id, nombre: clientes.razon_social })
+      .select({
+        id: clientes.id,
+        nombre: clientes.razon_social,
+        comision_intermediario_pct_default: clientes.comision_intermediario_pct_default,
+      })
       .from(clientes)
       .orderBy(asc(clientes.razon_social)),
     db

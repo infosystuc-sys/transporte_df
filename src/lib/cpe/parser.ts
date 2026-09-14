@@ -128,8 +128,18 @@ export function parseTextoCpe(texto: string): CpeExtraido {
   }
 
   // Los 4 pares CUIT - Razón Social que aparecen en bloque antes de
-  // "A - INTERVINIENTES": titular, destinatario, destino (redundante),
-  // empresa transportista (somos nosotros, se ignora).
+  // "A - INTERVINIENTES": titular, destinatario, destino (redundante) y
+  // empresa transportista.
+  //
+  // Pedido explícito del cliente: en su operatoria real, la "Empresa
+  // Transportista" que figura en la CPE es -en el 90% de los casos- el
+  // mismo cliente que le paga el flete a él, no el que aparece
+  // textualmente como "Flete pagador" (que suele ser el exportador/
+  // comprador final, ej. la cerealera). Por eso pagador_cuit/
+  // pagador_nombre (= "Cliente (flete pagador)" en la pantalla de
+  // revisión) se completan desde acá directo, no desde el campo "Flete
+  // pagador". Sigue siendo editable a mano para el 10% de casos en que
+  // no corresponda.
   const paresCuit = [
     ...texto.matchAll(/(\d{11})\s*-\s*([^\n]+?)(?=\n|Flete pagador|Chofer\s*:)/g),
   ];
@@ -141,11 +151,20 @@ export function parseTextoCpe(texto: string): CpeExtraido {
     resultado.destinatario_cuit = paresCuit[1][1];
     resultado.destinatario_nombre = paresCuit[1][2].trim();
   }
+  if (paresCuit[3]) {
+    resultado.pagador_cuit = paresCuit[3][1];
+    resultado.pagador_nombre = paresCuit[3][2].trim();
+  }
 
-  const pagador = texto.match(/(\d{11})\s*-\s*([^\n]+?)Flete pagador\s*:/);
-  if (pagador) {
-    resultado.pagador_cuit = pagador[1];
-    resultado.pagador_nombre = pagador[2].trim();
+  // Fallback si por algún formato atípico no aparecieron los 4 pares de
+  // arriba: se usa el que figura textualmente como "Flete pagador" antes
+  // que dejar el campo vacío.
+  if (!resultado.pagador_cuit) {
+    const pagador = texto.match(/(\d{11})\s*-\s*([^\n]+?)Flete pagador\s*:/);
+    if (pagador) {
+      resultado.pagador_cuit = pagador[1];
+      resultado.pagador_nombre = pagador[2].trim();
+    }
   }
 
   const chofer = texto.match(/Chofer\s*:\s*(\d{11})\s*-\s*([^\n]+)/);

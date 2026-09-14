@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
-import { eq, ilike } from "drizzle-orm";
+import { ilike } from "drizzle-orm";
 import { db } from "@/db";
 import { adjuntos, camiones, choferes, clientes, lugares, productos, viajes } from "@/db/schema";
 import { clienteSchema, type ClienteInput } from "@/lib/schemas/clientes";
@@ -17,6 +17,7 @@ import {
   type ViajeDesdeCpeInput,
 } from "@/lib/schemas/cpe-importacion";
 import { procesarCpe, type ResultadoImportacionCpe } from "@/lib/cpe/importar";
+import { cuitLimpioIgual } from "@/lib/cpe/matching";
 import { buscarLugarPorNombre } from "@/lib/lugares/buscar";
 import { subirAdjunto } from "@/lib/supabase/storage";
 import { recalcularMerma } from "../_lib/merma";
@@ -172,7 +173,7 @@ async function resolverOCrear(f: {
   switch (f.tipo) {
     case "cliente": {
       const existente = doc
-        ? await db.select({ id: clientes.id }).from(clientes).where(eq(clientes.cuit, doc))
+        ? await db.select({ id: clientes.id }).from(clientes).where(cuitLimpioIgual(clientes.cuit, doc))
         : await db.select({ id: clientes.id }).from(clientes).where(ilike(clientes.razon_social, nombre));
       if (existente[0]) return existente[0].id;
       const { id } = await crearClienteRapido({ razon_social: nombre, cuit: doc ?? "" });
@@ -180,7 +181,7 @@ async function resolverOCrear(f: {
     }
     case "chofer": {
       const existente = doc
-        ? await db.select({ id: choferes.id }).from(choferes).where(eq(choferes.cuil, doc))
+        ? await db.select({ id: choferes.id }).from(choferes).where(cuitLimpioIgual(choferes.cuil, doc))
         : await db.select({ id: choferes.id }).from(choferes).where(ilike(choferes.nombre_completo, nombre));
       if (existente[0]) return existente[0].id;
       const { id } = await crearChoferRapido({ nombre_completo: nombre, cuil: doc ?? "" });

@@ -1,0 +1,1 @@
+ALTER TABLE "clientes" ADD COLUMN "comision_intermediario_pct_default" numeric(6, 3);

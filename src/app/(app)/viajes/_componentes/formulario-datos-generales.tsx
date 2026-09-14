@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,6 +14,7 @@ import {
 import { viajeDatosGeneralesSchema, type ViajeDatosGeneralesInput } from "@/lib/schemas/viajes";
 
 type Opcion = { id: number; nombre: string };
+type ClienteOpcion = Opcion & { comision_intermediario_pct_default: string | null };
 type CamionOpcion = { id: number; dominio_tractor: string; dominio_acoplado: string | null };
 
 const opcionesTipoCarga = [
@@ -36,7 +37,7 @@ export function FormularioDatosGenerales({
   textoBoton = "Guardar",
 }: {
   valoresIniciales: ViajeDatosGeneralesInput;
-  clientes: Opcion[];
+  clientes: ClienteOpcion[];
   camiones: CamionOpcion[];
   choferes: Opcion[];
   productos: Opcion[];
@@ -54,6 +55,7 @@ export function FormularioDatosGenerales({
 
   const tieneCpe = form.watch("tiene_cpe");
   const camionId = form.watch("camion_id");
+  const clienteId = form.watch("cliente_id");
 
   useEffect(() => {
     if (!camionId) return;
@@ -63,6 +65,26 @@ export function FormularioDatosGenerales({
     form.setValue("dominio_acoplado", camion.dominio_acoplado ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camionId]);
+
+  // Spec del cliente: en la práctica el mismo cliente que paga el flete
+  // suele actuar también de intermediario/bróker, así que si tiene un %
+  // configurado se sugiere acá -- pero solo ante un cambio real de cliente
+  // dentro de esta sesión de edición (el `useRef` salta el primer render),
+  // para no pisar un intermediario distinto ya cargado a mano al abrir un
+  // viaje existente.
+  const clienteIdAlMontar = useRef(true);
+  useEffect(() => {
+    if (clienteIdAlMontar.current) {
+      clienteIdAlMontar.current = false;
+      return;
+    }
+    if (!clienteId) return;
+    const cliente = clientes.find((c) => c.id === Number(clienteId));
+    if (!cliente?.comision_intermediario_pct_default) return;
+    form.setValue("intermediario_id", cliente.id);
+    form.setValue("comision_intermediario_pct", cliente.comision_intermediario_pct_default);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clienteId]);
 
   function onSubmit(valores: ViajeDatosGeneralesInput) {
     startTransition(async () => {
