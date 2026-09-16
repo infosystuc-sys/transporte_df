@@ -7,11 +7,19 @@ import { z } from "zod";
  * "8.359.732,70", un reemplazo ingenuo de "," por "." lo deja en
  * "8.359.732.70" -- dos puntos, formato inválido -- aunque el valor sea
  * perfectamente correcto. Si hay coma, se la toma como separador decimal y
- * se descartan los puntos (miles); sin coma se deja como estaba, para no
- * romper el caso ambiguo de "1234.56" con punto decimal.
+ * se descartan los puntos (miles).
+ *
+ * Sin coma, un monto redondo también puede venir con puntos de miles y
+ * nada de decimales (ej. "8.000.000") -- ahí no hay ambigüedad posible en
+ * cuanto aparece MÁS DE UN punto: ningún número decimal válido tiene dos
+ * puntos, así que tienen que ser separadores de miles y se pueden sacar
+ * con seguridad. Un solo punto sigue siendo ambiguo ("1234.56" decimal vs.
+ * "1.234" con separador de miles) y se deja tal cual, como antes.
  */
 function normalizarDecimal(v: string): string {
-  return v.includes(",") ? v.replace(/\./g, "").replace(",", ".") : v;
+  if (v.includes(",")) return v.replace(/\./g, "").replace(",", ".");
+  const puntos = (v.match(/\./g) ?? []).length;
+  return puntos > 1 ? v.replace(/\./g, "") : v;
 }
 
 /**
