@@ -17,6 +17,7 @@ export const clienteSchema = z.object({
   condicion_pago_id: z.coerce.number().optional().nullable(),
   base_calculo_flete: z.enum(["origen", "destino", "heredar"]).default("heredar"),
   tolerancia_merma_pct: decimalOpcional(),
+  comision_intermediario_pct_default: decimalOpcional(),
   observaciones: textoOpcional,
   activo: z.boolean().default(true),
 });

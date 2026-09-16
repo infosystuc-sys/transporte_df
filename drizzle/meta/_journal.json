@@ -92,6 +92,13 @@
       "when": 1788788534174,
       "tag": "0012_agrega_origen_estimado",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789399814892,
+      "tag": "0013_agrega_comision_intermediario_default",
+      "breakpoints": true
     }
   ]
 }
