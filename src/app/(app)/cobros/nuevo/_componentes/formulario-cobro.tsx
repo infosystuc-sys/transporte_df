@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -74,6 +74,17 @@ export function FormularioCobro({
     resolver: zodResolver(cobroCabeceraSchema),
     defaultValues: { ...valoresPorDefectoCabecera, cliente_id: clienteId as unknown as number },
   });
+
+  // El selector de cliente navega (router.push) en vez de escribir en el
+  // form -- necesario para que el servidor recargue viajesPendientes del
+  // nuevo cliente. Pero al navegar dentro de la misma página, React no
+  // desmonta este componente, así que el "cliente_id" de defaultValues
+  // (fijado solo en el primer render) nunca se actualizaba: el form
+  // enviaba cliente_id=undefined y el server action fallaba antes de
+  // llegar a la base -- por eso nunca se guardó ningún cobro.
+  useEffect(() => {
+    form.setValue("cliente_id", clienteId as unknown as number);
+  }, [clienteId, form]);
 
   const totalImputado = useMemo(
     () => Object.values(seleccionados).reduce((s, v) => s + (Number(v) || 0), 0),
