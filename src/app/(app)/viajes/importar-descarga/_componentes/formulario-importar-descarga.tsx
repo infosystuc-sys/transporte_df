@@ -19,6 +19,7 @@ import { previsualizarImportacionDescarga } from "../actions";
 import {
   CamposRevisionDescarga,
   construirValoresDescarga,
+  etiquetaIdentificadorBuscado,
   PickerViajesEncontrados,
 } from "./campos-revision-descarga";
 
@@ -39,7 +40,8 @@ export function FormularioImportarDescarga() {
   const [isPendingProcesar, startTransitionProcesar] = useTransition();
   const [isPendingGuardar, startTransitionGuardar] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [ctgBuscado, setCtgBuscado] = useState<string | null>(null);
+  const [identificadorBuscado, setIdentificadorBuscado] = useState<string | null>(null);
+  const [valorBuscado, setValorBuscado] = useState<string | null>(null);
   const [viajesEncontrados, setViajesEncontrados] = useState<ViajeEncontradoPorCtg[] | null>(null);
   const [datosExtraidos, setDatosExtraidos] = useState<ComprobanteDescargaExtraido | null>(null);
   const [viajeElegido, setViajeElegido] = useState<ViajeEncontradoPorCtg | null>(null);
@@ -73,11 +75,12 @@ export function FormularioImportarDescarga() {
           setError(resultado.error);
           return;
         }
-        setCtgBuscado(resultado.datos.ctg);
+        setIdentificadorBuscado(etiquetaIdentificadorBuscado(resultado.datos));
+        setValorBuscado(resultado.datos.ctg ?? resultado.datos.cpe_nro);
         setViajesEncontrados(resultado.viajes);
         setDatosExtraidos(resultado.datos);
         if (resultado.viajes.length === 0) {
-          setError(`No se encontró ningún viaje cargado con el CTG ${resultado.datos.ctg}.`);
+          setError(`No se encontró ningún viaje cargado con ${etiquetaIdentificadorBuscado(resultado.datos)}.`);
           return;
         }
         if (resultado.viajes.length === 1) {
@@ -145,7 +148,7 @@ export function FormularioImportarDescarga() {
         </div>
         <div>
           <Button onClick={procesar} disabled={!archivo || isPendingProcesar}>
-            {isPendingProcesar ? "Leyendo..." : "Buscar viaje por CTG"}
+            {isPendingProcesar ? "Leyendo..." : "Buscar viaje por CTG o Carta de Porte"}
           </Button>
         </div>
       </div>
@@ -156,10 +159,10 @@ export function FormularioImportarDescarga() {
           <AlertTitle>No se pudo continuar</AlertTitle>
           <AlertDescription>
             {error}{" "}
-            {ctgBuscado && (
+            {valorBuscado && (
               <>
                 Buscá el viaje a mano en{" "}
-                <Link href={`/viajes?q=${encodeURIComponent(ctgBuscado)}`} className="underline">
+                <Link href={`/viajes?q=${encodeURIComponent(valorBuscado)}`} className="underline">
                   el listado de Viajes
                 </Link>
                 , o{" "}
@@ -169,7 +172,7 @@ export function FormularioImportarDescarga() {
                 y cargá la descarga desde la pestaña correspondiente.
               </>
             )}
-            {!ctgBuscado && (
+            {!valorBuscado && (
               <>
                 {" "}
                 Podés cargar la descarga a mano desde{" "}
@@ -186,7 +189,7 @@ export function FormularioImportarDescarga() {
       {viajesEncontrados && viajesEncontrados.length > 1 && !viajeElegido && (
         <PickerViajesEncontrados
           viajes={viajesEncontrados}
-          ctgBuscado={ctgBuscado}
+          identificadorBuscado={identificadorBuscado ?? ""}
           onElegir={(v) => datosExtraidos && elegirViaje(v, datosExtraidos)}
         />
       )}

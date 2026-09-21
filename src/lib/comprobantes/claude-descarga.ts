@@ -2,11 +2,19 @@ import Anthropic from "@anthropic-ai/sdk";
 import { canvasParaClaude, LADO_LARGO_MAX_IA, renderizarPrimeraPagina } from "@/lib/cpe/render";
 import { limpiarCamposTexto } from "@/lib/ia/sanear";
 
-const CAMPOS_TEXTO_DESCARGA = ["ctg", "n_turno_descarga"] as const;
+const CAMPOS_TEXTO_DESCARGA = ["ctg", "cpe_nro", "n_turno_descarga"] as const;
 const CAMPOS_NUMERO_DESCARGA = ["bruto_destino_kg", "tara_destino_kg", "neto_destino_kg", "humedad_pct"] as const;
 
 export type ComprobanteDescargaExtraido = {
   ctg: string | null;
+  /**
+   * Número de Carta de Porte. En la mayoría de los tickets es el mismo
+   * número que el CTG, pero algunos comprobantes (ej. balanzas de
+   * puertos/acopios como Servicios Portuarios S.A.) imprimen un número de
+   * Carta de Porte propio, distinto del CTG -- se extrae aparte para poder
+   * matchear el viaje por cualquiera de los dos.
+   */
+  cpe_nro: string | null;
   fecha_arribo: string | null; // yyyy-mm-dd
   fecha_descarga: string | null; // yyyy-mm-dd
   n_turno_descarga: string | null;
@@ -31,6 +39,7 @@ const HERRAMIENTA_EXTRACCION = {
     type: "object" as const,
     properties: {
       ctg: { type: ["string", "null"] },
+      cpe_nro: { type: ["string", "null"] },
       fecha_arribo: { type: ["string", "null"] },
       fecha_descarga: { type: ["string", "null"] },
       n_turno_descarga: { type: ["string", "null"] },
@@ -47,6 +56,7 @@ const HERRAMIENTA_EXTRACCION = {
     },
     required: [
       "ctg",
+      "cpe_nro",
       "fecha_arribo",
       "fecha_descarga",
       "n_turno_descarga",
@@ -94,7 +104,7 @@ export async function extraerComprobanteDescarga(
           },
           {
             type: "text",
-            text: 'Esta es una foto o PDF de un ticket de balanza o comprobante de descarga de un camión con granos en destino (puede ser una nota de recepción de una empresa como Cargill, Vicentin, ACA, etc., no necesariamente un formulario oficial de ARCA). Extraé el CTG (Código de Trazabilidad de Granos, un número largo que suele figurar como "CTG", "Carta de Porte" o similar — es el mismo número que identifica el viaje de origen a destino), fecha de arribo, fecha de descarga, número de turno, peso bruto, tara y peso neto (todos los pesos en KILOGRAMOS — si el ticket los muestra en toneladas, convertilos multiplicando por 1000) y el porcentaje de humedad si figura. Para el peso neto: algunos tickets muestran DOS valores de neto -- uno antes de descontar una merma de calidad (a veces etiquetado "Neto S/Merma", "Neto sin merma" o similar) y otro después de descontarla (etiquetado simplemente "Neto"). Esa merma de calidad la absorbe el productor y es un concepto distinto de la merma de transporte que este sistema calcula aparte (origen menos destino) -- cuando el ticket muestre los dos valores, neto_destino_kg tiene que ser el que NO tiene la merma de calidad descontada (el "Neto S/Merma" o equivalente), nunca el que ya viene descontado. Si el ticket solo muestra un único valor de "Neto" (sin la distinción), usá ese. Fechas en formato yyyy-mm-dd. Si un campo no aparece en el documento, poné null — no inventes valores. La imagen puede venir con calidad degradada (foto de celular comprimida, poca luz, texto chico) — cuando completes un campo pero no estés del todo seguro de haberlo leído bien, agregá el nombre de ese campo a campos_dudosos en vez de fingir certeza. Es preferible marcar de más que de menos.',
+            text: 'Esta es una foto o PDF de un ticket de balanza o comprobante de descarga de un camión con granos en destino (puede ser una nota de recepción de una empresa como Cargill, Vicentin, ACA, etc., o de una balanza de puerto/acopio como Servicios Portuarios S.A., no necesariamente un formulario oficial de ARCA). Extraé POR SEPARADO el CTG (Código de Trazabilidad de Granos, suele figurar rotulado "CTG") y el número de Carta de Porte (suele figurar como "Carta de Porte", "C. Porte" o "C.PORTE"): en la mayoría de los comprobantes son el mismo número, pero en algunos (típicamente los de balanzas de puertos/acopios) la Carta de Porte es un número propio de ese establecimiento, distinto del CTG -- nunca asumas que son iguales, extraé cada uno tal como figura impreso, y si el ticket solo muestra uno de los dos dejá el otro en null. También extraé fecha de arribo, fecha de descarga, número de turno, peso bruto, tara y peso neto (todos los pesos en KILOGRAMOS — si el ticket los muestra en toneladas, convertilos multiplicando por 1000) y el porcentaje de humedad si figura. Para el peso neto: algunos tickets muestran DOS valores de neto -- uno antes de descontar una merma de calidad (a veces etiquetado "Neto S/Merma", "Neto sin merma" o similar) y otro después de descontarla (etiquetado simplemente "Neto"). Esa merma de calidad la absorbe el productor y es un concepto distinto de la merma de transporte que este sistema calcula aparte (origen menos destino) -- cuando el ticket muestre los dos valores, neto_destino_kg tiene que ser el que NO tiene la merma de calidad descontada (el "Neto S/Merma" o equivalente), nunca el que ya viene descontado. Si el ticket solo muestra un único valor de "Neto" (sin la distinción), usá ese. Fechas en formato yyyy-mm-dd. Si un campo no aparece en el documento, poné null — no inventes valores. La imagen puede venir con calidad degradada (foto de celular comprimida, poca luz, texto chico) — cuando completes un campo pero no estés del todo seguro de haberlo leído bien, agregá el nombre de ese campo a campos_dudosos en vez de fingir certeza. Es preferible marcar de más que de menos.',
           },
         ],
       },

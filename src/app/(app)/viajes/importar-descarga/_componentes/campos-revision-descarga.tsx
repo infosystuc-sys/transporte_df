@@ -11,6 +11,7 @@ import type { ViajeEncontradoPorCtg } from "../../_lib/buscar-ctg";
 
 export const ETIQUETAS_CAMPOS_DESCARGA: Record<string, string> = {
   ctg: "CTG",
+  cpe_nro: "Carta de Porte",
   n_turno_descarga: "N° de turno",
   bruto_destino_kg: "Peso bruto (destino)",
   tara_destino_kg: "Tara (destino)",
@@ -31,6 +32,14 @@ export const ETIQUETAS_ESTADO: Record<string, string> = {
 
 const formatoFecha = new Intl.DateTimeFormat("es-AR", { timeZone: "America/Argentina/Cordoba" });
 
+/** Texto para mostrarle al usuario qué identificador(es) se usaron para buscar el viaje. */
+export function etiquetaIdentificadorBuscado(datos: { ctg: string | null; cpe_nro: string | null }): string {
+  const partes: string[] = [];
+  if (datos.ctg) partes.push(`CTG ${datos.ctg}`);
+  if (datos.cpe_nro) partes.push(`Carta de Porte ${datos.cpe_nro}`);
+  return partes.join(" / ");
+}
+
 export function construirValoresDescarga(datos: ComprobanteDescargaExtraido): ViajeDescargaInput {
   return {
     fecha_arribo: (datos.fecha_arribo ?? undefined) as unknown as Date,
@@ -47,17 +56,17 @@ export function construirValoresDescarga(datos: ComprobanteDescargaExtraido): Vi
 /** Lista para elegir a mano cuando el CTG matchea a más de un viaje cargado. */
 export function PickerViajesEncontrados({
   viajes,
-  ctgBuscado,
+  identificadorBuscado,
   onElegir,
 }: {
   viajes: ViajeEncontradoPorCtg[];
-  ctgBuscado: string | null;
+  identificadorBuscado: string;
   onElegir: (viaje: ViajeEncontradoPorCtg) => void;
 }) {
   return (
     <div className="flex flex-col gap-3 rounded-md border p-4">
       <p className="text-sm text-muted-foreground">
-        Encontré {viajes.length} viajes con el CTG {ctgBuscado}. Elegí cuál es:
+        Encontré {viajes.length} viajes con {identificadorBuscado}. Elegí cuál es:
       </p>
       <div className="flex flex-col gap-2">
         {viajes.map((v) => (
@@ -105,7 +114,7 @@ export function CamposRevisionDescarga({
     <>
       <div className="rounded-md border bg-muted/40 p-4 text-sm">
         <p className="font-semibold">
-          Viaje #{viaje.numero} — CTG {viaje.ctg}
+          Viaje #{viaje.numero} — CTG {viaje.ctg ?? "—"} · Carta de Porte {viaje.cpe_nro ?? "—"}
         </p>
         <p className="text-muted-foreground">
           {viaje.cliente_nombre ?? "—"} · Chofer: {viaje.chofer_nombre ?? "—"} · Camión:{" "}

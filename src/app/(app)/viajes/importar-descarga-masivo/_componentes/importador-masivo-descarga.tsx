@@ -17,6 +17,7 @@ import { previsualizarImportacionDescarga } from "../../importar-descarga/action
 import {
   CamposRevisionDescarga,
   construirValoresDescarga,
+  etiquetaIdentificadorBuscado,
   PickerViajesEncontrados,
 } from "../../importar-descarga/_componentes/campos-revision-descarga";
 
@@ -26,7 +27,7 @@ export type ItemLoteDescarga = {
   id: string;
   archivo: File;
   estado: EstadoItemDescarga;
-  ctgBuscado: string | null;
+  identificadorBuscado: string | null;
   viajesEncontrados: ViajeEncontradoPorCtg[] | null;
   datosExtraidos: ComprobanteDescargaExtraido | null;
   viajeElegido: ViajeEncontradoPorCtg | null;
@@ -83,7 +84,7 @@ export function ImportadorMasivoDescarga() {
       const necesitaRevision = !viajeUnico || yaTieneDescarga || r.datos.campos_dudosos.length > 0;
       actualizarItem(item.id, {
         estado: necesitaRevision ? "revisar" : "listo",
-        ctgBuscado: r.datos.ctg,
+        identificadorBuscado: etiquetaIdentificadorBuscado(r.datos),
         viajesEncontrados: r.viajes,
         datosExtraidos: r.datos,
         viajeElegido: viajeUnico,
@@ -107,7 +108,7 @@ export function ImportadorMasivoDescarga() {
       id: crypto.randomUUID(),
       archivo,
       estado: "pendiente",
-      ctgBuscado: null,
+      identificadorBuscado: null,
       viajesEncontrados: null,
       datosExtraidos: null,
       viajeElegido: null,
@@ -236,7 +237,7 @@ export function ImportadorMasivoDescarga() {
                       {it.viajeElegido && (
                         <span className="text-xs text-muted-foreground">
                           Viaje #{it.viajeElegido.numero} · {it.viajeElegido.cliente_nombre ?? "—"} ·
-                          CTG {it.viajeElegido.ctg}
+                          CTG {it.viajeElegido.ctg ?? "—"} · Carta de Porte {it.viajeElegido.cpe_nro ?? "—"}
                         </span>
                       )}
                       {it.actualizadoPorOtroEnLote ? (
@@ -285,15 +286,15 @@ export function ImportadorMasivoDescarga() {
                       {it.viajesEncontrados && it.viajesEncontrados.length > 1 && !it.viajeElegido && (
                         <PickerViajesEncontrados
                           viajes={it.viajesEncontrados}
-                          ctgBuscado={it.ctgBuscado}
+                          identificadorBuscado={it.identificadorBuscado ?? ""}
                           onElegir={(v) => elegirViajeEnDetalle(it.id, v)}
                         />
                       )}
                       {!it.viajesEncontrados?.length && (
                         <p className="text-sm text-muted-foreground">
-                          {it.ctgBuscado
-                            ? `No se encontró ningún viaje cargado con el CTG ${it.ctgBuscado}. Buscalo a mano en `
-                            : "No se pudo leer el CTG de este archivo. Buscá el viaje a mano en "}
+                          {it.identificadorBuscado
+                            ? `No se encontró ningún viaje cargado con ${it.identificadorBuscado}. Buscalo a mano en `
+                            : "No se pudo leer el CTG ni la Carta de Porte de este archivo. Buscá el viaje a mano en "}
                           <Link href="/viajes" className="underline">
                             el listado de Viajes
                           </Link>
