@@ -40,6 +40,19 @@ export function etiquetaIdentificadorBuscado(datos: { ctg: string | null; cpe_nr
   return partes.join(" / ");
 }
 
+/**
+ * Si no se encontró ningún viaje y la IA marcó el CTG o la Carta de Porte
+ * como campo dudoso (foto poco clara), avisa que puede haber un dígito
+ * mal leído -- sin esto, "no encontrado" se ve igual tanto si el viaje
+ * realmente no existe como si la IA se comió un dígito.
+ */
+export function avisoLecturaDudosa(datos: { campos_dudosos: string[] }): string | null {
+  const dudoso = datos.campos_dudosos.includes("ctg") || datos.campos_dudosos.includes("cpe_nro");
+  return dudoso
+    ? " La IA no está segura de haber leído bien este número (foto poco clara o borrosa) -- puede tener algún dígito equivocado. Revisá el ticket con atención."
+    : null;
+}
+
 export function construirValoresDescarga(datos: ComprobanteDescargaExtraido): ViajeDescargaInput {
   return {
     fecha_arribo: (datos.fecha_arribo ?? undefined) as unknown as Date,

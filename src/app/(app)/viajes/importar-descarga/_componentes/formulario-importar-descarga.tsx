@@ -17,6 +17,7 @@ import type { ViajeEncontradoPorCtg } from "../../_lib/buscar-ctg";
 import { actualizarDescargaConAdjunto } from "../../actions";
 import { previsualizarImportacionDescarga } from "../actions";
 import {
+  avisoLecturaDudosa,
   CamposRevisionDescarga,
   construirValoresDescarga,
   etiquetaIdentificadorBuscado,
@@ -80,7 +81,10 @@ export function FormularioImportarDescarga() {
         setViajesEncontrados(resultado.viajes);
         setDatosExtraidos(resultado.datos);
         if (resultado.viajes.length === 0) {
-          setError(`No se encontró ningún viaje cargado con ${etiquetaIdentificadorBuscado(resultado.datos)}.`);
+          setError(
+            `No se encontró ningún viaje cargado con ${etiquetaIdentificadorBuscado(resultado.datos)}.` +
+              (avisoLecturaDudosa(resultado.datos) ?? "")
+          );
           return;
         }
         if (resultado.viajes.length === 1) {

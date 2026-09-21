@@ -15,6 +15,7 @@ import type { ViajeEncontradoPorCtg } from "../../_lib/buscar-ctg";
 import { actualizarDescargaConAdjunto } from "../../actions";
 import { previsualizarImportacionDescarga } from "../../importar-descarga/actions";
 import {
+  avisoLecturaDudosa,
   CamposRevisionDescarga,
   construirValoresDescarga,
   etiquetaIdentificadorBuscado,
@@ -293,7 +294,9 @@ export function ImportadorMasivoDescarga() {
                       {!it.viajesEncontrados?.length && (
                         <p className="text-sm text-muted-foreground">
                           {it.identificadorBuscado
-                            ? `No se encontró ningún viaje cargado con ${it.identificadorBuscado}. Buscalo a mano en `
+                            ? `No se encontró ningún viaje cargado con ${it.identificadorBuscado}.${
+                                (it.datosExtraidos && avisoLecturaDudosa(it.datosExtraidos)) ?? ""
+                              } Buscalo a mano en `
                             : "No se pudo leer el CTG ni la Carta de Porte de este archivo. Buscá el viaje a mano en "}
                           <Link href="/viajes" className="underline">
                             el listado de Viajes
