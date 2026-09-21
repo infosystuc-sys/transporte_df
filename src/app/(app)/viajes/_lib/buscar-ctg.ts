@@ -57,12 +57,26 @@ export async function buscarViajesPorCtg(ctg: string) {
  * (ej. balanzas de puertos/acopios) no traen el CTG sino solo el número de
  * Carta de Porte propio de ese establecimiento -- se acepta cualquiera de
  * los dos que haya podido leer la IA.
+ *
+ * Caso real (balanza "Servicios Portuarios S.A."): su ticket rotula
+ * "C.PORTE" pero lo que imprime ahí es en realidad el CTG del viaje SIN el
+ * "10" inicial que llevan todos los CTG argentinos (ej. ticket
+ * "135160206" == CTG real "10135160206") -- no es un número de Carta de
+ * Porte distinto, es el mismo CTG recortado. Por eso, además de la
+ * igualdad exacta, se prueba si el CTG guardado TERMINA con el valor
+ * leído (solo para valores de 8+ dígitos, para no matchear de más por un
+ * sufijo corto y coincidente de casualidad).
  */
 export async function buscarViajesPorCtgOCartaPorte(ctg: string | null, cpeNro: string | null) {
   const condiciones: SQL[] = [];
-  if (ctg?.trim()) condiciones.push(sql`ltrim(${viajes.ctg}, '0') = ${sinCerosIniciales(ctg.trim())}`);
-  if (cpeNro?.trim())
-    condiciones.push(sql`ltrim(${viajes.cpe_nro}, '0') = ${sinCerosIniciales(cpeNro.trim())}`);
+  for (const valor of [ctg, cpeNro]) {
+    const limpio = valor?.trim();
+    if (!limpio) continue;
+    const sinCeros = sinCerosIniciales(limpio);
+    condiciones.push(sql`ltrim(${viajes.ctg}, '0') = ${sinCeros}`);
+    condiciones.push(sql`ltrim(${viajes.cpe_nro}, '0') = ${sinCeros}`);
+    if (sinCeros.length >= 8) condiciones.push(sql`${viajes.ctg} LIKE ${"%" + sinCeros}`);
+  }
   if (condiciones.length === 0) return [];
   return buscarViajesPorCondicion(or(...condiciones)!);
 }
