@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: "Importar descarga — Gestión de Fletes",
 };
 
+// Ver la nota en viajes/importar-cpe/page.tsx: mismo límite de Server
+// Action, misma razón (acá, la lectura por Claude del ticket/nota).
+export const maxDuration = 60;
+
 export default function ImportarDescargaPage() {
   return (
     <div className="flex flex-col gap-6">

@@ -7,6 +7,10 @@ export const metadata: Metadata = {
   title: "Gasoil en tanda — Gestión de Fletes",
 };
 
+// Ver la nota en viajes/importar-cpe/page.tsx: mismo límite de Server
+// Action, misma razón (acá, la lectura por Claude del comprobante).
+export const maxDuration = 60;
+
 export default async function GasoilMasivoPage() {
   const catalogos = await obtenerCatalogosGasoil();
 

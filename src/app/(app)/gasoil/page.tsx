@@ -13,6 +13,11 @@ export const metadata: Metadata = {
   title: "Gasoil — Gestión de Fletes",
 };
 
+// Ver la nota en viajes/importar-cpe/page.tsx: mismo límite de Server
+// Action, misma razón (acá, la lectura por Claude del comprobante de
+// carga de gasoil desde GestorGasoil).
+export const maxDuration = 60;
+
 export default async function GasoilPage({
   searchParams,
 }: {
