@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: "Importar CPE (varios) — Gestión de Fletes",
 };
 
+// Ver la nota en ../importar-cpe/page.tsx: mismo límite de Server Action,
+// misma razón (fallback de Claude que puede tardar más que el default).
+export const maxDuration = 60;
+
 export default async function ImportarCpeMasivoPage() {
   const catalogos = await obtenerCatalogosImportacionCpe();
 

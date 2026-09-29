@@ -7,6 +7,18 @@ export const metadata: Metadata = {
   title: "Importar CPE — Gestión de Fletes",
 };
 
+// El fallback de Claude (claude-opus-5, para CPE escaneadas o fotos, que
+// invoca la Server Action importarCpe definida en ./actions) puede tardar
+// más que el límite por defecto de una Server Action en Vercel (10s en
+// Hobby) -- sin esto la función se corta a mitad de camino y el cliente
+// ve un genérico "An unexpected response was received from the server"
+// en vez del resultado o de un error prolijo. 60s es el máximo permitido
+// en Hobby. Va acá (la página que invoca la acción) y no en actions.ts
+// porque un archivo "use server" solo puede exportar funciones async --
+// cualquier otra exportación (como esta) hace que Next descarte todas las
+// demás exportaciones del módulo en producción.
+export const maxDuration = 60;
+
 export default async function ImportarCpePage() {
   const catalogos = await obtenerCatalogosImportacionCpe();
 

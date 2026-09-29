@@ -49,6 +49,11 @@ export async function generateMetadata({
   return { title: `Viaje #${id} — Gestión de Fletes` };
 }
 
+// Ver la nota en viajes/importar-cpe/page.tsx: mismo límite de Server
+// Action, misma razón -- esta página hostea los botones "Cargar por IA"
+// de Descarga, Gastos y Adicionales.
+export const maxDuration = 60;
+
 export default async function ViajeDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idParam } = await params;
   const id = Number(idParam);
