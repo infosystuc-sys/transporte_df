@@ -85,8 +85,28 @@ export async function procesarCpe(buffer: Buffer): Promise<ResultadoImportacionC
     }
   }
 
-  const coincidencias = await buscarCoincidencias(extraido);
-  const faltantes = detectarFaltantes(extraido, coincidencias);
+  // Mismo motivo que el try/catch de arriba: si la consulta de matching
+  // contra la base falla por lo que sea (un hiccup de conexión, por
+  // ejemplo), no puede reventar sin capturar -- Next.js redacta el error
+  // de la Server Action y el resultado es el mismo genérico "unexpected
+  // response" que si no se hubiera podido leer el archivo en absoluto.
+  // Sin coincidencias, el usuario igual puede revisar y completar los
+  // campos a mano en la pantalla de confirmación.
+  let coincidencias: Coincidencias = {
+    cliente_id: null,
+    chofer_id: null,
+    camion_id: null,
+    producto_id: null,
+    origen_id: null,
+    destino_id: null,
+  };
+  let faltantes: EntidadFaltante[] = [];
+  try {
+    coincidencias = await buscarCoincidencias(extraido);
+    faltantes = detectarFaltantes(extraido, coincidencias);
+  } catch (err) {
+    console.error("procesarCpe: falló el matching contra los catálogos:", err);
+  }
 
   return { extraido, fuente, motivoManual, referenciaQr, coincidencias, faltantes };
 }
