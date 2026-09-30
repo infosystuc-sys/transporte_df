@@ -72,7 +72,11 @@
 }
 
 :root {
-  --background: #eef1f5;
+  /* Fondo blanco (pedido explícito del cliente, en vez del gris/celeste
+     apagado anterior): igual que Alem Vidrios, todo el "aire" de la app es
+     blanco y son el borde + la sombra tintada los que separan cada panel,
+     no un cambio de tono de fondo. */
+  --background: #ffffff;
   --foreground: #1a2433;
   --card: #ffffff;
   --card-foreground: #1a2433;
@@ -82,14 +86,18 @@
      dorado (sol/trigo) en vez del azul "Cashflow" original. */
   --primary: #1e5b34;
   --primary-foreground: #ffffff;
-  --secondary: #f8fafc;
+  /* Secondary/muted/accent bajan un poco más de gris que antes (#f8fafc
+     quedaba casi indistinguible del fondo blanco): así el header de tabla,
+     los botones secundarios y los estados hover se siguen notando sobre
+     un fondo blanco en vez de perderse contra él. */
+  --secondary: #eef2f6;
   --secondary-foreground: #3b4859;
-  --muted: #f8fafc;
-  --muted-foreground: #7c8aa0;
-  --accent: #f8fafc;
+  --muted: #eef2f6;
+  --muted-foreground: #6b7890;
+  --accent: #eef2f6;
   --accent-foreground: #1a2433;
   --destructive: #dc2626;
-  --border: #e3e8ef;
+  --border: #dbe1ea;
   --input: #cfd6e1;
   /* Foco en celeste (no verde): dos colores de marca distinguibles a simple
      vista -- verde para acciones/estado positivo, celeste para foco/
@@ -110,10 +118,7 @@
   --sidebar-foreground: #a9b4c5;
   --sidebar-primary: #1e5b34;
   --sidebar-primary-foreground: #ffffff;
-  /* El ítem de menú activo usa celeste (no el verde del resto del sidebar):
-     es la marca de agua más visible del segundo color de marca, siempre a
-     la vista mientras se navega. */
-  --sidebar-accent: #0ea5e9;
+  --sidebar-accent: #1e5b34;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #1c2f22;
   --sidebar-ring: #1e5b34;
@@ -167,7 +172,7 @@
   --sidebar-foreground: #a9b4c5;
   --sidebar-primary: #3fa65e;
   --sidebar-primary-foreground: #0f1520;
-  --sidebar-accent: #38bdf8;
+  --sidebar-accent: #3fa65e;
   --sidebar-accent-foreground: #0f1520;
   --sidebar-border: #16241b;
   --sidebar-ring: #3fa65e;
