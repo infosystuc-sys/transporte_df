@@ -47,17 +47,24 @@
   --color-violet: var(--violet);
   --color-teal: var(--teal);
   --color-amber: var(--amber);
+  /* Celeste: segundo color de marca (a la par del verde primario), pedido
+     explícito del cliente inspirado en la paleta de Alem Vidrios. Se usa
+     para el foco/ring de inputs y queda disponible como bg-celeste/
+     text-celeste para chips o resaltados puntuales. */
+  --color-celeste: var(--celeste);
+  --color-celeste-foreground: var(--celeste-foreground);
 
   /* Escala de radios calibrada al uso real del proyecto en vez de un solo
      multiplicador: "rounded-md" es el idioma dominante para tarjetas/
      paneles/contenedores ad-hoc en toda la app (listas, asides, banners),
      así que es el que tiene que dar exactamente los 12px de la identidad
      Cashflow. Button/Input usan rounded-lg (9-11px); Card/Dialog usan
-     rounded-xl (16px, el radio de modal de Cashflow). */
+     rounded-xl (20px -- subido desde 16px para acercarse a las tarjetas
+     bien redondeadas de Alem Vidrios, la referencia visual pedida). */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 10px;
-  --radius-xl: 16px;
+  --radius-xl: 20px;
   --radius-2xl: 20px;
   --radius-3xl: 24px;
   --radius-4xl: 9999px;
@@ -83,13 +90,19 @@
   --destructive: #dc2626;
   --border: #e3e8ef;
   --input: #cfd6e1;
-  --ring: #1e5b34;
+  /* Foco en celeste (no verde): dos colores de marca distinguibles a simple
+     vista -- verde para acciones/estado positivo, celeste para foco/
+     interacción -- en vez de que todo sea la misma variante de verde. */
+  --ring: #0ea5e9;
   --chart-1: #1e5b34;
   --chart-2: #e8a916;
-  --chart-3: #0d9488;
+  --chart-3: #0ea5e9;
   --chart-4: #7a4ddb;
   --chart-5: #7c8aa0;
   --radius: 12px;
+
+  --celeste: #0ea5e9;
+  --celeste-foreground: #ffffff;
 
   /* Menú lateral: siempre oscuro, incluso con el resto de la app en claro. */
   --sidebar: #0f1a13;
@@ -107,8 +120,11 @@
   --teal: #0d9488;
   --amber: #e8a916;
 
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.07);
-  --shadow-lg: 0 12px 40px -8px rgba(16, 24, 40, 0.22);
+  /* Sombras tintadas de verde (en vez de gris/negro puro): es el detalle
+     que le da a Alem Vidrios su "brillo" de marca en tarjetas y botones
+     primarios -- mismo truco, con el verde de esta identidad. */
+  --shadow: 0 1px 3px rgba(30, 91, 52, 0.06), 0 4px 14px rgba(30, 91, 52, 0.08);
+  --shadow-lg: 0 12px 40px -8px rgba(30, 91, 52, 0.22);
 }
 
 .dark {
@@ -129,12 +145,15 @@
   --destructive: #f87171;
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.16);
-  --ring: #3fa65e;
+  --ring: #38bdf8;
   --chart-1: #3fa65e;
   --chart-2: #f2c230;
-  --chart-3: #2dd4bf;
+  --chart-3: #38bdf8;
   --chart-4: #9a7bea;
   --chart-5: #8b96a8;
+
+  --celeste: #38bdf8;
+  --celeste-foreground: #0f1520;
 
   --sidebar: #0a120d;
   --sidebar-foreground: #a9b4c5;
