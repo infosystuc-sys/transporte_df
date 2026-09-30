@@ -18,13 +18,18 @@ export function Sidebar() {
         {navItems.map((item) => {
           const activo = pathname === item.href;
 
+          const Icono = item.icono;
+
           if (!item.disponible) {
             return (
               <span
                 key={item.href}
-                className="flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/40"
+                className="flex items-center justify-between gap-2.5 rounded-md px-3 py-2 text-sm font-bold text-sidebar-foreground/40"
               >
-                {item.label}
+                <span className="flex items-center gap-2.5">
+                  <Icono className="size-4 shrink-0" />
+                  {item.label}
+                </span>
                 <span className="text-xs">Próximamente</span>
               </span>
             );
@@ -35,10 +40,11 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-white/5 hover:text-white",
+                "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-bold text-sidebar-foreground transition-colors hover:bg-white/5 hover:text-white",
                 activo && "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
+              <Icono className="size-4 shrink-0" />
               {item.label}
             </Link>
           );
