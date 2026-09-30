@@ -60,6 +60,11 @@
   --color-lima-foreground: var(--lima-foreground);
   --color-navy: var(--navy);
   --color-navy-foreground: var(--navy-foreground);
+  /* Prueba puntual pedida por el cliente: un azul intermedio entre navy y
+     celeste, solo para ver cómo queda en los botones que hoy son verdes
+     (el verde institucional en sí no se toca). */
+  --color-boton-primario: var(--boton-primario);
+  --color-boton-primario-foreground: var(--boton-primario-foreground);
 
   /* Fondos/bordes suaves para banners informativos (Alert), a la par de
      success/warning que ya usan --pos/--amber para el texto. */
@@ -137,6 +142,10 @@
   --lima-foreground: #ffffff;
   --navy: #1e3a5f;
   --navy-foreground: #ffffff;
+  /* Punto medio entre navy (#1e3a5f) y celeste (#4fa9e0) -- prueba pedida
+     por el cliente para los botones que hoy son verde institucional. */
+  --boton-primario: #3772a0;
+  --boton-primario-foreground: #ffffff;
 
   /* Fondos suaves para Alert (info/success/warning), tal como los define
      el sistema de referencia. */
@@ -204,6 +213,8 @@
   --lima-foreground: #0f1520;
   --navy: #4fa9e0;
   --navy-foreground: #0f1520;
+  --boton-primario: #5b9bc7;
+  --boton-primario-foreground: #0f1520;
 
   --success-bg: #052e1a;
   --success-border: #15803d;

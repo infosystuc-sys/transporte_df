@@ -9,7 +9,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:brightness-[1.07]",
+        // Prueba pedida por el cliente: azul intermedio entre navy y
+        // celeste en vez del verde institucional, solo en este botón.
+        default:
+          "bg-boton-primario text-boton-primario-foreground hover:brightness-[1.07]",
         // Acción positiva puntual (confirmar, marcar como listo): verde
         // lima, distinto del verde institucional de "default".
         positivo: "bg-lima text-lima-foreground hover:brightness-[1.07]",
