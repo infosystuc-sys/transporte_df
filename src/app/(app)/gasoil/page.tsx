@@ -47,7 +47,7 @@ export default async function GasoilPage({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Gasoil</h1>
+        <h1 className="text-[24px] font-black tracking-[-0.01em]">Gasoil</h1>
         <Button variant="outline" asChild>
           <Link href="/gasoil-masivo">Cargar varios comprobantes</Link>
         </Button>

@@ -88,7 +88,7 @@ export default async function LiquidacionDetallePage({
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Liquidación #{liq.id}</h1>
+          <h1 className="text-[24px] font-black tracking-[-0.01em]">Liquidación #{liq.id}</h1>
           <p className="text-sm text-muted-foreground">{liq.chofer_nombre}</p>
         </div>
         <div className="flex gap-2">

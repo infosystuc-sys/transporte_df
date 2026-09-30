@@ -7,9 +7,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-manrope);
-  --font-mono: var(--font-manrope);
-  --font-heading: var(--font-manrope);
+  /* Sistema de diseño del cliente (inspirado en Alem Vidrios): sans-serif
+     del sistema, sin tipografía custom/importada. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -47,21 +49,37 @@
   --color-violet: var(--violet);
   --color-teal: var(--teal);
   --color-amber: var(--amber);
-  /* Celeste: segundo color de marca (a la par del verde primario), pedido
-     explícito del cliente inspirado en la paleta de Alem Vidrios. Se usa
-     para el foco/ring de inputs y queda disponible como bg-celeste/
-     text-celeste para chips o resaltados puntuales. */
+  /* Celeste: acento secundario de marca (íconos, links, foco de inputs).
+     Verde lima: acento positivo puntual (confirmaciones, "listo"), distinto
+     del verde institucional que sigue siendo el color principal de la app.
+     Navy: para títulos y textos de énfasis. Los tres valores vienen del
+     sistema de diseño de referencia (Alem Vidrios) pedido por el cliente. */
   --color-celeste: var(--celeste);
   --color-celeste-foreground: var(--celeste-foreground);
+  --color-lima: var(--lima);
+  --color-lima-foreground: var(--lima-foreground);
+  --color-navy: var(--navy);
+  --color-navy-foreground: var(--navy-foreground);
+
+  /* Fondos/bordes suaves para banners informativos (Alert), a la par de
+     success/warning que ya usan --pos/--amber para el texto. */
+  --color-success-bg: var(--success-bg);
+  --color-success-border: var(--success-border);
+  --color-info-bg: var(--info-bg);
+  --color-info-border: var(--info-border);
+  --color-info-text: var(--info-text);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-accent: var(--warning-accent);
+  --color-destructive-border: var(--destructive-border);
 
   /* Escala de radios calibrada al uso real del proyecto en vez de un solo
      multiplicador: "rounded-md" es el idioma dominante para tarjetas/
      paneles/contenedores ad-hoc en toda la app (listas, asides, banners),
      así que es el que tiene que dar exactamente los 12px de la identidad
-     Cashflow. Button/Input usan rounded-lg (13px -- subido desde 10px,
-     como los botones/inputs bien redondeados de Alem Vidrios); Card/Dialog
-     usan rounded-xl (20px -- subido desde 16px para acercarse a las
-     tarjetas de Alem Vidrios, la referencia visual pedida). */
+     Cashflow. Button usa rounded-lg (13px, dentro del rango 10-14px del
+     sistema de referencia); Card/Dialog usan rounded-xl (20px, dentro del
+     rango 14-20px de tarjetas). Input/Select/Textarea usan rounded-sm
+     (8px) directamente, más chico que los botones como pide el sistema. */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 13px;
@@ -74,44 +92,61 @@
 :root {
   /* Fondo blanco (pedido explícito del cliente, en vez del gris/celeste
      apagado anterior): igual que Alem Vidrios, todo el "aire" de la app es
-     blanco y son el borde + la sombra tintada los que separan cada panel,
-     no un cambio de tono de fondo. */
+     blanco y son el borde + la sombra los que separan cada panel, no un
+     cambio de tono de fondo. */
   --background: #ffffff;
   --foreground: #1a2433;
   --card: #ffffff;
   --card-foreground: #1a2433;
   --popover: #ffffff;
   --popover-foreground: #1a2433;
-  /* Identidad Grupo Don Félix: verde bosque (contorno/camión del logo) y
-     dorado (sol/trigo) en vez del azul "Cashflow" original. */
+  /* Identidad Grupo Don Félix: verde bosque (contorno/camión del logo),
+     color principal de la app (botones primarios, foco de navegación) --
+     el cliente pidió expresamente mantenerlo en vez de reemplazarlo por el
+     azul oscuro del sistema de referencia. */
   --primary: #1e5b34;
   --primary-foreground: #ffffff;
-  /* Secondary/muted/accent bajan un poco más de gris que antes (#f8fafc
-     quedaba casi indistinguible del fondo blanco): así el header de tabla,
-     los botones secundarios y los estados hover se siguen notando sobre
-     un fondo blanco en vez de perderse contra él. */
-  --secondary: #eef2f6;
+  /* Secondary/muted/accent alineados al gris estándar del sistema de
+     referencia (#E2E8F0): sobre un fondo blanco, es lo que sigue
+     distinguiendo el header de tabla, los botones secundarios y los
+     estados hover en vez de perderse contra el fondo. */
+  --secondary: #e2e8f0;
   --secondary-foreground: #3b4859;
-  --muted: #eef2f6;
-  --muted-foreground: #6b7890;
-  --accent: #eef2f6;
+  --muted: #e2e8f0;
+  --muted-foreground: #64748b;
+  --accent: #e2e8f0;
   --accent-foreground: #1a2433;
-  --destructive: #dc2626;
-  --border: #dbe1ea;
-  --input: #cfd6e1;
+  --destructive: #ef4444;
+  --destructive-border: #f87171;
+  --border: #e2e8f0;
+  --input: #cbd5e1;
   /* Foco en celeste (no verde): dos colores de marca distinguibles a simple
      vista -- verde para acciones/estado positivo, celeste para foco/
      interacción -- en vez de que todo sea la misma variante de verde. */
-  --ring: #0ea5e9;
+  --ring: #4fa9e0;
   --chart-1: #1e5b34;
   --chart-2: #e8a916;
-  --chart-3: #0ea5e9;
+  --chart-3: #4fa9e0;
   --chart-4: #7a4ddb;
   --chart-5: #7c8aa0;
   --radius: 12px;
 
-  --celeste: #0ea5e9;
+  --celeste: #4fa9e0;
   --celeste-foreground: #ffffff;
+  --lima: #a4d454;
+  --lima-foreground: #ffffff;
+  --navy: #1e3a5f;
+  --navy-foreground: #ffffff;
+
+  /* Fondos suaves para Alert (info/success/warning), tal como los define
+     el sistema de referencia. */
+  --success-bg: #f0fdf4;
+  --success-border: #86efac;
+  --info-bg: #eff6ff;
+  --info-border: #bfdbfe;
+  --info-text: #1d4ed8;
+  --warning-bg: #fef9c3;
+  --warning-accent: #f59e0b;
 
   /* Menú lateral: siempre oscuro, incluso con el resto de la app en claro. */
   --sidebar: #0f1a13;
@@ -129,15 +164,12 @@
   --teal: #0d9488;
   --amber: #e8a916;
 
-  /* Sombras tintadas de verde (en vez de gris/negro puro): es el detalle
-     que le da a Alem Vidrios su "brillo" de marca en tarjetas y botones
-     primarios -- mismo truco, con el verde de esta identidad. Subidas de
-     intensidad para que se note a simple vista, no solo de cerca. */
-  --shadow: 0 2px 6px rgba(30, 91, 52, 0.10), 0 8px 24px rgba(30, 91, 52, 0.14);
-  --shadow-lg: 0 16px 48px -8px rgba(30, 91, 52, 0.32);
-  /* Sombra propia de los botones primarios (más marcada que --shadow): el
-     "pop" que tienen los botones de Alem Vidrios contra un fondo claro. */
-  --shadow-primary: 0 4px 16px -2px rgba(30, 91, 52, 0.4);
+  /* Sombras neutras (no tintadas), tal como las define el sistema de
+     referencia: --shadow para tarjetas de contenido (Card, tabla),
+     --shadow-sm para elementos chicos, --shadow-lg para diálogos. */
+  --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
 }
 
 .dark {
@@ -156,6 +188,7 @@
   --accent: #1c2632;
   --accent-foreground: #e7ecf3;
   --destructive: #f87171;
+  --destructive-border: #f87171;
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.16);
   --ring: #38bdf8;
@@ -167,6 +200,18 @@
 
   --celeste: #38bdf8;
   --celeste-foreground: #0f1520;
+  --lima: #a4d454;
+  --lima-foreground: #0f1520;
+  --navy: #4fa9e0;
+  --navy-foreground: #0f1520;
+
+  --success-bg: #052e1a;
+  --success-border: #15803d;
+  --info-bg: #0b1f3a;
+  --info-border: #1d4ed8;
+  --info-text: #93c5fd;
+  --warning-bg: #2a2205;
+  --warning-accent: #f59e0b;
 
   --sidebar: #0a120d;
   --sidebar-foreground: #a9b4c5;
@@ -184,8 +229,8 @@
   --amber: #f2c230;
 
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 12px 40px -8px rgba(0, 0, 0, 0.6);
-  --shadow-primary: 0 4px 16px -2px rgba(63, 166, 94, 0.45);
 }
 
 @layer base {
@@ -195,8 +240,15 @@
   body {
     @apply bg-background text-foreground;
     font-variant-numeric: tabular-nums;
+    font-size: 15px;
   }
   html {
     @apply font-sans;
+  }
+  /* Títulos de página: color navy y peso 900, como pide el sistema de
+     referencia -- se aplica solo si el h1 no trae ya un color explícito. */
+  h1 {
+    color: var(--navy);
+    font-weight: 900;
   }
 }

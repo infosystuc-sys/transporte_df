@@ -5,7 +5,7 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2.5 py-0.5 text-[11.5px] font-bold whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
+  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2.5 py-0.5 text-[11px] font-black whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
   {
     variants: {
       variant: {
@@ -13,12 +13,16 @@ const badgeVariants = cva(
         // Chip "hecho/liquidado" — pastel índigo, distinto del acento principal.
         secondary:
           "bg-[#eef0fd] text-[#4f46e5] dark:bg-[#312e81]/40 dark:text-[#a5b4fc] [a]:hover:bg-[#e2e4fb]",
-        // Chip negativo/alerta — pastel rojo.
+        // Chip negativo/urgente — pastel rojo, colores del sistema de referencia.
         destructive:
-          "bg-[#fdecec] text-[#dc2626] dark:bg-[#7f1d1d]/40 dark:text-[#fca5a5] focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-[#fbd8d8]",
-        // Chip neutral — la mayoría de las etiquetas de estado.
+          "bg-[#fee2e2] text-[#ef4444] dark:bg-[#7f1d1d]/40 dark:text-[#fca5a5] focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-[#fecaca]",
+        // Chip neutral/pendiente — gris del sistema de referencia.
         outline:
-          "border-transparent bg-[#f1f3f7] text-[#64748b] dark:bg-white/10 dark:text-muted-foreground [a]:hover:bg-[#e6e9ef]",
+          "border-transparent bg-[#e2e8f0] text-[#475569] dark:bg-white/10 dark:text-muted-foreground [a]:hover:bg-[#cbd5e1]",
+        // Chip de éxito/confirmación — verde suave, distinto del verde
+        // institucional sólido de "default".
+        success:
+          "bg-success-bg text-pos dark:bg-success-bg dark:text-pos [a]:hover:brightness-95",
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",

@@ -79,7 +79,7 @@ export default async function ClienteDetallePage({ params }: { params: Promise<{
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">{cliente.razon_social}</h1>
+        <h1 className="text-[24px] font-black tracking-[-0.01em]">{cliente.razon_social}</h1>
         <Button variant="outline" asChild>
           <Link href="/clientes">Volver al listado</Link>
         </Button>
