@@ -58,12 +58,13 @@
      multiplicador: "rounded-md" es el idioma dominante para tarjetas/
      paneles/contenedores ad-hoc en toda la app (listas, asides, banners),
      así que es el que tiene que dar exactamente los 12px de la identidad
-     Cashflow. Button/Input usan rounded-lg (9-11px); Card/Dialog usan
-     rounded-xl (20px -- subido desde 16px para acercarse a las tarjetas
-     bien redondeadas de Alem Vidrios, la referencia visual pedida). */
+     Cashflow. Button/Input usan rounded-lg (13px -- subido desde 10px,
+     como los botones/inputs bien redondeados de Alem Vidrios); Card/Dialog
+     usan rounded-xl (20px -- subido desde 16px para acercarse a las
+     tarjetas de Alem Vidrios, la referencia visual pedida). */
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 10px;
+  --radius-lg: 13px;
   --radius-xl: 20px;
   --radius-2xl: 20px;
   --radius-3xl: 24px;
@@ -109,7 +110,10 @@
   --sidebar-foreground: #a9b4c5;
   --sidebar-primary: #1e5b34;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1e5b34;
+  /* El ítem de menú activo usa celeste (no el verde del resto del sidebar):
+     es la marca de agua más visible del segundo color de marca, siempre a
+     la vista mientras se navega. */
+  --sidebar-accent: #0ea5e9;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #1c2f22;
   --sidebar-ring: #1e5b34;
@@ -122,9 +126,13 @@
 
   /* Sombras tintadas de verde (en vez de gris/negro puro): es el detalle
      que le da a Alem Vidrios su "brillo" de marca en tarjetas y botones
-     primarios -- mismo truco, con el verde de esta identidad. */
-  --shadow: 0 1px 3px rgba(30, 91, 52, 0.06), 0 4px 14px rgba(30, 91, 52, 0.08);
-  --shadow-lg: 0 12px 40px -8px rgba(30, 91, 52, 0.22);
+     primarios -- mismo truco, con el verde de esta identidad. Subidas de
+     intensidad para que se note a simple vista, no solo de cerca. */
+  --shadow: 0 2px 6px rgba(30, 91, 52, 0.10), 0 8px 24px rgba(30, 91, 52, 0.14);
+  --shadow-lg: 0 16px 48px -8px rgba(30, 91, 52, 0.32);
+  /* Sombra propia de los botones primarios (más marcada que --shadow): el
+     "pop" que tienen los botones de Alem Vidrios contra un fondo claro. */
+  --shadow-primary: 0 4px 16px -2px rgba(30, 91, 52, 0.4);
 }
 
 .dark {
@@ -159,8 +167,8 @@
   --sidebar-foreground: #a9b4c5;
   --sidebar-primary: #3fa65e;
   --sidebar-primary-foreground: #0f1520;
-  --sidebar-accent: #3fa65e;
-  --sidebar-accent-foreground: #ffffff;
+  --sidebar-accent: #38bdf8;
+  --sidebar-accent-foreground: #0f1520;
   --sidebar-border: #16241b;
   --sidebar-ring: #3fa65e;
 
@@ -172,6 +180,7 @@
 
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 12px 40px -8px rgba(0, 0, 0, 0.6);
+  --shadow-primary: 0 4px 16px -2px rgba(63, 166, 94, 0.45);
 }
 
 @layer base {
