@@ -14,7 +14,7 @@ export default function ImportarDescargaPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Importar descarga</h1>
+        <h1 className="text-[24px] font-black tracking-[-0.01em]">Importar descarga</h1>
         <p className="text-sm text-muted-foreground">
           Subí el ticket de balanza o la nota de recepción del destino: el sistema lee el CTG,
           busca el viaje que ya tenés cargado con ese CTG, y precarga los datos de descarga para

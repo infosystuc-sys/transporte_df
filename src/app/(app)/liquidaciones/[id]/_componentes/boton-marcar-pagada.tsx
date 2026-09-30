@@ -60,7 +60,7 @@ export function BotonMarcarPagada({
           ))}
         </SelectContent>
       </Select>
-      <Button onClick={confirmar} disabled={isPending}>
+      <Button variant="positivo" onClick={confirmar} disabled={isPending}>
         {isPending ? "Guardando..." : "Marcar como pagada"}
       </Button>
     </div>

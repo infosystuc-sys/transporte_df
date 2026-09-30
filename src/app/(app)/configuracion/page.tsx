@@ -73,7 +73,7 @@ export default async function ConfiguracionPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Configuración</h1>
+      <h1 className="text-[24px] font-black tracking-[-0.01em]">Configuración</h1>
 
       <Tabs defaultValue="general">
         {/* flex-wrap chocaba con la altura fija (h-8) de TabsList: en

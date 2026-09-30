@@ -17,7 +17,7 @@ export default async function GasoilMasivoPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Gasoil en tanda</h1>
+        <h1 className="text-[24px] font-black tracking-[-0.01em]">Gasoil en tanda</h1>
         <p className="text-sm text-muted-foreground">
           Subí varios comprobantes de carga de combustible de una: la app va buscando el camión de
           cada uno por patente y te deja confirmar sin salir de esta pantalla.

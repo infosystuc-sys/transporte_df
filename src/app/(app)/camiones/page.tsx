@@ -13,7 +13,7 @@ export default async function CamionesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-[25px] font-extrabold tracking-[-0.01em]">Camiones</h1>
+      <h1 className="text-[24px] font-black tracking-[-0.01em]">Camiones</h1>
       <GestorCamiones filas={filas} />
     </div>
   );
