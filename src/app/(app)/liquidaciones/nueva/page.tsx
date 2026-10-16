@@ -53,7 +53,12 @@ export default async function NuevaLiquidacionPage({
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-[24px] font-black tracking-[-0.01em]">Nueva liquidación</h1>
+      {/* key: al cambiar de chofer la navegación es "suave" y React reusa el
+          componente, así que react-hook-form conservaría el chofer_id del
+          primer chofer elegido y la liquidación se guardaba a nombre del
+          chofer anterior con los viajes del nuevo. */}
       <FormularioLiquidacion
+        key={choferId ?? "sin-chofer"}
         choferes={filasChoferes}
         medioPagos={filasMediosPago}
         choferId={choferId}
