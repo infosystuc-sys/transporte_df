@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { viajeDesdeCpeSchema, type ViajeDesdeCpeInput } from "@/lib/schemas/cpe-importacion";
 import type { BaseCalculo, ModalidadTarifa } from "@/lib/tarifa-defaults";
 import type { ResultadoImportacionCpe } from "@/lib/cpe/importar";
+import { mensajeArchivoMuyPesado, prepararArchivoParaSubir } from "@/lib/archivos/preparar-subida";
 import type { EntidadFaltante, TipoEntidadFaltante } from "@/lib/cpe/matching";
 import {
   agruparFaltantes,
@@ -95,11 +96,23 @@ export function FormularioRevisionCpe({
     };
   }, [urlPreview]);
 
-  function onSeleccionarArchivo(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0] ?? null;
-    setArchivo(f);
+  async function onSeleccionarArchivo(e: React.ChangeEvent<HTMLInputElement>) {
+    const original = e.target.files?.[0] ?? null;
     setResultado(null);
     setFaltantes([]);
+    if (!original) {
+      setArchivo(null);
+      return;
+    }
+    const f = await prepararArchivoParaSubir(original);
+    const error = mensajeArchivoMuyPesado(f);
+    if (error) {
+      toast.error(error);
+      setArchivo(null);
+      e.target.value = "";
+      return;
+    }
+    setArchivo(f);
   }
 
   function procesar() {
