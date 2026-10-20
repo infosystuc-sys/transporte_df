@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { CatalogosImportacionCpe } from "@/lib/cpe/datos-catalogos";
 import type { ResultadoImportacionCpe } from "@/lib/cpe/importar";
+import { mensajeArchivoMuyPesado, prepararArchivoParaSubir } from "@/lib/archivos/preparar-subida";
 import { viajeDesdeCpeSchema, type ViajeDesdeCpeInput } from "@/lib/schemas/cpe-importacion";
 import {
   agruparFaltantes,
@@ -149,7 +150,16 @@ export function ImportadorMasivoCpe({
   }
 
   async function onSeleccionarArchivos(e: React.ChangeEvent<HTMLInputElement>) {
-    const archivos = Array.from(e.target.files ?? []);
+    const seleccionados = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (seleccionados.length === 0) return;
+    const preparados = await Promise.all(seleccionados.map(prepararArchivoParaSubir));
+    const archivos: File[] = [];
+    for (const archivo of preparados) {
+      const error = mensajeArchivoMuyPesado(archivo);
+      if (error) toast.error(error);
+      else archivos.push(archivo);
+    }
     if (archivos.length === 0) return;
     const nuevosItems: ItemLote[] = archivos.map((archivo) => ({
       id: crypto.randomUUID(),
@@ -162,7 +172,6 @@ export function ImportadorMasivoCpe({
     }));
     setItems(nuevosItems);
     setIdAbierto(null);
-    e.target.value = "";
 
     setProcesando(true);
     for (const item of nuevosItems) {

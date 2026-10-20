@@ -18,6 +18,24 @@ export async function crearLiquidacion(
     return { error: "Elegí al menos un viaje o un movimiento pendiente para liquidar." };
   }
 
+  const choferId = datos.cabecera.chofer_id;
+
+  if (datos.viajes.length > 0) {
+    const viajesDb = await db
+      .select({ id: viajes.id, chofer_id: viajes.chofer_id, liquidado: viajes.liquidado })
+      .from(viajes)
+      .where(inArray(viajes.id, datos.viajes.map((v) => v.viaje_id)));
+    if (
+      viajesDb.length !== datos.viajes.length ||
+      viajesDb.some((v) => v.chofer_id !== choferId || v.liquidado)
+    ) {
+      return {
+        error:
+          "Algunos viajes elegidos no son de este chofer o ya están liquidados. Recargá la página y volvé a elegirlos.",
+      };
+    }
+  }
+
   const totalViajesImporte = datos.viajes.reduce((s, v) => s + Number(v.importe), 0);
 
   const movimientosSeleccionados =
@@ -32,6 +50,16 @@ export async function crearLiquidacion(
             )
           )
       : [];
+
+  if (
+    movimientosSeleccionados.length !== datos.movimientos.length ||
+    movimientosSeleccionados.some((m) => m.chofer_id !== choferId || m.liquidacion_id !== null)
+  ) {
+    return {
+      error:
+        "Algunos movimientos elegidos no son de este chofer o ya están liquidados. Recargá la página y volvé a elegirlos.",
+    };
+  }
 
   // Deducciones pendientes (adelanto/gasoil/ajuste/devolución) vs créditos
   // pendientes (gasto_rendido) que se saldan junto con esta liquidación.

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { viajeDescargaSchema, type ViajeDescargaInput } from "@/lib/schemas/viajes";
+import { mensajeArchivoMuyPesado, prepararArchivoParaSubir } from "@/lib/archivos/preparar-subida";
 import type { ComprobanteDescargaExtraido } from "@/lib/comprobantes/claude-descarga";
 import type { ViajeEncontradoPorCtg } from "../../_lib/buscar-ctg";
 import { actualizarDescargaConAdjunto } from "../../actions";
@@ -103,7 +104,16 @@ export function ImportadorMasivoDescarga() {
   }
 
   async function onSeleccionarArchivos(e: React.ChangeEvent<HTMLInputElement>) {
-    const archivos = Array.from(e.target.files ?? []);
+    const seleccionados = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (seleccionados.length === 0) return;
+    const preparados = await Promise.all(seleccionados.map(prepararArchivoParaSubir));
+    const archivos: File[] = [];
+    for (const archivo of preparados) {
+      const error = mensajeArchivoMuyPesado(archivo);
+      if (error) toast.error(error);
+      else archivos.push(archivo);
+    }
     if (archivos.length === 0) return;
     const nuevosItems: ItemLoteDescarga[] = archivos.map((archivo) => ({
       id: crypto.randomUUID(),
@@ -118,7 +128,6 @@ export function ImportadorMasivoDescarga() {
     }));
     setItems(nuevosItems);
     setIdAbierto(null);
-    e.target.value = "";
 
     setProcesando(true);
     try {

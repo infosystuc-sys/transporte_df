@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { viajeDescargaSchema, type ViajeDescargaInput } from "@/lib/schemas/viajes";
+import { mensajeArchivoMuyPesado, prepararArchivoParaSubir } from "@/lib/archivos/preparar-subida";
 import type { ComprobanteDescargaExtraido } from "@/lib/comprobantes/claude-descarga";
 import type { ViajeEncontradoPorCtg } from "../../_lib/buscar-ctg";
 import { actualizarDescargaConAdjunto } from "../../actions";
@@ -53,9 +54,13 @@ export function FormularioImportarDescarga() {
     defaultValues: valoresPorDefecto,
   });
 
-  function onSeleccionarArchivo(e: React.ChangeEvent<HTMLInputElement>) {
-    setArchivo(e.target.files?.[0] ?? null);
-    setError(null);
+  async function onSeleccionarArchivo(e: React.ChangeEvent<HTMLInputElement>) {
+    const original = e.target.files?.[0] ?? null;
+    const preparado = original ? await prepararArchivoParaSubir(original) : null;
+    const muyPesado = preparado ? mensajeArchivoMuyPesado(preparado) : null;
+    if (muyPesado) e.target.value = "";
+    setArchivo(muyPesado ? null : preparado);
+    setError(muyPesado);
     setViajesEncontrados(null);
     setDatosExtraidos(null);
     setViajeElegido(null);
