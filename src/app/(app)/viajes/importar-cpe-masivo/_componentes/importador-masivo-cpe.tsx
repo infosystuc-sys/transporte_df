@@ -132,7 +132,12 @@ export function ImportadorMasivoCpe({
       const formData = new FormData();
       formData.set("archivo", item.archivo);
       const r = await importarCpe(formData);
-      const necesitaRevision = r.motivoManual != null || r.extraido.campos_dudosos.length > 0;
+      // Un chofer encontrado solo por nombre (CUIL distinto) también pasa
+      // por revisión: confirmarlo a ciegas podría asignar el viaje a otro.
+      const necesitaRevision =
+        r.motivoManual != null ||
+        r.extraido.campos_dudosos.length > 0 ||
+        r.coincidencias.choferes_parecidos.length > 0;
 
       const ctg = r.extraido.ctg ?? r.referenciaQr;
       const viajesExistentes = ctg ? await verificarCtgExistente(ctg) : [];
@@ -212,7 +217,7 @@ export function ImportadorMasivoCpe({
           const faltantesRestantes = it.resultado.faltantes.filter((f) => {
             const id = creadas[`${it.id}:${f.clave}`];
             if (id == null) return true;
-            (coincidencias as Record<string, number | null>)[f.campo] = id;
+            coincidencias[f.campo] = id;
             return false;
           });
           return { ...it, resultado: { ...it.resultado, coincidencias, faltantes: faltantesRestantes } };
@@ -359,6 +364,11 @@ export function ImportadorMasivoCpe({
                       <span className="text-xs text-muted-foreground">
                         {it.resultado.extraido.pagador_nombre ?? "—"} · {it.resultado.extraido.chofer_nombre ?? "—"} ·{" "}
                         {it.resultado.extraido.dominio_tractor ?? "—"} · CTG {it.resultado.extraido.ctg ?? it.resultado.referenciaQr ?? "—"}
+                      </span>
+                    )}
+                    {!!it.resultado?.coincidencias.choferes_parecidos.length && (
+                      <span className="text-xs text-amber">
+                        El CUIL del chofer no coincide: se buscó por nombre. Revisá el chofer en el detalle.
                       </span>
                     )}
                     {!!ctgDeItem && ctgsRepetidosEnLote.has(ctgDeItem) && (

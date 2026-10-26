@@ -99,6 +99,7 @@ export async function procesarCpe(buffer: Buffer): Promise<ResultadoImportacionC
     producto_id: null,
     origen_id: null,
     destino_id: null,
+    choferes_parecidos: [],
   };
   let faltantes: EntidadFaltante[] = [];
   try {

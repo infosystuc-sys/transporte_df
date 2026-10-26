@@ -371,6 +371,36 @@ export function DialogCrearRapido({
 }
 
 /**
+ * El CUIL de la CPE no coincidió con ningún chofer pero sí el nombre (ver
+ * buscarChoferesParecidos): se avisa para que no se termine creando un
+ * chofer duplicado y para que corrijan el CUIL en la ficha si hace falta.
+ */
+function AvisoChoferParecido({ resultado }: { resultado: ResultadoImportacionCpe }) {
+  const parecidos = resultado.coincidencias.choferes_parecidos;
+  if (parecidos.length === 0) return null;
+  const cuilCpe = resultado.extraido.chofer_cuil;
+  const describir = (c: { nombre: string; cuil: string | null }) =>
+    `${c.nombre} (CUIL ${c.cuil || "sin cargar"})`;
+  return (
+    <p className="rounded-md border border-amber/40 bg-amber/10 p-3 text-sm text-amber">
+      {parecidos.length === 1 ? (
+        <>
+          El CUIL del chofer en la CPE ({cuilCpe || "sin leer"}) no coincide con ningún chofer, pero
+          el nombre sí: se asignó a {describir(parecidos[0])}. Si es otra persona, elegí otro chofer
+          o creá uno con &quot;+ Nuevo&quot;. Si es la misma, corregí el CUIL en su ficha.
+        </>
+      ) : (
+        <>
+          El CUIL del chofer en la CPE ({cuilCpe || "sin leer"}) no coincide con ningún chofer, pero
+          hay varios con nombre parecido: {parecidos.map(describir).join(", ")}. Elegí el que
+          corresponda antes de crear uno nuevo.
+        </>
+      )}
+    </p>
+  );
+}
+
+/**
  * Todo lo editable de la revisión de una CPE: avisos, panel de faltantes y
  * la grilla de campos. No incluye el <form> que lo envuelve ni los botones
  * de confirmar/cancelar -- eso lo maneja cada pantalla que lo usa (la de
@@ -444,6 +474,7 @@ export function CamposRevisionCpe({
           Referencia leída del QR: {resultado.referenciaQr}
         </p>
       )}
+      <AvisoChoferParecido resultado={resultado} />
 
       {grupos.length > 0 && (
         <div className="flex flex-col gap-3 rounded-md border border-amber/40 bg-amber/10 p-4">
