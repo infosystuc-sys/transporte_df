@@ -94,11 +94,13 @@ export async function procesarCpe(buffer: Buffer): Promise<ResultadoImportacionC
   // campos a mano en la pantalla de confirmación.
   let coincidencias: Coincidencias = {
     cliente_id: null,
+    intermediario_id: null,
     chofer_id: null,
     camion_id: null,
     producto_id: null,
     origen_id: null,
     destino_id: null,
+    choferes_parecidos: [],
   };
   let faltantes: EntidadFaltante[] = [];
   try {

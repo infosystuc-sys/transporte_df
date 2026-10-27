@@ -239,6 +239,7 @@ export function FormularioRevisionCpe({
               onDarDeAltaFaltantes={darDeAltaFaltantes}
               onDescartarFaltantes={() => setFaltantes([])}
               opcionesClientes={opcionesClientes}
+              comisionDeCliente={(id) => clientes.find((c) => c.id === id)?.comision_intermediario_pct_default}
               opcionesCamiones={opcionesCamiones}
               opcionesChoferes={opcionesChoferes}
               opcionesProductos={opcionesProductos}
