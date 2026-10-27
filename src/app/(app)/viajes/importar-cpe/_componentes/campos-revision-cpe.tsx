@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 import { Controller, useForm, type Path } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -124,6 +125,8 @@ const ETIQUETAS_CAMPOS_CPE: Record<string, string> = {
   destinatario_nombre: "Destinatario",
   pagador_cuit: "CUIT del cliente (flete pagador)",
   pagador_nombre: "Cliente (flete pagador)",
+  intermediario_cuit: "CUIT del intermediario de flete",
+  intermediario_nombre: "Intermediario de flete",
   chofer_cuil: "CUIL del chofer",
   chofer_nombre: "Chofer",
   producto_nombre: "Producto",
@@ -161,12 +164,15 @@ export function construirValoresIniciales(
     cliente?.base_calculo_flete,
     configDefaults
   );
-  // Spec del cliente: en la práctica el mismo cliente que paga el flete
-  // suele actuar también de intermediario/bróker de ese viaje -- si tiene
-  // un % de comisión configurado, se precarga acá para no tener que
-  // volver a elegirlo y tipearlo a mano en cada CPE. Sigue siendo editable
-  // (o se puede vaciar) si en un viaje puntual no corresponde.
-  const comisionDefault = cliente?.comision_intermediario_pct_default;
+  // Quién se lleva la comisión: el "Intermediario de flete" que trae la
+  // CPE si está cargado como cliente; si no trae ninguno, el mismo cliente
+  // que paga el flete, siempre que tenga un % cargado (en la práctica
+  // suele actuar también de intermediario). En los dos casos se precarga
+  // el % del cliente para no tipearlo en cada CPE, y sigue siendo
+  // editable (o se puede vaciar) si en un viaje puntual no corresponde.
+  const intermediario =
+    clientes.find((cl) => cl.id === c.intermediario_id) ??
+    (cliente?.comision_intermediario_pct_default != null ? cliente : undefined);
   return {
     tiene_cpe: true,
     tipo_carga: "grano",
@@ -189,8 +195,8 @@ export function construirValoresIniciales(
     titular_cuit: e.titular_cuit ?? "",
     destinatario_nombre: e.destinatario_nombre ?? "",
     destinatario_cuit: e.destinatario_cuit ?? "",
-    intermediario_id: comisionDefault != null ? (c.cliente_id ?? undefined) : undefined,
-    comision_intermediario_pct: comisionDefault ?? undefined,
+    intermediario_id: intermediario?.id,
+    comision_intermediario_pct: intermediario?.comision_intermediario_pct_default ?? undefined,
 
     camion_id: c.camion_id ?? undefined,
     chofer_id: c.chofer_id ?? undefined,
@@ -246,12 +252,14 @@ function CampoEntidadConCrear({
   label,
   opciones,
   onAbrirCrear,
+  onCambio,
 }: {
   form: ReturnType<typeof useForm<ViajeDesdeCpeInput>>;
   name: Path<ViajeDesdeCpeInput>;
   label: string;
   opciones: Opcion[];
   onAbrirCrear: () => void;
+  onCambio?: (valor: string) => void;
 }) {
   const error = form.formState.errors[name]?.message as string | undefined;
   return (
@@ -272,7 +280,10 @@ function CampoEntidadConCrear({
         render={({ field }) => (
           <Select
             value={field.value != null ? String(field.value) : undefined}
-            onValueChange={field.onChange}
+            onValueChange={(valor) => {
+              field.onChange(valor);
+              onCambio?.(valor);
+            }}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Seleccionar..." />
@@ -370,6 +381,15 @@ export function DialogCrearRapido({
   );
 }
 
+/** En otra pestaña: navegar acá perdería la CPE que se está revisando. */
+function LinkComisiones() {
+  return (
+    <Link href="/clientes?tab=comisiones" target="_blank" className="underline">
+      Clientes → Comisiones
+    </Link>
+  );
+}
+
 /**
  * El CUIL de la CPE no coincidió con ningún chofer pero sí el nombre (ver
  * buscarChoferesParecidos): se avisa para que no se termine creando un
@@ -420,6 +440,7 @@ export function CamposRevisionCpe({
   opcionesProductos,
   opcionesLugares,
   onAbrirCrear,
+  comisionDeCliente,
 }: {
   form: ReturnType<typeof useForm<ViajeDesdeCpeInput>>;
   resultado: ResultadoImportacionCpe;
@@ -439,6 +460,8 @@ export function CamposRevisionCpe({
     extra: string,
     campo: Path<ViajeDesdeCpeInput>
   ) => void;
+  /** % de comisión cargado en el cliente, para precargarlo al elegirlo como intermediario. */
+  comisionDeCliente: (id: number) => string | null | undefined;
 }) {
   const e = resultado.extraido;
 
@@ -475,6 +498,14 @@ export function CamposRevisionCpe({
         </p>
       )}
       <AvisoChoferParecido resultado={resultado} />
+      {e.intermediario_cuit && resultado.coincidencias.intermediario_id == null && (
+        <p className="rounded-md border border-amber/40 bg-amber/10 p-3 text-sm text-amber">
+          La CPE trae como intermediario de flete a {e.intermediario_nombre ?? "un cliente"} (CUIT{" "}
+          {e.intermediario_cuit}), que todavía no está cargado como cliente. Agregalo con su % en{" "}
+          <LinkComisiones /> para que la próxima vez se complete solo, o crealo con &quot;+ Nuevo&quot;
+          en el campo Intermediario de flete.
+        </p>
+      )}
 
       {grupos.length > 0 && (
         <div className="flex flex-col gap-3 rounded-md border border-amber/40 bg-amber/10 p-4">
@@ -578,14 +609,28 @@ export function CamposRevisionCpe({
           label="Intermediario de flete"
           opciones={opcionesClientes}
           onAbrirCrear={() =>
-            onAbrirCrear("cliente", "Nuevo cliente", "", "", "intermediario_id")
+            onAbrirCrear(
+              "cliente",
+              "Nuevo cliente",
+              e.intermediario_nombre ?? "",
+              e.intermediario_cuit ?? "",
+              "intermediario_id"
+            )
           }
+          onCambio={(valor) => {
+            const comision = comisionDeCliente(Number(valor));
+            if (comision != null) form.setValue("comision_intermediario_pct", comision);
+          }}
         />
         <CampoTexto
           form={form}
           name="comision_intermediario_pct"
           label="Comisión del intermediario (%)"
         />
+        <p className="text-xs text-muted-foreground sm:col-span-2">
+          La comisión se completa sola con el % que tiene cargado el intermediario en{" "}
+          <LinkComisiones />. Podés cambiarla para este viaje sin modificar el % guardado del cliente.
+        </p>
       </div>
 
       <div className="flex flex-col gap-3 rounded-md border p-4">

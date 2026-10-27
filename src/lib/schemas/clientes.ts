@@ -22,3 +22,16 @@ export const clienteSchema = z.object({
   activo: z.boolean().default(true),
 });
 export type ClienteInput = z.input<typeof clienteSchema>;
+
+/** Solapa Comisiones: alta rápida de un cliente intermediario con su %. */
+export const comisionClienteSchema = z.object({
+  razon_social: textoRequerido(),
+  cuit: z
+    .string()
+    .transform((v) => v.replace(/[^0-9]/g, ""))
+    .pipe(z.string().length(11, { error: "El CUIT tiene que tener 11 dígitos." })),
+  comision: decimalOpcional("Porcentaje inválido.").refine(
+    (v) => v == null || (Number(v) >= 0 && Number(v) <= 100),
+    { error: "El % tiene que estar entre 0 y 100." }
+  ),
+});

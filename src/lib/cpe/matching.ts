@@ -7,6 +7,8 @@ import type { CpeExtraido } from "./parser";
 export type Coincidencias = {
   /** Se busca por el CUIT del flete pagador: es el único que es cliente. */
   cliente_id: number | null;
+  /** Cliente con el CUIT del campo "Intermediario de flete" de la CPE, si lo trae. */
+  intermediario_id: number | null;
   chofer_id: number | null;
   camion_id: number | null;
   producto_id: number | null;
@@ -178,7 +180,10 @@ async function buscarClientePorCuit(cuit: string | null) {
 }
 
 export async function buscarCoincidencias(cpe: CpeExtraido): Promise<Coincidencias> {
-  const cliente_id = await buscarClientePorCuit(cpe.pagador_cuit);
+  const [cliente_id, intermediario_id] = await Promise.all([
+    buscarClientePorCuit(cpe.pagador_cuit),
+    buscarClientePorCuit(cpe.intermediario_cuit),
+  ]);
 
   const [chofer] = cpe.chofer_cuil
     ? await db
@@ -216,6 +221,7 @@ export async function buscarCoincidencias(cpe: CpeExtraido): Promise<Coincidenci
 
   return {
     cliente_id,
+    intermediario_id,
     chofer_id: chofer?.id ?? (choferes_parecidos.length === 1 ? choferes_parecidos[0].id : null),
     choferes_parecidos,
     camion_id: camion?.id ?? null,

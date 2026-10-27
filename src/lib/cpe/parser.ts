@@ -25,6 +25,9 @@ export type CpeExtraido = {
   destinatario_nombre: string | null;
   pagador_cuit: string | null;
   pagador_nombre: string | null;
+  /** Campo "Intermediario de flete" de la CPE: quien cobra la comisión, si lo hay. */
+  intermediario_cuit: string | null;
+  intermediario_nombre: string | null;
   chofer_cuil: string | null;
   chofer_nombre: string | null;
 
@@ -88,6 +91,8 @@ export function parseTextoCpe(texto: string): CpeExtraido {
     destinatario_nombre: null,
     pagador_cuit: null,
     pagador_nombre: null,
+    intermediario_cuit: null,
+    intermediario_nombre: null,
     chofer_cuil: null,
     chofer_nombre: null,
     producto_nombre: null,
@@ -165,6 +170,18 @@ export function parseTextoCpe(texto: string): CpeExtraido {
       resultado.pagador_cuit = pagador[1];
       resultado.pagador_nombre = pagador[2].trim();
     }
+  }
+
+  // En la CPE de muestra el campo viene vacío ("Intermediario de flete :"
+  // seguido de la sección B), así que se aceptan las dos disposiciones que
+  // usa el PDF para el resto de los pares: valor después de la etiqueta
+  // (como "Chofer :") o pegado antes (como "Flete pagador :").
+  const intermediario =
+    texto.match(/Intermediario de flete\s*:\s*(\d{11})\s*-\s*([^\n]+)/) ??
+    texto.match(/(\d{11})\s*-\s*([^\n]+?)\s*Intermediario de flete\s*:/);
+  if (intermediario) {
+    resultado.intermediario_cuit = intermediario[1];
+    resultado.intermediario_nombre = intermediario[2].trim();
   }
 
   const chofer = texto.match(/Chofer\s*:\s*(\d{11})\s*-\s*([^\n]+)/);
