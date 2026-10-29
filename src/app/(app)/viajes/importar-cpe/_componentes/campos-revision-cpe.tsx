@@ -500,8 +500,9 @@ export function CamposRevisionCpe({
       <AvisoChoferParecido resultado={resultado} />
       {resultado.coincidencias.pagador_es_empresa && (
         <p className="rounded-md border border-amber/40 bg-amber/10 p-3 text-sm text-amber">
-          En esta CPE la Empresa Transportista son ustedes ({e.pagador_nombre ?? e.pagador_cuit}), así
-          que no dice quién les paga el flete: elegí a mano el cliente que les dio el viaje. Si no lo
+          En esta CPE la Empresa Transportista son ustedes ({e.pagador_nombre ?? e.pagador_cuit}) y
+          el Intermediario de flete está vacío, así que no dice quién los contrató: elegí a mano el
+          cliente que les dio el viaje. Si no lo
           sabés todavía, al importar el líquido producto el cliente se corrige solo con quien lo
           emitió.
         </p>

@@ -241,3 +241,20 @@ export function parseTextoCpe(texto: string): CpeExtraido {
 
   return resultado;
 }
+
+/**
+ * El cliente (quien contrata el viaje, paga el flete y cobra la comisión)
+ * según cómo esté hecha la CPE, explicado por la empresa:
+ * - Bien hecha: "Empresa Transportista" son ellos mismos y quien los
+ *   contrata va en "Intermediario de flete" → el cliente es el
+ *   intermediario.
+ * - Lo más común hoy: el que los contrata va directo como "Empresa
+ *   Transportista" y "Intermediario de flete" queda vacío → el cliente es
+ *   la Empresa Transportista (lo que ya cargan parseTextoCpe y la IA en
+ *   pagador_*).
+ * "Flete pagador" (dueño del campo, corredor) no les interesa.
+ */
+export function aplicarClienteSegunCpe(cpe: CpeExtraido): CpeExtraido {
+  if (!cpe.intermediario_cuit) return cpe;
+  return { ...cpe, pagador_cuit: cpe.intermediario_cuit, pagador_nombre: cpe.intermediario_nombre };
+}

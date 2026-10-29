@@ -1,4 +1,4 @@
-import { parseTextoCpe, type CpeExtraido } from "./parser";
+import { aplicarClienteSegunCpe, parseTextoCpe, type CpeExtraido } from "./parser";
 import { extraerTextoCpe } from "./extraer";
 import { decodificarQrCpe } from "./qr";
 import { extraerConClaude } from "./claude";
@@ -84,6 +84,10 @@ export async function procesarCpe(buffer: Buffer): Promise<ResultadoImportacionC
       motivoManual = "sin_conexion_ia";
     }
   }
+
+  // Si la CPE trae "Intermediario de flete", ese es el cliente (ver
+  // aplicarClienteSegunCpe), no la Empresa Transportista.
+  extraido = aplicarClienteSegunCpe(extraido);
 
   // Mismo motivo que el try/catch de arriba: si la consulta de matching
   // contra la base falla por lo que sea (un hiccup de conexión, por
