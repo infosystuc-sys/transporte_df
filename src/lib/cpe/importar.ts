@@ -95,6 +95,7 @@ export async function procesarCpe(buffer: Buffer): Promise<ResultadoImportacionC
   let coincidencias: Coincidencias = {
     cliente_id: null,
     intermediario_id: null,
+    pagador_es_empresa: false,
     chofer_id: null,
     camion_id: null,
     producto_id: null,
