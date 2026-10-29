@@ -137,7 +137,8 @@ export function ImportadorMasivoCpe({
       const necesitaRevision =
         r.motivoManual != null ||
         r.extraido.campos_dudosos.length > 0 ||
-        r.coincidencias.choferes_parecidos.length > 0;
+        r.coincidencias.choferes_parecidos.length > 0 ||
+        r.coincidencias.pagador_es_empresa;
 
       const ctg = r.extraido.ctg ?? r.referenciaQr;
       const viajesExistentes = ctg ? await verificarCtgExistente(ctg) : [];

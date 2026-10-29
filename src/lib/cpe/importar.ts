@@ -1,4 +1,4 @@
-import { parseTextoCpe, type CpeExtraido } from "./parser";
+import { aplicarClienteSegunCpe, parseTextoCpe, type CpeExtraido } from "./parser";
 import { extraerTextoCpe } from "./extraer";
 import { decodificarQrCpe } from "./qr";
 import { extraerConClaude } from "./claude";
@@ -85,6 +85,10 @@ export async function procesarCpe(buffer: Buffer): Promise<ResultadoImportacionC
     }
   }
 
+  // Si la CPE trae "Intermediario de flete", ese es el cliente (ver
+  // aplicarClienteSegunCpe), no la Empresa Transportista.
+  extraido = aplicarClienteSegunCpe(extraido);
+
   // Mismo motivo que el try/catch de arriba: si la consulta de matching
   // contra la base falla por lo que sea (un hiccup de conexión, por
   // ejemplo), no puede reventar sin capturar -- Next.js redacta el error
@@ -95,6 +99,7 @@ export async function procesarCpe(buffer: Buffer): Promise<ResultadoImportacionC
   let coincidencias: Coincidencias = {
     cliente_id: null,
     intermediario_id: null,
+    pagador_es_empresa: false,
     chofer_id: null,
     camion_id: null,
     producto_id: null,

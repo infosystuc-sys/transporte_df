@@ -1,6 +1,6 @@
 import { ilike, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { camiones, choferes, clientes, productos } from "@/db/schema";
+import { camiones, choferes, clientes, configuracion, productos } from "@/db/schema";
 import { buscarLugarPorNombre } from "@/lib/lugares/buscar";
 import type { CpeExtraido } from "./parser";
 
@@ -9,6 +9,12 @@ export type Coincidencias = {
   cliente_id: number | null;
   /** Cliente con el CUIT del campo "Intermediario de flete" de la CPE, si lo trae. */
   intermediario_id: number | null;
+  /**
+   * La "Empresa Transportista" de la CPE es la propia empresa (su CUIT en
+   * Configuración). Pasa a veces: lo normal es que figure la empresa que
+   * les da el flete. En ese caso no hay cliente que asignar desde la CPE.
+   */
+  pagador_es_empresa: boolean;
   chofer_id: number | null;
   camion_id: number | null;
   producto_id: number | null;
@@ -84,9 +90,10 @@ export function detectarFaltantes(cpe: CpeExtraido, c: Coincidencias): EntidadFa
   };
 
   // Solo el flete pagador se da de alta como cliente: es a quien se le
-  // factura. El titular de la carta de porte y el destinatario quedan
+  // factura (salvo que sea la propia empresa, ver pagador_es_empresa). El titular de la carta de porte y el destinatario quedan
   // como texto estadístico en el viaje, sin ficha en el catálogo.
-  agregar(c.cliente_id, "cliente", "cliente", "cliente_id", "Cliente (flete pagador)", cpe.pagador_nombre, cpe.pagador_cuit);
+  if (!c.pagador_es_empresa)
+    agregar(c.cliente_id, "cliente", "cliente", "cliente_id", "Cliente (flete pagador)", cpe.pagador_nombre, cpe.pagador_cuit);
   // Con choferes parecidos no se ofrece crear uno nuevo: casi siempre es
   // la misma persona con el CUIL mal tipeado en la ficha o en la CPE, y
   // darlo de alta duplica al chofer (pasó con "PORTILLO" / "PORTILLO
@@ -180,8 +187,13 @@ async function buscarClientePorCuit(cuit: string | null) {
 }
 
 export async function buscarCoincidencias(cpe: CpeExtraido): Promise<Coincidencias> {
+  const [config] = await db.select({ cuit: configuracion.cuit }).from(configuracion).limit(1);
+  const cuitEmpresa = config?.cuit ? limpiarCuit(config.cuit) : "";
+  const pagador_es_empresa =
+    cuitEmpresa.length === 11 && !!cpe.pagador_cuit && limpiarCuit(cpe.pagador_cuit) === cuitEmpresa;
+
   const [cliente_id, intermediario_id] = await Promise.all([
-    buscarClientePorCuit(cpe.pagador_cuit),
+    pagador_es_empresa ? null : buscarClientePorCuit(cpe.pagador_cuit),
     buscarClientePorCuit(cpe.intermediario_cuit),
   ]);
 
@@ -222,6 +234,7 @@ export async function buscarCoincidencias(cpe: CpeExtraido): Promise<Coincidenci
   return {
     cliente_id,
     intermediario_id,
+    pagador_es_empresa,
     chofer_id: chofer?.id ?? (choferes_parecidos.length === 1 ? choferes_parecidos[0].id : null),
     choferes_parecidos,
     camion_id: camion?.id ?? null,
