@@ -296,7 +296,7 @@ function TarjetaLp({
                     {pesos(l.linea.comision)}
                     {l.comision_pct != null && (
                       <span className="block text-xs text-muted-foreground">
-                        {l.comision_pct.toLocaleString("es-AR", { maximumFractionDigits: 3 })}%
+                        {l.comision_pct.toLocaleString("es-AR", { maximumFractionDigits: 2 })}%
                       </span>
                     )}
                   </TableCell>

@@ -4,7 +4,8 @@ import { clientes, cobroImputaciones, viajes } from "@/db/schema";
 import { extraerTextoCpe } from "@/lib/cpe/extraer";
 import { cuitLimpioIgual } from "@/lib/cpe/matching";
 import { extraerLpConClaude } from "./claude";
-import { netoLinea, parseTextoLp, type LineaLp, type LpExtraido } from "./parser";
+import { netoLinea, parseTextoLiquidoProducto, type LineaLp, type LpExtraido } from "./parser";
+import { leerQrArca } from "./qr-arca";
 
 export type ViajeParaLp = {
   id: number;
@@ -51,7 +52,7 @@ const sinCeros = (v: string) => v.replace(/^0+/, "") || v;
  * revisión, que compara cada línea contra su viaje antes de confirmar.
  */
 export async function procesarLp(buffer: Buffer): Promise<ResultadoLp> {
-  let lp = parseTextoLp(await extraerTextoCpe(buffer));
+  let lp = parseTextoLiquidoProducto(await extraerTextoCpe(buffer));
   let fuente: "texto" | "ia" = "texto";
 
   if (lp.lineas.length === 0) {
@@ -69,6 +70,22 @@ export async function procesarLp(buffer: Buffer): Promise<ResultadoLp> {
   }
   if (lp.lineas.length === 0) {
     return { ok: false, error: "No se encontró ningún viaje (Carta de Porte / CTG) en el archivo. ¿Es un líquido producto?" };
+  }
+
+  // Lo que el formato no trae como texto (ej. el CUIT del emisor de la CVLP
+  // de Buenos Viajes, que va en el logo) sale del QR de ARCA.
+  if (!lp.emisor_cuit || !lp.numero || !lp.fecha) {
+    const qr = await leerQrArca(buffer);
+    if (qr) {
+      lp = {
+        ...lp,
+        emisor_cuit: lp.emisor_cuit ?? qr.emisor_cuit,
+        receptor_cuit: lp.receptor_cuit ?? qr.receptor_cuit,
+        numero: lp.numero ?? qr.numero,
+        fecha: lp.fecha ?? qr.fecha,
+        cae: lp.cae ?? qr.cae,
+      };
+    }
   }
 
   const avisos: string[] = [];

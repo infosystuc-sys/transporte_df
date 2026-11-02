@@ -1,10 +1,14 @@
 /**
  * Parser del "Líquido Producto" (comprobante ARCA cód. 060) que emiten los
  * clientes cuando le liquidan los fletes a la empresa, a partir del texto
- * plano que extrae unpdf. Los patrones salen de LP reales generados con
- * "Soft Raíces - Gestión para Transportistas" (según la empresa, todos los
- * que reciben tienen prácticamente el mismo formato). Si algún LP no
- * matchea, procesarLp cae a la lectura por IA.
+ * plano que extrae unpdf. Hay dos formatos vistos en LP reales:
+ * - parseTextoLp: el de "Soft Raíces - Gestión para Transportistas"
+ *   (ej. Transporte 2020), importes con punto decimal.
+ * - parseTextoCvlp: la "Cuenta Venta y Líquido Producto" de Transporte
+ *   Buenos Viajes, importes con coma decimal y la comisión como línea
+ *   negativa con el mismo CTG. No trae el CUIT del emisor como texto (va
+ *   en el logo); procesarLp lo completa desde el QR de ARCA.
+ * Si ninguno matchea, procesarLp cae a la lectura por IA.
  *
  * Nunca se guarda nada de acá directo: todo pasa por la pantalla de
  * revisión, que compara cada línea contra el viaje de ese CTG.
@@ -118,6 +122,93 @@ export function parseTextoLp(texto: string): LpExtraido {
   }
 
   return resultado;
+}
+
+// ---------- Formato "Cuenta Venta y Líquido Producto" (Buenos Viajes) ----------
+
+/** "1.712.440,00" / "62000,000" / "-137.020,00" → número. */
+function numeroAr(texto: string): number {
+  return Number(texto.replace(/\./g, "").replace(",", "."));
+}
+
+const IMPORTE_AR = String.raw`-?\d{1,3}(?:\.\d{3})*,\d{2}`;
+
+// "10135546888 11/10/26 QUIMILI SAN LORENZO SOJA GUERRA ANDRES 27,620 TN 62000,000 1.712.440,00"
+// "10135546888 11/10/26 COMIS MERC TR COMISION MERCADE GUERRA ANDRES 2,210 TN -62000,000 -137.020,00"
+const LINEA_CVLP = new RegExp(
+  String.raw`^(\d{11})\s+\d{2}\/\d{2}\/\d{2}\s+(.*?)\s+(\d+,\d{3})\s+TN\s+(-?\d+,\d+)\s+(${IMPORTE_AR})\s*$`
+);
+
+export function parseTextoCvlp(texto: string): LpExtraido {
+  const resultado: LpExtraido = {
+    numero: null,
+    fecha: null,
+    emisor_cuit: null,
+    receptor_cuit: null,
+    cae: null,
+    lineas: [],
+    neto_gravado: null,
+    iva: null,
+    total: null,
+  };
+  if (!/CUENTA VENTA Y LIQU/i.test(texto)) return resultado;
+
+  // "* A * Nº0006 -00012405"
+  const nro = texto.match(/\*\s*([A-Z])\s*\*\s*N[º°o]?\s*(\d{4})\s*-\s*(\d{8})/);
+  if (nro) resultado.numero = `${nro[1]}${nro[2]}-${nro[3]}`;
+
+  const fecha = texto.match(/Fecha\s+(\d{2})\/(\d{2})\/(\d{4})/);
+  if (fecha) resultado.fecha = `${fecha[3]}-${fecha[2]}-${fecha[1]}`;
+
+  const receptor = texto.match(/C\.U\.I\.T:?\s*(\d{2}-?\d{8}-?\d)/);
+  if (receptor) resultado.receptor_cuit = soloDigitos(receptor[1]);
+
+  const cae = texto.match(/CAE\s+(\d{14})/);
+  if (cae) resultado.cae = cae[1];
+
+  const porCtg = new Map<string, LineaLp>();
+  for (const linea of texto.split("\n")) {
+    const m = linea.match(LINEA_CVLP);
+    if (!m) continue;
+    const [, ctg, detalle, toneladas, tarifa, importe] = m;
+    const monto = numeroAr(importe);
+    // La comisión viene como una línea más del mismo CTG, en negativo.
+    if (monto < 0 || /COMIS/i.test(detalle)) {
+      const viaje = porCtg.get(ctg);
+      if (!viaje) continue;
+      if (/COMIS/i.test(detalle)) viaje.comision += Math.abs(monto);
+      else viaje.otros_descuentos += Math.abs(monto);
+      continue;
+    }
+    const viaje: LineaLp = {
+      ctg,
+      kg: Math.round(numeroAr(toneladas) * 1000),
+      tarifa: numeroAr(tarifa),
+      km: null,
+      total: monto,
+      comision: 0,
+      otros_descuentos: 0,
+    };
+    porCtg.set(ctg, viaje);
+    resultado.lineas.push(viaje);
+  }
+
+  // El primer "Sub-Total" es el neto gravado; el segundo repite el valor.
+  const neto = texto.match(new RegExp(String.raw`Sub-Total\s+(${IMPORTE_AR})`));
+  if (neto) resultado.neto_gravado = numeroAr(neto[1]);
+  const iva = texto.match(new RegExp(String.raw`IVA Insc\s+[\d,]+\s+(${IMPORTE_AR})`));
+  if (iva) resultado.iva = numeroAr(iva[1]);
+  const total = texto.match(new RegExp(String.raw`\bTOTAL\s+(${IMPORTE_AR})`));
+  if (total) resultado.total = numeroAr(total[1]);
+
+  return resultado;
+}
+
+/** Prueba los formatos conocidos; devuelve el primero que encuentre viajes. */
+export function parseTextoLiquidoProducto(texto: string): LpExtraido {
+  const softRaices = parseTextoLp(texto);
+  if (softRaices.lineas.length > 0) return softRaices;
+  return parseTextoCvlp(texto);
 }
 
 /** Neto de una línea: el flete menos lo que el cliente descontó. */

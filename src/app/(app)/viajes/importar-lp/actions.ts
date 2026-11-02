@@ -105,7 +105,10 @@ export async function confirmarLp(formData: FormData): Promise<{ error?: string;
         ...(linea.comision > 0 && linea.total > 0
           ? {
               intermediario_id: emisor.id,
-              comision_intermediario_pct: ((linea.comision / linea.total) * 100).toFixed(3),
+              // A 2 decimales: Buenos Viajes calcula la comisión sobre las
+              // toneladas redondeadas y el % exacto da 7,999 / 8,001. El
+              // importe exacto del LP queda igual en la facturación.
+              comision_intermediario_pct: ((linea.comision / linea.total) * 100).toFixed(2),
             }
           : {}),
         factura_nro: nroFactura,
