@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cobroCabeceraSchema, type CobroCabeceraInput } from "@/lib/schemas/cobros";
+import { camposFaltantesEcheq, clasificarMedioPago } from "@/lib/cobros/medio-pago";
 import { crearCobro } from "../../actions";
 
 const formatoARS = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
@@ -123,7 +124,18 @@ export function FormularioCobro({
     );
   }
 
+  const medioSeleccionado = form.watch("medio_pago_id");
+  const esEcheq =
+    clasificarMedioPago(medioPagos.find((m) => m.id === Number(medioSeleccionado))?.nombre) === "echeq";
+
   function onSubmit(cabecera: CobroCabeceraInput) {
+    // El Cash Flow necesita identificar cada eCheq y saber cuándo se cobra.
+    if (esEcheq) {
+      const faltantes = camposFaltantesEcheq(cabecera);
+      for (const f of faltantes) form.setError(f.campo, { message: f.mensaje });
+      if (faltantes.length > 0) return;
+    }
+
     const imputaciones = Object.entries(seleccionados)
       .filter(([, importe]) => Number(importe) > 0)
       .map(([viajeId, importe]) => ({ viaje_id: Number(viajeId), importe_imputado: importe }));
@@ -169,10 +181,15 @@ export function FormularioCobro({
           opciones={medioPagos.map((m) => ({ value: String(m.id), label: m.nombre }))}
         />
         <CampoTexto form={form} name="importe" label="Importe del cobro ($)" />
-        <CampoTexto form={form} name="referencia" label="Referencia" />
-        <CampoTexto form={form} name="banco" label="Banco" />
-        <CampoTexto form={form} name="cheque_nro" label="N° de cheque" />
-        <CampoTexto form={form} name="cheque_vto" label="Vencimiento del cheque" tipo="date" />
+        <CampoTexto form={form} name="referencia" label="Referencia (N° de orden de pago)" />
+        <CampoTexto form={form} name="banco" label={esEcheq ? "Banco emisor *" : "Banco emisor"} />
+        <CampoTexto form={form} name="cheque_nro" label={esEcheq ? "N° de eCheq *" : "N° de cheque"} />
+        <CampoTexto
+          form={form}
+          name="cheque_vto"
+          label={esEcheq ? "Fecha de cobro del eCheq *" : "Vencimiento del cheque"}
+          tipo="date"
+        />
       </div>
       <CampoTexto form={form} name="observaciones" label="Observaciones" textarea />
 

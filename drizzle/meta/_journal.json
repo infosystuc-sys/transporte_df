@@ -99,6 +99,13 @@
       "when": 1789399814892,
       "tag": "0013_agrega_comision_intermediario_default",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793714934367,
+      "tag": "0014_cobros_actualizado_en",
+      "breakpoints": true
     }
   ]
 }

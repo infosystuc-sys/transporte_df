@@ -3,6 +3,11 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const RUTAS_PUBLICAS = ["/login"];
 
+// Endpoints para otras apps (ej. el Cash Flow): no usan la sesión de
+// Supabase sino un token propio que valida cada ruta. Sin esta excepción
+// el pedido se redirigiría a /login antes de llegar a la ruta.
+const PREFIJO_INTEGRACIONES = "/api/integracion/";
+
 const TIMEOUT_AUTH_MS = 5000;
 
 /**
@@ -26,6 +31,10 @@ const fetchConTimeout: typeof fetch = (input, init) => {
  * no están en RUTAS_PUBLICAS. Se usa desde proxy.ts (raíz de src/).
  */
 export async function actualizarSesion(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith(PREFIJO_INTEGRACIONES)) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

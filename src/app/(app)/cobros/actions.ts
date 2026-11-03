@@ -4,13 +4,23 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { cobroImputaciones, cobros, retencionesCobro } from "@/db/schema";
+import { cobroImputaciones, cobros, mediosPago, retencionesCobro } from "@/db/schema";
 import { crearCobroSchema, type CrearCobroInput } from "@/lib/schemas/cobros";
+import { camposFaltantesEcheq, clasificarMedioPago } from "@/lib/cobros/medio-pago";
 import { recalcularCobro } from "../viajes/_lib/cobro";
 import { avanzarEstadoAutomatico } from "../viajes/_lib/avance-estado";
 
 export async function crearCobro(valores: CrearCobroInput): Promise<{ error?: string } | void> {
   const datos = crearCobroSchema.parse(valores);
+
+  const [medio] = await db
+    .select({ nombre: mediosPago.nombre })
+    .from(mediosPago)
+    .where(eq(mediosPago.id, datos.cabecera.medio_pago_id));
+  if (clasificarMedioPago(medio?.nombre) === "echeq") {
+    const faltantes = camposFaltantesEcheq(datos.cabecera);
+    if (faltantes.length > 0) return { error: faltantes.map((f) => f.mensaje).join(" ") };
+  }
 
   const totalImputado = datos.imputaciones.reduce((s, i) => s + Number(i.importe_imputado), 0);
   if (totalImputado > Number(datos.cabecera.importe)) {
