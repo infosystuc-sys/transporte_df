@@ -73,7 +73,7 @@ export function TabLiquidacion({
           Este importe se calcula solo y se actualiza mientras el viaje no esté incluido en una
           liquidación. Para liquidarlo, andá a{" "}
           <Link href="/liquidaciones/nueva" className="text-primary hover:underline">
-            Liquidaciones → Nueva liquidación
+            Liquidaciones Choferes → Nueva liquidación
           </Link>
           .
         </p>

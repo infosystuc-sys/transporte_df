@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = {
-  title: "Liquidaciones — Gestión de Fletes",
+  title: "Liquidaciones Choferes — Gestión de Fletes",
 };
 
 const formatoARS = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
@@ -30,7 +30,7 @@ export default async function LiquidacionesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-[24px] font-black tracking-[-0.01em]">Liquidaciones</h1>
+        <h1 className="text-[24px] font-black tracking-[-0.01em]">Liquidaciones Choferes</h1>
         <Button asChild>
           <Link href="/liquidaciones/nueva">Nueva liquidación</Link>
         </Button>

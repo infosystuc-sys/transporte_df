@@ -321,7 +321,7 @@ export async function cambiarEstadoViaje(
   if (nuevoEstado === "liquidado" && !viaje.liquidado) {
     return {
       error:
-        "No se puede pasar a Liquidado sin incluir el viaje en una liquidación. Hacelo desde Liquidaciones → Nueva liquidación: el estado avanza solo, no hace falta volver a tocar este botón.",
+        "No se puede pasar a Liquidado sin incluir el viaje en una liquidación. Hacelo desde Liquidaciones Choferes → Nueva liquidación: el estado avanza solo, no hace falta volver a tocar este botón.",
     };
   }
 
