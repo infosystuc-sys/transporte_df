@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // "Cobros" pasó a ser "Cobranzas" y la carga de líquidos producto se
+  // mudó ahí: los links viejos (favoritos, historial) siguen funcionando.
+  async redirects() {
+    return [
+      { source: "/cobros", destination: "/cobranzas/cobros", permanent: false },
+      { source: "/cobros/:ruta*", destination: "/cobranzas/cobros/:ruta*", permanent: false },
+      { source: "/viajes/importar-lp", destination: "/cobranzas/cargar-lp", permanent: false },
+    ];
+  },
   // @napi-rs/canvas trae un binario nativo (.node); pdfjs-dist lo usa para
   // renderizar PDFs a imagen (lectura de QR + fallback de Claude en la
   // importación de CPE). heic-convert (fotos HEIC de iPhone) carga

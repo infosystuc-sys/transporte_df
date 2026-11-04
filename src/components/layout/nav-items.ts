@@ -30,7 +30,7 @@ export const navItems: NavItem[] = [
   { href: "/choferes", label: "Choferes", disponible: true, icono: IdCard },
   { href: "/tarifario", label: "Tarifario", disponible: true, icono: Receipt },
   { href: "/gasoil", label: "Gasoil", disponible: true, icono: Fuel },
-  { href: "/cobros", label: "Cobros", disponible: true, icono: Wallet },
+  { href: "/cobranzas", label: "Cobranzas", disponible: true, icono: Wallet },
   { href: "/liquidaciones", label: "Liquidaciones", disponible: true, icono: FileCheck },
   { href: "/reportes", label: "Reportes", disponible: true, icono: BarChart3 },
   { href: "/configuracion", label: "Configuración", disponible: true, icono: Settings },

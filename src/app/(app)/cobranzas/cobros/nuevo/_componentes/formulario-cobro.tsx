@@ -97,7 +97,7 @@ export function FormularioCobro({
   );
 
   function cambiarCliente(valor: string) {
-    router.push(`/cobros/nuevo?cliente_id=${valor}`);
+    router.push(`/cobranzas/cobros/nuevo?cliente_id=${valor}`);
   }
 
   function alternarViaje(viaje: ViajePendiente, marcado: boolean) {

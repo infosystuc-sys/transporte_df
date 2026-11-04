@@ -23,7 +23,7 @@ export function CobrosCliente({
     <div className="flex flex-col gap-4">
       <div className="flex justify-end">
         <Button asChild>
-          <Link href={`/cobros/nuevo?cliente_id=${clienteId}`}>Nuevo cobro</Link>
+          <Link href={`/cobranzas/cobros/nuevo?cliente_id=${clienteId}`}>Nuevo cobro</Link>
         </Button>
       </div>
 
