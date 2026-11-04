@@ -23,6 +23,9 @@ export const cobros = pgTable(
     cheque_nro: text("cheque_nro"),
     cheque_vto: timestampTz("cheque_vto"),
     observaciones: text("observaciones"),
+    // La lee el Cash Flow (GET /api/integracion/cashflow) para detectar
+    // cambios; un trigger de la base la actualiza en cada UPDATE.
+    actualizado_en: timestampTz("actualizado_en").notNull().defaultNow(),
   },
   (t) => [
     accesoTotalAutenticados("cobros"),

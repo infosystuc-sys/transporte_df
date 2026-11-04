@@ -32,7 +32,7 @@ export function CuentaCorrienteCliente({
           <p className="text-[20px] font-extrabold">{formatoARS.format(saldoTotal)}</p>
         </div>
         <Button asChild>
-          <Link href={`/cobros/nuevo?cliente_id=${clienteId}`}>Nuevo cobro</Link>
+          <Link href={`/cobranzas/cobros/nuevo?cliente_id=${clienteId}`}>Nuevo cobro</Link>
         </Button>
       </div>
 

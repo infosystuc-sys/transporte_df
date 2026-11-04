@@ -10,3 +10,4 @@ export * from "./adjuntos";
 export * from "./gasoil";
 export * from "./cobros";
 export * from "./choferes-cuenta";
+export * from "./liquidos-producto";

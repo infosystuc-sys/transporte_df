@@ -30,7 +30,7 @@ export default async function CobrosPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-[24px] font-black tracking-[-0.01em]">Cobros</h1>
         <Button asChild>
-          <Link href="/cobros/nuevo">Nuevo cobro</Link>
+          <Link href="/cobranzas/cobros/nuevo">Nuevo cobro</Link>
         </Button>
       </div>
       <TablaCobros filas={filas} />

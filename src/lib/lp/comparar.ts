@@ -17,7 +17,7 @@ type ViajeComparable = {
 const pesos = (n: number) =>
   n.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 });
 const kilos = (n: number) => `${n.toLocaleString("es-AR")} kg`;
-const pct = (n: number) => `${n.toLocaleString("es-AR", { maximumFractionDigits: 3 })}%`;
+const pct = (n: number) => `${n.toLocaleString("es-AR", { maximumFractionDigits: 2 })}%`;
 
 /**
  * Lo que el cliente liquidó distinto de lo que tiene cargado el viaje.
