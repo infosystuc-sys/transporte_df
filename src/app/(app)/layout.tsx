@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { UserMenu } from "@/components/layout/user-menu";
 import { MenuMobile } from "@/components/layout/menu-mobile";
 import { BotonVolver } from "@/components/layout/boton-volver";
+import { ChatFelix } from "@/components/asistente/chat-felix";
 
 // Todo lo que cuelga de este layout depende de la sesión y hace consultas
 // reales a Supabase por request: nunca debe intentar generarse como
@@ -46,11 +47,12 @@ export default async function AppLayout({
             de su contenido -- una tabla ancha (o cualquier otra cosa)
             estiraba el <main>, y con él toda la página, en vez de quedar
             contenida con su propio scroll horizontal interno. */}
-        <main className="min-w-0 flex-1 p-6">
+        <main className="min-w-0 flex-1 p-6 pb-24">
           <BotonVolver />
           {children}
         </main>
       </div>
+      <ChatFelix />
     </div>
   );
 }

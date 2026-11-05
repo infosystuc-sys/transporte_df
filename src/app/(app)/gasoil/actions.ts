@@ -2,19 +2,41 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { adjuntos, camiones, cargasGasoil, estacionesServicio } from "@/db/schema";
+import { adjuntos, camiones, cargasGasoil, estacionesServicio, viajes } from "@/db/schema";
 import { cargaGasoilSchema, type CargaGasoilInput } from "@/lib/schemas/gasoil";
 import { registrarMovimientoAutomatico } from "@/lib/cuenta-corriente/movimientos";
 import { subirAdjunto } from "@/lib/supabase/storage";
 
 const RUTA = "/gasoil";
 
+/**
+ * El último viaje hecho por el chofer (o, si la carga no tiene chofer,
+ * por el camión) hasta el día de la carga. Pedido de David: cada
+ * comprobante de gasoil que se sube queda asociado a ese viaje, así se
+ * puede responder "¿cuánto gasoil usó el camión X en el viaje del día Y?".
+ */
+async function ultimoViajeHasta(datos: { fecha: Date; chofer_id?: number | null; camion_id: number }) {
+  const fechaViaje = sql`coalesce(${viajes.fecha_carga}, ${viajes.fecha_partida}, ${viajes.cpe_fecha_emision}, ${viajes.creado_en})`;
+  // Hasta el final del día de la carga (la fecha llega sin hora).
+  const tope = new Date(datos.fecha.getTime() + 36 * 3600 * 1000);
+  const filtroQuien = datos.chofer_id ? eq(viajes.chofer_id, datos.chofer_id) : eq(viajes.camion_id, datos.camion_id);
+  const [viaje] = await db
+    .select({ id: viajes.id })
+    .from(viajes)
+    .where(and(filtroQuien, ne(viajes.estado, "planificado"), sql`${fechaViaje} <= ${tope.toISOString()}::timestamptz`))
+    .orderBy(desc(fechaViaje), desc(viajes.id))
+    .limit(1);
+  return viaje?.id ?? null;
+}
+
 /** Inserta la carga y aplica los efectos secundarios (odómetro, cuenta
  * corriente del chofer). Devuelve el id — lo usan tanto el alta manual
  * como el alta con comprobante adjunto para no duplicar esta lógica. */
-async function insertarCargaGasoil(datos: ReturnType<typeof cargaGasoilSchema.parse>) {
+async function insertarCargaGasoil(entrada: ReturnType<typeof cargaGasoilSchema.parse>) {
+  // Si no se eligió a qué viaje corresponde, va al último viaje del chofer o camión.
+  const datos = entrada.viaje_id ? entrada : { ...entrada, viaje_id: await ultimoViajeHasta(entrada) };
   const [carga] = await db.insert(cargasGasoil).values(datos).returning({ id: cargasGasoil.id });
 
   const [camion] = await db.select().from(camiones).where(eq(camiones.id, datos.camion_id));
