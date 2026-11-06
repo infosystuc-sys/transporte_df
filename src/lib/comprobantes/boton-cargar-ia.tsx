@@ -3,6 +3,7 @@
 import { useRef, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { mensajeArchivoMuyPesado, prepararArchivoParaSubir } from "@/lib/archivos/preparar-subida";
 import { previsualizarComprobante } from "./actions";
 import type { ComprobanteExtraido } from "./claude";
 
@@ -22,10 +23,19 @@ export function BotonCargarIA({
   const [isPending, startTransition] = useTransition();
 
   function onSeleccionar(e: React.ChangeEvent<HTMLInputElement>) {
-    const archivo = e.target.files?.[0];
-    if (!archivo) return;
+    const original = e.target.files?.[0];
+    if (!original) return;
 
     startTransition(async () => {
+      // Una captura del iPhone en PNG puede pasar los 4,5 MB que acepta
+      // Vercel: se achica antes de subirla (ver preparar-subida.ts).
+      const archivo = await prepararArchivoParaSubir(original);
+      const pesado = mensajeArchivoMuyPesado(archivo);
+      if (pesado) {
+        toast.error(pesado);
+        if (inputRef.current) inputRef.current.value = "";
+        return;
+      }
       const formData = new FormData();
       formData.set("archivo", archivo);
       const resultado = await previsualizarComprobante(formData);

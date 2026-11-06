@@ -2,12 +2,14 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Loader2, RotateCcw, Send } from "lucide-react";
+import { Loader2, Mic, RotateCcw, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { BotonEscuchar } from "./boton-escuchar";
+import { useNotaDeVoz } from "./use-nota-de-voz";
 
-type Turno = { rol: "usuario" | "felix"; texto: string; error?: boolean };
+type Turno = { rol: "usuario" | "felix"; texto: string; error?: boolean; audio?: boolean };
 
 const CLAVE_HISTORIAL = "felix:historial";
 const SUGERENCIAS = [
@@ -44,11 +46,17 @@ function Burbuja({ turno }: { turno: Turno }) {
             : "max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-3 py-2 text-primary-foreground"
         }
       >
+        {turno.audio && (
+          <span className="mb-0.5 flex items-center gap-1 text-[11px] opacity-80">
+            <Mic className="size-3" /> Nota de voz
+          </span>
+        )}
         {turno.texto.split("\n").map((linea, i) => (
           <p key={i} className={linea.trim() === "" ? "h-2" : "break-words"}>
             <Linea texto={linea} />
           </p>
         ))}
+        {deFelix && !turno.error && <BotonEscuchar texto={turno.texto} />}
       </div>
     </div>
   );
@@ -64,6 +72,8 @@ export function ChatFelix() {
   const [texto, setTexto] = useState("");
   const [pensando, setPensando] = useState(false);
   const fin = useRef<HTMLDivElement>(null);
+  const voz = useNotaDeVoz((transcripto) => enviar(transcripto, true));
+  const ocupado = pensando || voz.estado === "transcribiendo";
 
   useEffect(() => {
     try {
@@ -84,10 +94,10 @@ export function ChatFelix() {
     fin.current?.scrollIntoView({ behavior: "smooth" });
   }, [turnos, pensando]);
 
-  async function enviar(pregunta: string) {
+  async function enviar(pregunta: string, audio = false) {
     const limpia = pregunta.trim();
     if (!limpia || pensando) return;
-    const nuevos: Turno[] = [...turnos, { rol: "usuario", texto: limpia }];
+    const nuevos: Turno[] = [...turnos, { rol: "usuario", texto: limpia, ...(audio ? { audio: true } : {}) }];
     setTurnos(nuevos);
     setTexto("");
     setPensando(true);
@@ -177,6 +187,14 @@ export function ChatFelix() {
             <div ref={fin} />
           </div>
 
+          {voz.aviso && (
+            <div className="flex items-start justify-between gap-2 border-t bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              <span>{voz.aviso}</span>
+              <button type="button" className="shrink-0 underline" onClick={() => voz.setAviso(null)}>
+                Cerrar
+              </button>
+            </div>
+          )}
           <form
             className="flex items-end gap-2 border-t p-3"
             onSubmit={(e) => {
@@ -184,23 +202,60 @@ export function ChatFelix() {
               enviar(texto);
             }}
           >
-            <Textarea
-              value={texto}
-              onChange={(e) => setTexto(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
+            {voz.estado === "grabando" ? (
+              <div className="flex min-h-10 flex-1 items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 text-sm">
+                <span className="size-2.5 animate-pulse rounded-full bg-destructive" />
+                <span className="font-medium tabular-nums">
+                  {Math.floor(voz.segundos / 60)}:{String(voz.segundos % 60).padStart(2, "0")}
+                </span>
+                <span className="text-muted-foreground">Grabando… soltá para enviar</span>
+              </div>
+            ) : voz.estado === "transcribiendo" ? (
+              <div className="flex min-h-10 flex-1 items-center gap-2 px-1 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                Escuchando tu audio…
+              </div>
+            ) : (
+              <Textarea
+                value={texto}
+                onChange={(e) => setTexto(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    enviar(texto);
+                  }
+                }}
+                placeholder="Escribile o mandale un audio a Félix…"
+                rows={1}
+                className="max-h-32 min-h-10 resize-none"
+                disabled={ocupado}
+              />
+            )}
+            {texto.trim() ? (
+              <Button type="submit" size="icon-lg" disabled={ocupado} aria-label="Enviar">
+                <Send className="size-4" />
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                size="icon-lg"
+                variant={voz.estado === "grabando" ? "destructive" : "default"}
+                disabled={ocupado}
+                aria-label="Mantené apretado para grabar un audio"
+                title="Mantené apretado para grabar un audio"
+                className={`touch-none select-none ${voz.estado === "grabando" ? "scale-125" : ""}`}
+                onContextMenu={(e) => e.preventDefault()}
+                onPointerDown={(e) => {
                   e.preventDefault();
-                  enviar(texto);
-                }
-              }}
-              placeholder="Escribile a Félix…"
-              rows={1}
-              className="max-h-32 min-h-10 resize-none"
-              disabled={pensando}
-            />
-            <Button type="submit" size="icon-lg" disabled={pensando || !texto.trim()} aria-label="Enviar">
-              <Send className="size-4" />
-            </Button>
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  void voz.empezar();
+                }}
+                onPointerUp={() => voz.terminar(true)}
+                onPointerCancel={() => voz.terminar(false)}
+              >
+                <Mic className="size-4" />
+              </Button>
+            )}
           </form>
         </SheetContent>
       </Sheet>
