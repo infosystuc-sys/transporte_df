@@ -58,7 +58,7 @@ export function CamposRevisionGasoil({
       <CampoSelect form={form} name="camion_id" label="Camión" opciones={opciones(camiones)} />
       <CampoSelect form={form} name="chofer_id" label="Chofer" opciones={opciones(choferes)} />
       <CampoSelect form={form} name="estacion_id" label="Estación" opciones={opciones(estaciones)} />
-      <CampoSelect form={form} name="viaje_id" label="Viaje (vacío = último viaje del chofer o camión)" opciones={opciones(viajes)} />
+      <CampoSelect form={form} name="viaje_id" label="Viaje (vacío = el viaje en curso o el último del chofer)" opciones={opciones(viajes)} />
       <CampoTexto form={form} name="litros" label="Litros" />
       <CampoTexto form={form} name="precio_litro" label="Precio por litro ($)" />
       <CampoTexto form={form} name="importe" label="Importe total ($)" />

@@ -38,7 +38,7 @@ Qué significa cada cosa (reglas de negocio):
 - Viajes pendientes de cobrar = viajes facturados con saldo_pendiente > 0, y LP con pagado = false. Lo que se va a cobrar de un LP es su total (con IVA).
 - Cobros: tabla cobros (medio de pago en medios_pago: Efectivo, Transferencia, Cheque, eCheq…; cheque_nro, banco, cheque_vto = fecha de cobro del eCheq; referencia = N° de orden de pago) imputados a viajes en cobro_imputaciones.
 - Flete y comisión: importe_flete es el flete bruto; importe_comision lo que se lleva el intermediario (comision_intermediario_pct); total_a_cobrar = flete + adicionales − comisión, sin IVA.
-- Gasoil: cargas_gasoil (fecha, camion_id, chofer_id, viaje_id, litros, importe, odometro, estacion_id, modalidad). Cada carga se asocia al último viaje del chofer o camión. "¿Cuánto gasoil usó el camión X en el viaje de la fecha Y?" = cargas de ese viaje; si no hay asociadas, cargas del camión entre la fecha de carga del viaje y la siguiente.
+- Gasoil: cargas_gasoil (fecha, camion_id, chofer_id, viaje_id, litros, importe, odometro, estacion_id, modalidad). Cada carga se asocia al viaje en curso (sin descarga) del chofer o camión, o si no hay, al último que hizo. "¿Cuánto gasoil usó el camión X en el viaje de la fecha Y?" = cargas de ese viaje; si no hay asociadas, cargas del camión entre la fecha de carga del viaje y la siguiente.
 - Vencimientos: camiones (vto_vtv, vto_seguro, vto_ruta, vto_cnrt, vto_senasa) y choferes (licencia_vto, linti_vto).
 - Cantidad de viajes de un cliente o chofer: contá viajes no planificados ni rechazados salvo que pidan otra cosa, y si no dicen período, dá el total y el de este mes.
 
