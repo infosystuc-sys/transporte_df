@@ -2,7 +2,7 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { and, desc, eq, ne, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, ne, notInArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { adjuntos, camiones, cargasGasoil, estacionesServicio, viajes } from "@/db/schema";
 import { cargaGasoilSchema, type CargaGasoilInput } from "@/lib/schemas/gasoil";
@@ -11,32 +11,57 @@ import { subirAdjunto } from "@/lib/supabase/storage";
 
 const RUTA = "/gasoil";
 
+const DIA_MS = 24 * 3600 * 1000;
+
 /**
- * El último viaje hecho por el chofer (o, si la carga no tiene chofer,
- * por el camión) hasta el día de la carga. Pedido de David: cada
- * comprobante de gasoil que se sube queda asociado a ese viaje, así se
- * puede responder "¿cuánto gasoil usó el camión X en el viaje del día Y?".
+ * A qué viaje va una carga de gasoil que se sube sin elegir viaje. Regla
+ * acordada con David (lo importante es que quede imputado a algún viaje):
+ * 1. Si el chofer (o el camión, si la carga no tiene chofer) tiene un
+ *    viaje en curso, todavía sin descarga, va a ese: muchas veces cargan
+ *    gasoil antes o después de tener la CPE del viaje que están haciendo.
+ *    Ese viaje tiene que haber arrancado entre 10 días antes y 2 días
+ *    después de la carga, para no pegar un ticket viejo a un viaje actual.
+ * 2. Si no, va al último viaje que arrancó hasta el día de la carga (el
+ *    que acaba de descargar).
+ * Las fechas llegan sin hora (medianoche UTC del día), igual que la de la carga.
  */
-async function ultimoViajeHasta(datos: { fecha: Date; chofer_id?: number | null; camion_id: number }) {
+async function viajeParaGasoil(datos: { fecha: Date; chofer_id?: number | null; camion_id: number }) {
   const fechaViaje = sql`coalesce(${viajes.fecha_carga}, ${viajes.fecha_partida}, ${viajes.cpe_fecha_emision}, ${viajes.creado_en})`;
-  // Hasta el final del día de la carga (la fecha llega sin hora).
-  const tope = new Date(datos.fecha.getTime() + 36 * 3600 * 1000);
   const filtroQuien = datos.chofer_id ? eq(viajes.chofer_id, datos.chofer_id) : eq(viajes.camion_id, datos.camion_id);
-  const [viaje] = await db
+  const dia = datos.fecha.getTime();
+  const iso = (ms: number) => new Date(ms).toISOString();
+
+  const [enCurso] = await db
     .select({ id: viajes.id })
     .from(viajes)
-    .where(and(filtroQuien, ne(viajes.estado, "planificado"), sql`${fechaViaje} <= ${tope.toISOString()}::timestamptz`))
+    .where(
+      and(
+        filtroQuien,
+        notInArray(viajes.estado, ["planificado", "rechazado"]),
+        isNull(viajes.fecha_descarga),
+        sql`${fechaViaje} >= ${iso(dia - 10 * DIA_MS)}::timestamptz`,
+        sql`${fechaViaje} < ${iso(dia + 3 * DIA_MS)}::timestamptz`
+      )
+    )
+    .orderBy(sql`abs(extract(epoch from ${fechaViaje} - ${iso(dia)}::timestamptz))`, desc(viajes.id))
+    .limit(1);
+  if (enCurso) return enCurso.id;
+
+  const [anterior] = await db
+    .select({ id: viajes.id })
+    .from(viajes)
+    .where(and(filtroQuien, ne(viajes.estado, "planificado"), sql`${fechaViaje} < ${iso(dia + DIA_MS)}::timestamptz`))
     .orderBy(desc(fechaViaje), desc(viajes.id))
     .limit(1);
-  return viaje?.id ?? null;
+  return anterior?.id ?? null;
 }
 
 /** Inserta la carga y aplica los efectos secundarios (odómetro, cuenta
  * corriente del chofer). Devuelve el id — lo usan tanto el alta manual
  * como el alta con comprobante adjunto para no duplicar esta lógica. */
 async function insertarCargaGasoil(entrada: ReturnType<typeof cargaGasoilSchema.parse>) {
-  // Si no se eligió a qué viaje corresponde, va al último viaje del chofer o camión.
-  const datos = entrada.viaje_id ? entrada : { ...entrada, viaje_id: await ultimoViajeHasta(entrada) };
+  // Si no se eligió a qué viaje corresponde, la app lo elige (ver viajeParaGasoil).
+  const datos = entrada.viaje_id ? entrada : { ...entrada, viaje_id: await viajeParaGasoil(entrada) };
   const [carga] = await db.insert(cargasGasoil).values(datos).returning({ id: cargasGasoil.id });
 
   const [camion] = await db.select().from(camiones).where(eq(camiones.id, datos.camion_id));
