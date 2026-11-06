@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cargaGasoilSchema, type CargaGasoilInput } from "@/lib/schemas/gasoil";
 import { previsualizarComprobante } from "@/lib/comprobantes/actions";
+import { mensajeArchivoMuyPesado, prepararArchivoParaSubir } from "@/lib/archivos/preparar-subida";
 import type { ComprobanteExtraido } from "@/lib/comprobantes/claude";
 import type { OpcionGasoil } from "@/lib/gasoil/datos-catalogos";
 import { crearCargaGasoilConAdjunto } from "../../gasoil/actions";
@@ -104,7 +105,19 @@ export function ImportadorMasivoGasoil({
   }
 
   async function onSeleccionarArchivos(e: React.ChangeEvent<HTMLInputElement>) {
-    const archivos = Array.from(e.target.files ?? []);
+    const seleccionados = Array.from(e.target.files ?? []);
+    if (seleccionados.length === 0) return;
+    e.target.value = "";
+    // Las capturas del iPhone en PNG suelen pasar los 4,5 MB que acepta
+    // Vercel ("An unexpected response was received from the server"): se
+    // achican antes de subirlas, igual que en la importación de CPE.
+    const preparados = await Promise.all(seleccionados.map(prepararArchivoParaSubir));
+    const archivos: File[] = [];
+    for (const archivo of preparados) {
+      const pesado = mensajeArchivoMuyPesado(archivo);
+      if (pesado) toast.error(pesado);
+      else archivos.push(archivo);
+    }
     if (archivos.length === 0) return;
     const nuevosItems: ItemLoteGasoil[] = archivos.map((archivo) => ({
       id: crypto.randomUUID(),
@@ -115,7 +128,6 @@ export function ImportadorMasivoGasoil({
     }));
     setItems(nuevosItems);
     setIdAbierto(null);
-    e.target.value = "";
 
     setProcesando(true);
     try {

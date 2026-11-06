@@ -3,6 +3,7 @@
 import { useRef, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { mensajeArchivoMuyPesado, prepararArchivoParaSubir } from "@/lib/archivos/preparar-subida";
 import { previsualizarComprobanteDescarga } from "./actions";
 import type { ComprobanteDescargaExtraido } from "./claude-descarga";
 
@@ -20,10 +21,18 @@ export function BotonCargarIADescarga({
   const [isPending, startTransition] = useTransition();
 
   function onSeleccionar(e: React.ChangeEvent<HTMLInputElement>) {
-    const archivo = e.target.files?.[0];
-    if (!archivo) return;
+    const original = e.target.files?.[0];
+    if (!original) return;
 
     startTransition(async () => {
+      // Ver BotonCargarIA: una captura pesada se achica antes de subirla.
+      const archivo = await prepararArchivoParaSubir(original);
+      const pesado = mensajeArchivoMuyPesado(archivo);
+      if (pesado) {
+        toast.error(pesado);
+        if (inputRef.current) inputRef.current.value = "";
+        return;
+      }
       const formData = new FormData();
       formData.set("archivo", archivo);
       const resultado = await previsualizarComprobanteDescarga(formData);
