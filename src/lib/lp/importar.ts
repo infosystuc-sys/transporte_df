@@ -88,7 +88,7 @@ export async function procesarLp(buffer: Buffer): Promise<ResultadoLp> {
     }
   }
 
-  const avisos: string[] = [];
+  const avisos: string[] = [...(lp.notas ?? [])];
   const sumaNetos = lp.lineas.reduce((s, l) => s + netoLinea(l), 0);
   if (lp.neto_gravado != null && Math.abs(sumaNetos - lp.neto_gravado) > 1) {
     avisos.push(
