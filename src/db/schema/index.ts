@@ -11,3 +11,4 @@ export * from "./gasoil";
 export * from "./cobros";
 export * from "./choferes-cuenta";
 export * from "./liquidos-producto";
+export * from "./asistente";

@@ -261,9 +261,16 @@ export function ChatFelix() {
     if (aResponder.length > 0 && (AFIRMATIVO.test(limpia) || NEGATIVO.test(limpia))) {
       setTurnos((prev) => [...prev, turnoUsuario]);
       setTexto("");
-      for (const p of aResponder) {
-        if (AFIRMATIVO.test(limpia)) await confirmar(p.turnoIdx, p.accionIdx);
-        else cancelar(p.turnoIdx, p.accionIdx);
+      const esBorrado = (p: { turnoIdx: number; accionIdx: number }) =>
+        turnosRef.current[p.turnoIdx]?.acciones?.[p.accionIdx]?.propuesta.tipo === "eliminar_viaje";
+      if (NEGATIVO.test(limpia)) {
+        for (const p of aResponder) cancelar(p.turnoIdx, p.accionIdx);
+        return;
+      }
+      // Borrar un viaje no se deshace: solo con el botón, nunca con un "sí" al pasar.
+      for (const p of aResponder.filter((p) => !esBorrado(p))) await confirmar(p.turnoIdx, p.accionIdx);
+      if (aResponder.some(esBorrado)) {
+        setTurnos((prev) => [...prev, { rol: "felix", texto: "Para borrar un viaje tocá el botón Borrar de la tarjeta: eso no lo confirmo con un sí." }]);
       }
       return;
     }

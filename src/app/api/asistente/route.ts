@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { preguntarAFelix, type AdjuntoFelix } from "@/lib/asistente/felix";
+import { rolDeUsuario } from "@/lib/asistente/permisos";
+import { MAX_PREGUNTAS_POR_HORA, registrar, superoElLimite } from "@/lib/asistente/registro";
 
 export const dynamic = "force-dynamic";
 // Félix puede encadenar varias consultas (y leer una foto) antes de responder.
@@ -62,8 +64,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Pedido inválido." }, { status: 400 });
   }
 
+  const usuario = { id: user.id, email: user.email ?? "usuario sin email" };
+  if (await superoElLimite(usuario)) {
+    return NextResponse.json(
+      { error: `Llegaste a ${MAX_PREGUNTAS_POR_HORA} mensajes en la última hora. Esperá un rato y seguimos.` },
+      { status: 429 }
+    );
+  }
+
   try {
-    const r = await preguntarAFelix(historial.data, user.email ?? "un usuario de la app", pedido.adjunto);
+    const rol = await rolDeUsuario(user.id);
+    const r = await preguntarAFelix(historial.data, usuario, rol, pedido.adjunto);
+    await registrar(usuario, "pregunta", {
+      texto: historial.data.at(-1)?.texto,
+      adjunto: pedido.adjunto?.media_type ?? null,
+      rol,
+      ...(r.ok ? { consultas: r.consultas, propuestas: r.acciones.length } : { error: r.error }),
+    });
     if (!r.ok) return NextResponse.json({ error: r.error }, { status: 422 });
     return NextResponse.json({ texto: r.texto, acciones: r.acciones });
   } catch (err) {

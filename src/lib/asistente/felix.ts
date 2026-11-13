@@ -2,6 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { hoyIso, prepararAccion, type EntradaHerramienta, type Propuesta } from "./acciones";
 import { consultarSoloLectura } from "./consulta";
 import { describirEsquema } from "./esquema";
+import { ACCIONES_POR_ROL, NOTA_ROL, type RolFelix } from "./permisos";
+import { registrar, type UsuarioFelix } from "./registro";
 
 const MODELO = "claude-opus-5-5";
 const MAX_VUELTAS = 10;
@@ -56,6 +58,7 @@ Qué significa cada cosa (reglas de negocio):
 - Cobros: tabla cobros (medio de pago en medios_pago: Efectivo, Transferencia, Cheque, eCheq…; cheque_nro, banco, cheque_vto = fecha de cobro del eCheq; referencia = N° de orden de pago) imputados a viajes en cobro_imputaciones.
 - Flete y comisión: importe_flete es el flete bruto; importe_comision lo que se lleva el intermediario (comision_intermediario_pct); total_a_cobrar = flete + adicionales − comisión, sin IVA.
 - Gasoil: cargas_gasoil (fecha, camion_id, chofer_id, viaje_id, litros, importe, odometro, estacion_id, modalidad). Cada carga se asocia al viaje en curso (sin descarga) del chofer o camión, o si no hay, al último que hizo. "¿Cuánto gasoil usó el camión X en el viaje de la fecha Y?" = cargas de ese viaje; si no hay asociadas, cargas del camión entre la fecha de carga del viaje y la siguiente.
+- Lo que se hizo con Félix queda en asistente_registro (tipo: pregunta, propuesta, confirmada o error; usuario_email; detalle en JSON). "¿Qué cargaste hoy?" o "¿quién confirmó tal gasoil?" = filas confirmadas.
 - Vencimientos: camiones (vto_vtv, vto_seguro, vto_ruta, vto_cnrt, vto_senasa) y choferes (licencia_vto, linti_vto).
 - Cantidad de viajes de un cliente o chofer: contá viajes no planificados ni rechazados salvo que pidan otra cosa, y si no dicen período, dá el total y el de este mes.
 
@@ -197,8 +200,16 @@ const TIPO_POR_HERRAMIENTA = {
   proponer_borrar_viaje: "eliminar_viaje",
 } as const;
 
-let sistemaCache: string | null = null;
-const sistema = () => (sistemaCache ??= INSTRUCCIONES + describirEsquema());
+// Uno por rol: cada uno queda en la caché de la IA por separado.
+const sistemaCache = new Map<RolFelix, string>();
+function sistema(rol: RolFelix) {
+  let texto = sistemaCache.get(rol);
+  if (!texto) {
+    texto = INSTRUCCIONES + (NOTA_ROL[rol] ? `${NOTA_ROL[rol]}\n\n` : "") + describirEsquema(rol);
+    sistemaCache.set(rol, texto);
+  }
+  return texto;
+}
 
 export type TurnoChat = { rol: "usuario" | "felix"; texto: string };
 
@@ -225,9 +236,15 @@ function hoyArgentina() {
  */
 export async function preguntarAFelix(
   historial: TurnoChat[],
-  usuario: string,
+  usuario: UsuarioFelix,
+  rol: RolFelix,
   adjunto: AdjuntoFelix | null = null
 ): Promise<RespuestaFelix> {
+  const permitidas = new Set(ACCIONES_POR_ROL[rol]);
+  const herramientas = [
+    HERRAMIENTA,
+    ...HERRAMIENTAS_ACCIONES.filter((h) => permitidas.has(TIPO_POR_HERRAMIENTA[h.name as keyof typeof TIPO_POR_HERRAMIENTA])),
+  ];
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { ok: false, error: "Félix no está configurado (falta la clave de la IA)." };
   const client = new Anthropic({ apiKey });
@@ -259,10 +276,10 @@ export async function preguntarAFelix(
       fallbacks: "default",
       output_config: { effort: "medium" },
       system: [
-        { type: "text", text: sistema(), cache_control: { type: "ephemeral" } },
-        { type: "text", text: `Hoy es ${hoyArgentina()} (${hoyIso()}). Te escribe: ${usuario}.` },
+        { type: "text", text: sistema(rol), cache_control: { type: "ephemeral" } },
+        { type: "text", text: `Hoy es ${hoyArgentina()} (${hoyIso()}). Te escribe: ${usuario.email}.` },
       ],
-      tools: [HERRAMIENTA, ...HERRAMIENTAS_ACCIONES],
+      tools: herramientas,
       messages: mensajes,
     });
 
@@ -294,13 +311,20 @@ export async function preguntarAFelix(
     for (const uso of usos) {
       if (uso.name in TIPO_POR_HERRAMIENTA) {
         const tipo = TIPO_POR_HERRAMIENTA[uso.name as keyof typeof TIPO_POR_HERRAMIENTA];
+        if (!permitidas.has(tipo)) {
+          resultados.push({ type: "tool_result", tool_use_id: uso.id, content: "Error: este usuario no puede hacer eso.", is_error: true });
+          continue;
+        }
         const r = await prepararAccion({ tipo, entrada: uso.input } as EntradaHerramienta, adjunto != null).catch(
           (err: unknown) => {
             console.error("Félix: falló preparar", uso.name, err);
             return { ok: false as const, error: "No se pudo preparar. Probá de nuevo." };
           }
         );
-        if (r.ok) acciones.push(r.valor);
+        if (r.ok) {
+          acciones.push(r.valor);
+          await registrar(usuario, "propuesta", { tipo: r.valor.tipo, datos: r.valor.datos, titulo: r.valor.titulo });
+        }
         resultados.push(
           r.ok
             ? {
@@ -318,7 +342,7 @@ export async function preguntarAFelix(
         continue;
       }
       consultas++;
-      const r = await consultarSoloLectura(consulta);
+      const r = await consultarSoloLectura(consulta, rol);
       resultados.push(
         r.ok
           ? { type: "tool_result", tool_use_id: uso.id, content: r.texto }

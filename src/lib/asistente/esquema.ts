@@ -1,10 +1,12 @@
 import { getTableName, type Table } from "drizzle-orm";
 import { getTableConfig, type PgTable } from "drizzle-orm/pg-core";
 import * as schema from "@/db/schema";
+import { COLUMNAS_EMPLEADO, type RolFelix } from "./permisos";
 
 /**
  * Tablas que Félix puede consultar: las mismas que habilita la migración
- * 0016 para el rol asistente_lectura (sin usuarios ni adjuntos).
+ * 0016 para el rol asistente_lectura (sin usuarios ni adjuntos), más su
+ * propio registro (0018). Un empleado ve menos: COLUMNAS_EMPLEADO.
  */
 export const TABLAS_ASISTENTE = [
   "viajes", "viaje_adicionales", "viaje_gastos", "viaje_contingencias",
@@ -14,6 +16,7 @@ export const TABLAS_ASISTENTE = [
   "movimientos_chofer", "liquidaciones_chofer", "liquidacion_viajes",
   "cobros", "cobro_imputaciones", "retenciones_cobro",
   "liquidos_producto", "liquido_producto_lineas", "liquido_producto_cobros",
+  "asistente_registro",
 ] as const;
 
 function esTabla(v: unknown): v is PgTable {
@@ -30,8 +33,8 @@ function esTabla(v: unknown): v is PgTable {
  * una copia a mano. Una línea por columna: nombre, tipo, valores posibles
  * (enums) y a qué tabla apunta (FK).
  */
-export function describirEsquema(): string {
-  const permitidas = new Set<string>(TABLAS_ASISTENTE);
+export function describirEsquema(rol: RolFelix = "admin"): string {
+  const permitidas = new Set<string>(rol === "admin" ? TABLAS_ASISTENTE : Object.keys(COLUMNAS_EMPLEADO));
   const bloques: string[] = [];
   for (const valor of Object.values(schema)) {
     if (!esTabla(valor)) continue;
@@ -46,7 +49,10 @@ export function describirEsquema(): string {
       });
     }
 
-    const columnas = config.columns.map((c) => {
+    const visibles = rol === "admin" ? "*" : COLUMNAS_EMPLEADO[config.name];
+    const columnas = config.columns
+      .filter((c) => visibles === "*" || visibles?.includes(c.name))
+      .map((c) => {
       const partes = [`${c.name} ${c.getSQLType()}`];
       const valores = (c as { enumValues?: readonly string[] }).enumValues;
       if (valores?.length) partes.push(`(${valores.join(" | ")})`);

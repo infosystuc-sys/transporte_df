@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
+import { ROL_BASE, type RolFelix } from "./permisos";
 
 /** Lo que Félix nunca puede escribir en una consulta: cambiar de rol, leer archivos del servidor, etc. */
 const PROHIBIDO =
@@ -22,11 +23,15 @@ function sinTextoNiComentarios(consulta: string) {
 /**
  * Corre una consulta que armó Félix. Tres barreras:
  * 1. Solo un SELECT (o WITH … SELECT), sin punto y coma ni palabras de la lista negra.
- * 2. Transacción READ ONLY con el rol asistente_lectura (migración 0016): solo
- *    ve las tablas de negocio y no puede escribir aunque lo intente.
+ * 2. Transacción READ ONLY con el rol asistente_lectura (migración 0016), o
+ *    asistente_empleado (0018) para un empleado: solo ve las tablas (y
+ *    columnas) permitidas y no puede escribir aunque lo intente.
  * 3. statement_timeout de 8 s y un tope de filas para no colgar la base.
  */
-export async function consultarSoloLectura(consulta: string): Promise<ResultadoConsulta> {
+export async function consultarSoloLectura(
+  consulta: string,
+  rol: RolFelix = "admin"
+): Promise<ResultadoConsulta> {
   const texto = consulta.trim().replace(/;+\s*$/, "");
   const revisable = sinTextoNiComentarios(texto);
   if (!/^\s*(select|with)\b/i.test(revisable)) return { ok: false, error: "Solo se permiten consultas SELECT." };
@@ -37,7 +42,8 @@ export async function consultarSoloLectura(consulta: string): Promise<ResultadoC
   try {
     const filas = await db.transaction(
       async (tx) => {
-        await tx.execute(sql`set local role asistente_lectura`);
+        // El nombre sale de una lista fija (ROL_BASE), nunca de lo que escribe nadie.
+        await tx.execute(sql.raw(`set local role ${ROL_BASE[rol]}`));
         await tx.execute(sql`set local statement_timeout = '8s'`);
         return (await tx.execute(sql.raw(texto))) as unknown as Record<string, unknown>[];
       },
