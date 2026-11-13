@@ -120,6 +120,20 @@
       "when": 1793895014661,
       "tag": "0016_asistente_lectura",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794587361495,
+      "tag": "0017_asistente_registro",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794587367261,
+      "tag": "0018_asistente_empleado",
+      "breakpoints": true
     }
   ]
 }
