@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { z } from "zod";
 import { hoyIso, prepararAccion, type EntradaHerramienta, type Propuesta } from "./acciones";
 import { consultarSoloLectura } from "./consulta";
 import { describirEsquema } from "./esquema";
@@ -83,7 +84,13 @@ const HERRAMIENTA: Anthropic.Beta.BetaTool = {
 const nulo = (tipo: "string" | "number" | "integer") => ({ type: [tipo, "null"] });
 const fecha = { type: ["string", "null"], description: "aaaa-mm-dd; null = hoy o sin cambio." };
 
-/** Herramientas que arman una propuesta (no guardan): ver acciones.ts. */
+/**
+ * Herramientas que arman una propuesta (no guardan): ver acciones.ts.
+ * Sin strict a propósito: la IA admite como mucho 16 campos "o null" entre
+ * todas las herramientas estrictas de un pedido y estas suman más (la
+ * respuesta es un 400 "Schema is too complex"). La entrada se valida con
+ * ENTRADAS (zod) antes de usarla.
+ */
 const HERRAMIENTAS_ACCIONES: Anthropic.Beta.BetaTool[] = [
   {
     name: "proponer_carga_gasoil",
@@ -121,7 +128,6 @@ const HERRAMIENTAS_ACCIONES: Anthropic.Beta.BetaTool[] = [
       ],
       additionalProperties: false,
     },
-    strict: true,
   },
   {
     name: "proponer_carga_viaje",
@@ -139,7 +145,6 @@ const HERRAMIENTAS_ACCIONES: Anthropic.Beta.BetaTool[] = [
       required: ["viaje_id", "fecha_carga", "bruto_origen", "tara_origen", "neto_origen"],
       additionalProperties: false,
     },
-    strict: true,
   },
   {
     name: "proponer_descarga_viaje",
@@ -158,7 +163,6 @@ const HERRAMIENTAS_ACCIONES: Anthropic.Beta.BetaTool[] = [
       required: ["viaje_id", "fecha_descarga", "bruto_destino", "tara_destino", "neto_destino", "usar_comprobante_adjunto"],
       additionalProperties: false,
     },
-    strict: true,
   },
   {
     name: "proponer_cambio_tarifa",
@@ -177,7 +181,6 @@ const HERRAMIENTAS_ACCIONES: Anthropic.Beta.BetaTool[] = [
       required: ["viaje_id", "valor_tarifa", "modalidad_tarifa"],
       additionalProperties: false,
     },
-    strict: true,
   },
   {
     name: "proponer_borrar_viaje",
@@ -188,9 +191,57 @@ const HERRAMIENTAS_ACCIONES: Anthropic.Beta.BetaTool[] = [
       required: ["viaje_id"],
       additionalProperties: false,
     },
-    strict: true,
   },
 ];
+
+const id = z.number().int().positive();
+const textoNulo = z.string().nullable();
+const ENTRADAS = {
+  cargar_gasoil: z.object({
+    fecha: textoNulo,
+    camion_id: id.nullable(),
+    chofer_id: id.nullable(),
+    viaje_id: id.nullable(),
+    estacion_id: id.nullable(),
+    litros: z.number(),
+    precio_litro: z.number().nullable(),
+    importe: z.number().nullable(),
+    modalidad: z.enum(["cuenta_corriente", "pagado_por_chofer", "surtidor_propio"]).nullable(),
+    comprobante_nro: textoNulo,
+    observaciones: textoNulo,
+    usar_comprobante_adjunto: z.boolean(),
+  }),
+  cargar_viaje: z.object({
+    viaje_id: id,
+    fecha_carga: textoNulo,
+    bruto_origen: z.number().nullable(),
+    tara_origen: z.number().nullable(),
+    neto_origen: z.number().nullable(),
+  }),
+  descargar_viaje: z.object({
+    viaje_id: id,
+    fecha_descarga: textoNulo,
+    bruto_destino: z.number().nullable(),
+    tara_destino: z.number().nullable(),
+    neto_destino: z.number().nullable(),
+    usar_comprobante_adjunto: z.boolean(),
+  }),
+  cambiar_tarifa: z.object({
+    viaje_id: id,
+    valor_tarifa: z.number(),
+    modalidad_tarifa: z.enum(["por_tonelada", "por_km", "por_tonelada_km", "monto_fijo"]).nullable(),
+  }),
+  eliminar_viaje: z.object({ viaje_id: id }),
+} as const;
+
+/** Completa con null lo que la IA no mandó y valida tipos. */
+function leerEntrada(tipo: keyof typeof ENTRADAS, crudo: unknown) {
+  const props = Object.keys(ENTRADAS[tipo].shape);
+  const base = Object.fromEntries(props.map((k) => [k, null]));
+  const valor = { ...base, ...(typeof crudo === "object" && crudo ? crudo : {}) } as Record<string, unknown>;
+  if ("usar_comprobante_adjunto" in valor && valor.usar_comprobante_adjunto == null) valor.usar_comprobante_adjunto = false;
+  return ENTRADAS[tipo].safeParse(valor);
+}
 
 const TIPO_POR_HERRAMIENTA = {
   proponer_carga_gasoil: "cargar_gasoil",
@@ -315,7 +366,18 @@ export async function preguntarAFelix(
           resultados.push({ type: "tool_result", tool_use_id: uso.id, content: "Error: este usuario no puede hacer eso.", is_error: true });
           continue;
         }
-        const r = await prepararAccion({ tipo, entrada: uso.input } as EntradaHerramienta, adjunto != null).catch(
+        const entrada = leerEntrada(tipo, uso.input);
+        if (!entrada.success) {
+          const problema = entrada.error.issues[0];
+          resultados.push({
+            type: "tool_result",
+            tool_use_id: uso.id,
+            content: `Error: dato inválido en ${problema?.path.join(".") || "la entrada"} (${problema?.message ?? "revisalo"}).`,
+            is_error: true,
+          });
+          continue;
+        }
+        const r = await prepararAccion({ tipo, entrada: entrada.data } as EntradaHerramienta, adjunto != null).catch(
           (err: unknown) => {
             console.error("Félix: falló preparar", uso.name, err);
             return { ok: false as const, error: "No se pudo preparar. Probá de nuevo." };
